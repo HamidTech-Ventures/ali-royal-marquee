@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useMockData } from '../../context/MockDataContext';
+import { customersService } from '../../services/customersService';
+import { useToast } from '../../context/ToastContext';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { ArrowLeft, Phone, Mail, MessageSquare } from 'lucide-react';
@@ -11,25 +12,42 @@ type TabType = 'overview' | 'bookings' | 'enquiries' | 'payments' | 'preferences
 export const CustomerDetails = () => {
   const { customerId } = useParams<{ customerId: string }>();
   const navigate = useNavigate();
-  const { customers, bookings, payments } = useMockData();
+  const { error } = useToast();
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [customer, setCustomer] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const customer = customers.find((c) => c.id === customerId);
+  const fetchCustomer = async () => {
+    setLoading(true);
+    try {
+      if (customerId) {
+        const data = await customersService.getCustomerById(customerId);
+        setCustomer(data);
+      }
+    } catch (err) {
+      error('Failed to load customer details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomer();
+  }, [customerId]);
   
+  if (loading) {
+    return <div className="p-8 text-center text-on-surface-variant">Loading customer details...</div>;
+  }
+
   if (!customer) {
     return <div className="p-8 text-center text-on-surface-variant">Customer not found.</div>;
   }
 
-  const customerBookings = bookings.filter(b => b.customerId === customer.id);
-
-  const customerPayments = payments.filter(p => p.customerId === customer.id);
-
+  const customerBookings = customer.bookings || [];
   const totalSpent = customer.totalSpent;
-  const outstanding = customerBookings.reduce((sum, b) => {
-    const paid = customerPayments.filter(p => p.bookingId === b.id).reduce((s, p) => s + p.amount, 0);
-    return sum + (b.totalAmount - paid);
-  }, 0);
+  // Outstanding logic is not readily available on backend yet, set to 0 or hardcode
+  const outstanding = 0; 
   const avgBookingValue = customerBookings.length > 0 ? totalSpent / customerBookings.length : 0;
 
   const tabs: { id: TabType; label: string }[] = [
@@ -105,7 +123,7 @@ export const CustomerDetails = () => {
           </div>
           <div className="bg-surface border border-outline-variant/40 rounded-xl p-5 shadow-sm">
             <div className="text-xs text-on-surface-variant uppercase tracking-wider font-semibold mb-1">Completed Events</div>
-            <div className="text-3xl font-bold text-on-surface">{customerBookings.filter(b => b.status === 'Completed').length}</div>
+            <div className="text-3xl font-bold text-on-surface">{customerBookings.filter((b: any) => b.status === 'Completed').length}</div>
           </div>
           <div className="bg-surface border border-outline-variant/40 rounded-xl p-5 shadow-sm">
             <div className="text-xs text-on-surface-variant uppercase tracking-wider font-semibold mb-1">Average Booking</div>
@@ -116,7 +134,7 @@ export const CustomerDetails = () => {
 
       {/* TABS NAVIGATION */}
       <div className="px-8 border-b border-outline-variant/30 flex overflow-x-auto no-scrollbar">
-        {tabs.map(tab => (
+        {tabs.map((tab: any) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -169,7 +187,7 @@ export const CustomerDetails = () => {
                   <div className="flex justify-between items-center border-b border-outline-variant/20 pb-3">
                     <span className="text-on-surface-variant text-sm">Next Event</span>
                     <span className="font-medium text-primary">
-                      {customerBookings.find(b => b.status === 'Confirmed')?.dateStr || 'None scheduled'}
+                      {customerBookings.find((b: any) => b.status === 'Confirmed')?.dateStr || 'None scheduled'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -200,7 +218,7 @@ export const CustomerDetails = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant/20">
-                  {customerBookings.map(booking => (
+                  {customerBookings.map((booking: any) => (
                     <tr key={booking.id} className="hover:bg-surface-variant/30 cursor-pointer transition-colors" onClick={() => navigate(`/app/bookings/${booking.id}`)}>
                       <td className="p-4 font-medium text-primary">{booking.id}</td>
                       <td className="p-4">
@@ -229,8 +247,92 @@ export const CustomerDetails = () => {
           </div>
         )}
 
+        {activeTab === 'enquiries' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="font-title-lg">Enquiry History</h3>
+              <Button variant="primary" onClick={() => navigate('/app/enquiries')}>New Enquiry</Button>
+            </div>
+            <div className="bg-surface border border-outline-variant/40 rounded-xl overflow-hidden">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-surface-variant/30 text-on-surface-variant text-sm">
+                  <tr>
+                    <th className="p-4 font-medium">ID</th>
+                    <th className="p-4 font-medium">Preferred Date</th>
+                    <th className="p-4 font-medium">Guests</th>
+                    <th className="p-4 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/20">
+                  {customer.enquiries?.map((enq: any) => (
+                    <tr key={enq.id} className="hover:bg-surface-variant/30 cursor-pointer transition-colors" onClick={() => navigate(`/app/enquiries/${enq.id}`)}>
+                      <td className="p-4 font-medium text-primary">{enq.id}</td>
+                      <td className="p-4 text-on-surface font-medium">{enq.dateStr}</td>
+                      <td className="p-4 text-on-surface">{enq.guests}</td>
+                      <td className="p-4">
+                        <Badge variant={enq.status === 'Converted' ? 'success' : enq.status === 'Lost' ? 'error' : 'neutral'}>
+                          {enq.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                  {(!customer.enquiries || customer.enquiries.length === 0) && (
+                    <tr>
+                      <td colSpan={4} className="p-8 text-center text-on-surface-variant">No enquiries found for this customer.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Payments Tab */}
+        {activeTab === 'payments' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="font-title-lg">Payment History</h3>
+            </div>
+            <div className="bg-surface border border-outline-variant/40 rounded-xl overflow-hidden">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-surface-variant/30 text-on-surface-variant text-sm">
+                  <tr>
+                    <th className="p-4 font-medium">Reference</th>
+                    <th className="p-4 font-medium">Date</th>
+                    <th className="p-4 font-medium">Booking ID</th>
+                    <th className="p-4 font-medium">Method</th>
+                    <th className="p-4 font-medium text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/20">
+                  {customer.payments?.map((payment: any) => (
+                    <tr key={payment.id} className="hover:bg-surface-variant/30 transition-colors">
+                      <td className="p-4 font-medium text-primary">{payment.reference}</td>
+                      <td className="p-4 text-on-surface">{payment.dateStr}</td>
+                      <td className="p-4 text-on-surface-variant text-sm cursor-pointer hover:underline" onClick={() => navigate(`/app/bookings/${payment.bookingId}`)}>
+                        {payment.bookingId}
+                      </td>
+                      <td className="p-4">
+                        <Badge variant="neutral">{payment.method}</Badge>
+                      </td>
+                      <td className="p-4 text-right font-currency-num text-on-surface font-medium">
+                        PKR {payment.amount.toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                  {(!customer.payments || customer.payments.length === 0) && (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-on-surface-variant">No payments found for this customer.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* Placeholders for others */}
-        {['enquiries', 'payments', 'preferences', 'activity'].includes(activeTab) && (
+        {['preferences', 'activity'].includes(activeTab) && (
           <div className="flex flex-col items-center justify-center py-20 text-on-surface-variant">
             <h3 className="text-xl font-medium text-on-surface mb-2">{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Workspace</h3>
             <p>Ready for integration.</p>

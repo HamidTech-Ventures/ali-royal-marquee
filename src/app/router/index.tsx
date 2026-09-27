@@ -1,5 +1,5 @@
 // import React from 'react';
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 
 import { DashboardLayout } from '../../layouts/DashboardLayout';
 import { Login } from '../../features/dashboard/Login';
@@ -18,6 +18,7 @@ import { Customers } from '../../features/customers/Customers';
 import { CustomerDetails } from '../../features/customers/CustomerDetails';
 import { PackagesMenu as Packages } from '../../features/packages/PackagesMenu';
 import { PackageForm } from '../../features/packages/PackageForm';
+import { PackageDetails } from '../../features/packages/PackageDetails';
 import { Payments } from '../../features/payments/Payments';
 import { PaymentDetails } from '../../features/payments/PaymentDetails';
 import { PaymentForm } from '../../features/payments/PaymentForm';
@@ -48,6 +49,18 @@ import { Reports } from '../../features/reports/Reports';
 import { Analytics } from '../../features/analytics/Analytics';
 import { Settings } from '../../features/settings/Settings';
 
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+
+const ProtectedRoute = () => {
+  const { isAuthenticated, loading } = useAuth();
+  
+  if (loading) return <div>Loading...</div>;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  
+  return <Outlet />;
+};
+
 export const router = createBrowserRouter([
   {
     path: '/login',
@@ -59,13 +72,18 @@ export const router = createBrowserRouter([
   },
   {
     path: '/app',
-    element: <DashboardLayout />,
+    element: <ProtectedRoute />,
     children: [
-      { index: true, element: <Navigate to="dashboard" replace /> },
+      {
+        path: '',
+        element: <DashboardLayout />,
+        children: [
+          { index: true, element: <Navigate to="dashboard" replace /> },
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'enquiries', element: <Enquiries /> },
       { path: 'enquiries/new', element: <EnquiryForm /> },
       { path: 'enquiries/:enquiryId', element: <EnquiryDetails /> },
+      { path: 'enquiries/:enquiryId/edit', element: <EnquiryForm /> },
       { path: 'bookings', element: <Bookings /> },
       { path: 'bookings/new', element: <BookingForm /> },
       { path: 'bookings/:bookingId', element: <BookingDetails /> },
@@ -76,6 +94,8 @@ export const router = createBrowserRouter([
       { path: 'customers/:customerId', element: <CustomerDetails /> },
       { path: 'packages', element: <Packages /> },
       { path: 'packages/new', element: <PackageForm /> },
+      { path: 'packages/:packageId', element: <PackageDetails /> },
+      { path: 'packages/:packageId/edit', element: <PackageForm /> },
       { path: 'payments', element: <Payments /> },
       { path: 'payments/new', element: <PaymentForm /> },
       { path: 'payments/:paymentId', element: <PaymentDetails /> },
@@ -83,12 +103,14 @@ export const router = createBrowserRouter([
       { path: 'inventory', element: <Inventory /> },
       { path: 'inventory/new', element: <InventoryForm /> },
       { path: 'inventory/:itemId', element: <InventoryDetails /> },
+      { path: 'inventory/:itemId/edit', element: <InventoryForm /> },
       { path: 'vendors', element: <Vendors /> },
       { path: 'vendors/new', element: <VendorForm /> },
       { path: 'vendors/:vendorId', element: <VendorDetails /> },
       { path: 'staff', element: <Staff /> },
       { path: 'staff/new', element: <StaffForm /> },
       { path: 'staff/:staffId', element: <StaffDetails /> },
+      { path: 'staff/:staffId/edit', element: <StaffForm /> },
       { path: 'business/overview', element: <BusinessOverview /> },
       { path: 'business/finances', element: <BusinessFinances /> },
       { path: 'business/packages', element: <BusinessPackages /> },
@@ -105,6 +127,8 @@ export const router = createBrowserRouter([
       { path: 'reports', element: <Reports /> },
       { path: 'analytics', element: <Analytics /> },
       { path: 'settings/*', element: <Settings /> },
+        ],
+      },
     ],
   },
 ]);

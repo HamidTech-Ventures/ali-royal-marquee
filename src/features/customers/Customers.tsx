@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { SearchInput } from '../../components/ui/SearchInput';
 import { Button } from '../../components/ui/Button';
@@ -6,16 +6,19 @@ import { DataGrid } from '../../components/ui/DataGrid';
 import type { ColumnDef } from '../../components/ui/DataGrid';
 import { Drawer } from '../../components/ui/Drawer';
 import { Badge } from '../../components/ui/Badge';
-import { useMockData } from '../../context/MockDataContext';
-import type {  Customer  } from '../../types';
+import type { Customer } from '../../types';
 import { useNavigate } from 'react-router-dom';
 import { AddCustomerModal } from './AddCustomerModal';
+import { customersService } from '../../services/customersService';
+import { useToast } from '../../context/ToastContext';
 
 export const Customers = () => {
-  const { customers, bookings } = useMockData();
   const navigate = useNavigate();
+  const { error } = useToast();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -27,6 +30,22 @@ export const Customers = () => {
   // Filter state
   const [tierFilter, setTierFilter] = useState<'All' | 'VIP' | 'Standard' | 'Corporate'>('All');
 
+  const fetchCustomers = async () => {
+    setLoading(true);
+    try {
+      const data = await customersService.getCustomers();
+      setCustomers(data);
+    } catch (err) {
+      error('Failed to load customers');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
   const handleSort = (colKey: string) => {
     if (sortColumn === colKey) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -36,10 +55,8 @@ export const Customers = () => {
     }
   };
 
-  const getCustomerBookings = (customerId: string) => bookings.filter(b => b.customerId === customerId);
-
   const filteredData = useMemo(() => {
-    let result = customers;
+    let result = [...customers];
     
     if (tierFilter !== 'All') {
       result = result.filter(c => c.tier === tierFilter);
@@ -51,7 +68,7 @@ export const Customers = () => {
         c.id.toLowerCase().includes(lowerSearch) ||
         c.name.toLowerCase().includes(lowerSearch) ||
         c.phone.includes(searchTerm) ||
-        c.email.toLowerCase().includes(lowerSearch)
+        (c.email && c.email.toLowerCase().includes(lowerSearch))
       );
     }
     
@@ -65,7 +82,7 @@ export const Customers = () => {
     });
 
     return result;
-  }, [searchTerm, tierFilter, sortColumn, sortDirection]);
+  }, [customers, searchTerm, tierFilter, sortColumn, sortDirection]);
 
   const columns: ColumnDef<Customer>[] = [
     {
@@ -226,6 +243,7 @@ export const Customers = () => {
           currentPage={1}
           totalPages={1}
           totalItems={filteredData.length}
+          loading={loading}
         />
       </div>
 
@@ -267,10 +285,10 @@ export const Customers = () => {
                 <span className="font-currency-num font-bold text-primary">PKR {selectedCustomer.totalSpent.toLocaleString()} LTV</span>
               </div>
               <div className="space-y-3">
-                {getCustomerBookings(selectedCustomer.id).length === 0 ? (
+                {[]?.length === 0 ? (
                   <div className="text-on-surface-variant text-body-sm">No booking history available.</div>
                 ) : (
-                  getCustomerBookings(selectedCustomer.id).map(booking => (
+                  [].map((booking: any) => (
                     <div key={booking.id} className="bg-surface-container-lowest p-3 rounded border border-surface-container-highest flex items-center justify-between">
                       <div>
                         <div className="font-semibold text-sm">{booking.hall}</div>
@@ -289,7 +307,11 @@ export const Customers = () => {
         )}
       </Drawer>
       
-      <AddCustomerModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+      <AddCustomerModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onSuccess={fetchCustomers}
+      />
     </div>
   );
 };

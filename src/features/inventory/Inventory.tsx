@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { SearchInput } from '../../components/ui/SearchInput';
@@ -7,14 +7,17 @@ import { DataGrid } from '../../components/ui/DataGrid';
 import type { ColumnDef } from '../../components/ui/DataGrid';
 import { Badge } from '../../components/ui/Badge';
 import { Drawer } from '../../components/ui/Drawer';
-import { useMockData } from '../../context/MockDataContext';
+import { inventoryService } from '../../services/inventoryService';
 import type { InventoryItem } from '../../types';
+import { useToast } from '../../context/ToastContext';
 
 export const Inventory = () => {
-  const { inventory } = useMockData();
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
   const showBack = location.state?.fromBusiness;
+  const { success, error: showError } = useToast();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
@@ -25,6 +28,35 @@ export const Inventory = () => {
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState<'All' | 'Low Stock' | 'Out of Stock'>('All');
+
+  const fetchInventory = async () => {
+    try {
+      setLoading(true);
+      const data = await inventoryService.getInventoryItems();
+      setInventory(data);
+    } catch (error) {
+      console.error('Failed to fetch inventory:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInventory();
+  }, []);
+
+  const handleDelete = async (id: string, name: string) => {
+    if (window.confirm(`Are you sure you want to delete ${name}?`)) {
+      try {
+        await inventoryService.deleteInventoryItem(id);
+        success('Item deleted successfully');
+        fetchInventory();
+      } catch (error) {
+        console.error('Error deleting item:', error);
+        showError('Failed to delete item');
+      }
+    }
+  };
 
   const handleSort = (colKey: string) => {
     if (sortColumn === colKey) {
@@ -46,7 +78,6 @@ export const Inventory = () => {
       const lowerSearch = searchTerm.toLowerCase();
       result = result.filter(i => 
         i.name.toLowerCase().includes(lowerSearch) ||
-        i.id.toLowerCase().includes(lowerSearch) ||
         i.category.toLowerCase().includes(lowerSearch)
       );
     }
@@ -61,15 +92,9 @@ export const Inventory = () => {
     });
 
     return result;
-  }, [searchTerm, statusFilter, sortColumn, sortDirection]);
+  }, [inventory, searchTerm, statusFilter, sortColumn, sortDirection]);
 
   const columns: ColumnDef<InventoryItem>[] = [
-    {
-      key: 'id',
-      header: 'SKU / ID',
-      sortable: true,
-      render: (item) => <span className="font-mono text-[12px] bg-surface-container-low px-2 py-1 rounded text-primary">{item.id}</span>
-    },
     {
       key: 'name',
       header: 'Item Name',
@@ -110,6 +135,24 @@ export const Inventory = () => {
         if (item.status === 'Out of Stock') variant = 'error';
         return <Badge variant={variant}>{item.status}</Badge>;
       }
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      render: (item) => (
+        <div className="flex items-center justify-end gap-1">
+          <Button variant="text" className="!p-2 text-on-surface-variant hover:text-primary" onClick={(e) => { e.stopPropagation(); navigate(`/app/inventory/${item.id}`); }} title="Manage">
+            <span className="material-symbols-outlined text-[18px]">visibility</span>
+          </Button>
+          <Button variant="text" className="!p-2 text-on-surface-variant hover:text-primary" onClick={(e) => { e.stopPropagation(); navigate(`/app/inventory/${item.id}/edit`); }} title="Edit">
+            <span className="material-symbols-outlined text-[18px]">edit</span>
+          </Button>
+          <Button variant="text" className="!p-2 text-error hover:bg-error/10" onClick={(e) => { e.stopPropagation(); handleDelete(item.id, item.name); }} title="Delete">
+            <span className="material-symbols-outlined text-[18px]">delete</span>
+          </Button>
+        </div>
+      )
     }
   ];
 
@@ -123,7 +166,7 @@ export const Inventory = () => {
         onBack={showBack ? () => navigate(-1) : undefined}
         actions={
           <>
-            <Button variant="outline" icon="sync">Stock Count</Button>
+            <Button variant="outline" icon="sync" onClick={fetchInventory}>Refresh Stock</Button>
             <Button variant="primary" icon="add" onClick={() => navigate('/app/inventory/new')}>Add Item</Button>
           </>
         }
@@ -131,22 +174,14 @@ export const Inventory = () => {
 
       <div className="flex flex-col w-full space-y-6">
         {/* KPI Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-4">
           <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
             <div className="flex items-center justify-between">
               <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Cataloged Items</span>
               <span className="material-symbols-outlined text-[18px] text-secondary">shelves</span>
             </div>
-            <div className="mt-3 font-headline-md text-headline-md text-primary font-bold">486</div>
-          </div>
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Stock Valuation</span>
-              <span className="material-symbols-outlined text-[18px] text-secondary">account_balance_wallet</span>
-            </div>
-            <div className="mt-3 font-currency-num text-currency-num text-on-surface font-bold">PKR 4.85M</div>
+            <div className="mt-3 font-headline-md text-headline-md text-primary font-bold">{inventory.length}</div>
           </div>
           <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary-container"></div>
@@ -154,7 +189,9 @@ export const Inventory = () => {
               <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Low Stock</span>
               <span className="material-symbols-outlined text-[18px] text-secondary">notifications_active</span>
             </div>
-            <div className="mt-3 font-headline-md text-headline-md text-secondary font-bold">18</div>
+            <div className="mt-3 font-headline-md text-headline-md text-secondary font-bold">
+              {inventory.filter(i => i.status === 'Low Stock').length}
+            </div>
           </div>
           <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
@@ -162,15 +199,9 @@ export const Inventory = () => {
               <span className="font-label-sm text-label-sm uppercase tracking-wider text-error font-semibold">Out of Stock</span>
               <span className="material-symbols-outlined text-[18px] text-error">warning</span>
             </div>
-            <div className="mt-3 font-headline-md text-headline-md text-error font-bold">6</div>
-          </div>
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden col-span-2 md:col-span-1">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Movement (Today)</span>
-              <span className="material-symbols-outlined text-[18px] text-secondary">swap_horiz</span>
+            <div className="mt-3 font-headline-md text-headline-md text-error font-bold">
+              {inventory.filter(i => i.status === 'Out of Stock').length}
             </div>
-            <div className="mt-3 font-headline-md text-headline-md text-primary font-bold">42 Logs</div>
           </div>
         </div>
 
@@ -214,6 +245,7 @@ export const Inventory = () => {
           columns={columns}
           keyExtractor={(item) => item.id}
           onRowClick={(item) => setSelectedItem(item)}
+          loading={loading}
           sortColumn={sortColumn}
           sortDirection={sortDirection}
           onSort={handleSort}
@@ -227,7 +259,7 @@ export const Inventory = () => {
         isOpen={!!selectedItem}
         onClose={() => setSelectedItem(null)}
         title={selectedItem?.name || ''}
-        subtitle={selectedItem ? `SKU: ${selectedItem.id} | Category: ${selectedItem.category}` : ''}
+        subtitle={selectedItem ? `Category: ${selectedItem.category}` : ''}
         width="md"
         footer={
           <div className="flex justify-end gap-3">

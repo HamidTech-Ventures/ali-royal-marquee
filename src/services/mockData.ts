@@ -1,7 +1,5 @@
 import type {  
   Customer, 
-  Enquiry, 
-  Booking, 
   Event, 
   Payment, 
   Expense, 
@@ -19,14 +17,14 @@ export const mockCustomers: Customer[] = [
   { id: 'CUST-005', name: 'Usman Tariq', phone: '+92 300 9988776', email: 'usman.t@example.com', tier: 'VIP', totalSpent: 3100000 },
 ];
 
-export const mockEnquiries: Enquiry[] = [
-  { id: 'ENQ-2042', customerId: 'CUST-002', eventName: 'Fatima\'s Mehndi', dateStr: '2026-10-15', guests: 350, status: 'Quoted', assignedTo: 'Ali Raza', createdAt: '2026-09-05' },
-  { id: 'ENQ-2043', customerId: 'CUST-004', eventName: 'Corporate Annual Dinner', dateStr: '2026-11-20', guests: 500, status: 'New', assignedTo: 'Unassigned', createdAt: '2026-09-06' },
-  { id: 'ENQ-2044', customerId: 'CUST-005', eventName: 'Usman Walima', dateStr: '2026-12-05', guests: 800, status: 'Converted', assignedTo: 'Ali Raza', createdAt: '2026-08-20' },
-  { id: 'ENQ-2045', customerId: 'CUST-001', eventName: 'Anniversary Party', dateStr: '2026-09-25', guests: 150, status: 'Negotiating', assignedTo: 'Sara Khan', createdAt: '2026-09-01' },
+export const mockEnquiries: any[] = [
+  { id: 'ENQ-2042', customerId: 'CUST-002', eventName: 'Fatima\'s Mehndi', preferredDate: '2026-10-15', guestCount: 350, status: 'Quoted', createdAt: '2026-09-05' },
+  { id: 'ENQ-2043', customerId: 'CUST-004', eventName: 'Corporate Annual Dinner', preferredDate: '2026-11-20', guestCount: 500, status: 'New', createdAt: '2026-09-06' },
+  { id: 'ENQ-2044', customerId: 'CUST-005', eventName: 'Usman Walima', preferredDate: '2026-12-05', guestCount: 800, status: 'Converted', createdAt: '2026-08-20' },
+  { id: 'ENQ-2045', customerId: 'CUST-001', eventName: 'Anniversary Party', preferredDate: '2026-09-25', guestCount: 150, status: 'Negotiating', createdAt: '2026-09-01' },
 ];
 
-export const mockBookings: Booking[] = [
+export const mockBookings: any[] = [
   { id: 'BK-1042', customerId: 'CUST-001', eventId: 'EV-2042', hall: 'Grand Ballroom', dateStr: '2026-09-08', shift: 'Night', guests: 450, totalAmount: 1850000, paidAmount: 1700000, status: 'Confirmed', paymentStatus: 'Partial', createdAt: '2026-07-15' },
   { id: 'BK-1043', customerId: 'CUST-003', eventId: 'EV-2043', hall: 'Royal Marquee', dateStr: '2026-09-12', shift: 'Day', guests: 600, totalAmount: 2100000, paidAmount: 2100000, status: 'Confirmed', paymentStatus: 'Paid', createdAt: '2026-08-01' },
   { id: 'BK-1044', customerId: 'CUST-005', eventId: 'EV-2044', hall: 'Grand Ballroom', dateStr: '2026-12-05', shift: 'Night', guests: 800, totalAmount: 3100000, paidAmount: 500000, status: 'Confirmed', paymentStatus: 'Partial', createdAt: '2026-08-25' },

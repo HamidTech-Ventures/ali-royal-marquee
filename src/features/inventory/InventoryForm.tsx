@@ -5,19 +5,33 @@ import { PageHeader } from '../../components/ui/PageHeader';
 import { FormSection, FormActions } from '../../components/ui/forms/FormLayout';
 import { Input } from '../../components/ui/forms/Input';
 import { Select } from '../../components/ui/forms/Select';
+import { inventoryService } from '../../services/inventoryService';
 
 export const InventoryForm = () => {
   const navigate = useNavigate();
-  const { success } = useToast();
+  const { success, error } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    category: 'Furniture',
+    quantity: 0,
+    minQuantity: 10,
+    unit: 'pcs'
+  });
+
+  const handleSubmit = async () => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await inventoryService.createInventoryItem(formData);
       success('Item added successfully');
       navigate('/app/inventory');
-    }, 800);
+    } catch (err) {
+      console.error(err);
+      error('Failed to add item');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -30,9 +44,17 @@ export const InventoryForm = () => {
 
       <div className="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/60 p-8 max-w-4xl mx-auto">
         <FormSection title="Item Details" description="Add a new physical asset or consumable.">
-          <Input label="Item Name" placeholder="e.g. Banquet Chairs" className="col-span-1 md:col-span-2" />
+          <Input 
+            label="Item Name" 
+            placeholder="e.g. Banquet Chairs" 
+            className="col-span-1 md:col-span-2" 
+            value={formData.name}
+            onChange={(e) => setFormData({...formData, name: e.target.value})}
+          />
           <Select 
             label="Category"
+            value={formData.category}
+            onChange={(e) => setFormData({...formData, category: e.target.value})}
             options={[
               { value: 'Furniture', label: 'Furniture' },
               { value: 'Decor', label: 'Decor' },
@@ -40,11 +62,24 @@ export const InventoryForm = () => {
               { value: 'Consumables', label: 'Consumables' },
             ]}
           />
-          <Input label="SKU / Barcode" placeholder="Leave blank to auto-generate" />
-          <Input label="Initial Quantity" type="number" defaultValue="0" />
-          <Input label="Reorder Level" type="number" defaultValue="10" />
-          <Input label="Unit" placeholder="pcs, kg, etc." />
-          <Input label="Unit Cost (PKR)" type="number" placeholder="0.00" />
+          <Input 
+            label="Initial Quantity" 
+            type="number" 
+            value={formData.quantity}
+            onChange={(e) => setFormData({...formData, quantity: Number(e.target.value)})}
+          />
+          <Input 
+            label="Reorder Level (Min Quantity)" 
+            type="number" 
+            value={formData.minQuantity}
+            onChange={(e) => setFormData({...formData, minQuantity: Number(e.target.value)})}
+          />
+          <Input 
+            label="Unit" 
+            placeholder="pcs, kg, etc." 
+            value={formData.unit}
+            onChange={(e) => setFormData({...formData, unit: e.target.value})}
+          />
           <div className="col-span-1 md:col-span-2">
             <Input label="Supplier (Optional)" placeholder="Select vendor" />
           </div>

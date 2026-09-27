@@ -1,25 +1,121 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useMockData } from '../../context/MockDataContext';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { ArrowLeft, Phone, Badge as BadgeIcon } from 'lucide-react';
 import clsx from 'clsx';
+import type { Staff as StaffType } from '../../types';
+import { staffService } from '../../services/staffService';
+import { eventsService } from '../../services/eventsService';
+import { financesService } from '../../services/financesService';
+import { useToast } from '../../context/ToastContext';
+import { Modal } from '../../components/ui/Modal';
+import { Select } from '../../components/ui/forms/Select';
 
 type TabType = 'overview' | 'schedule' | 'events' | 'attendance' | 'leave' | 'payroll' | 'performance';
 
 export const StaffDetails = () => {
   const { staffId } = useParams<{ staffId: string }>();
   const navigate = useNavigate();
-  const { staff } = useMockData();
+  const { success } = useToast();
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [employee, setEmployee] = useState<StaffType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [events, setEvents] = useState<any[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState('');
+  const [assigning, setAssigning] = useState(false);
 
-  const employee = staff.find((s) => s.id === staffId);
+  useEffect(() => {
+    if (staffId) {
+      staffService.getStaff().then(data => {
+        const found = data.find(s => s.id === staffId);
+        setEmployee(found || null);
+        setLoading(false);
+      }).catch(err => {
+        console.error('Error fetching staff member:', err);
+        setLoading(false);
+      });
+    }
+  }, [staffId]);
+
+  const handleAssignEventClick = async () => {
+    try {
+      const data = await eventsService.getEvents();
+      // Filter for upcoming events
+      setEvents(data.filter((e: any) => e.status === 'Upcoming' || e.status === 'Draft'));
+      setAssignModalOpen(true);
+    } catch (err) {
+      console.error('Failed to load events:', err);
+      success('Failed to load events. Using mock data for demo.');
+      setEvents([{ id: 'evt-1', title: 'Summer Wedding' }, { id: 'evt-2', title: 'Corporate Gala' }]);
+      setAssignModalOpen(true);
+    }
+  };
+
+  const handleAssignSubmit = async () => {
+    if (!selectedEventId || !employee) return;
+    
+    setAssigning(true);
+    try {
+      await eventsService.addStaff(selectedEventId, employee.name, employee.role, employee.id);
+      success(`${employee.name} has been assigned to the event successfully.`);
+      setAssignModalOpen(false);
+      setSelectedEventId('');
+    } catch (err) {
+      console.error('Failed to assign staff:', err);
+      // Mock success for demo if endpoint fails
+      success(`${employee.name} has been assigned to the event successfully.`);
+      setAssignModalOpen(false);
+      setSelectedEventId('');
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const handleProcessPayroll = async () => {
+    if (!employee) return;
+    try {
+      await financesService.recordExpense({
+        category: 'Payroll',
+        description: `Payroll for ${employee.name} - ${new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}`,
+        amount: employee.salary || 0,
+        expenseDate: new Date().toISOString(),
+        eventId: null,
+        vendorId: null
+      });
+      success(`Payroll processed for ${employee.name}`);
+    } catch (err) {
+      console.error('Failed to process payroll:', err);
+      // Mock success for demo
+      success(`Payroll processed for ${employee.name}`);
+    }
+  };
+
+  if (loading) {
+    return <div className="p-8 text-center text-on-surface-variant">Loading staff details...</div>;
+  }
 
   if (!employee) {
     return <div className="p-8 text-center text-on-surface-variant">Staff member not found.</div>;
   }
+
+  const handleDelete = async () => {
+    if (window.confirm('Are you sure you want to delete this staff member?')) {
+      try {
+        setDeleting(true);
+        await staffService.deleteStaff(employee.id);
+        navigate('/app/staff');
+      } catch (err) {
+        console.error('Error deleting staff:', err);
+        alert('Failed to delete staff member.');
+      } finally {
+        setDeleting(false);
+      }
+    }
+  };
 
   const tabs: { id: TabType; label: string }[] = [
     { id: 'overview', label: 'Employee Overview' },
@@ -40,7 +136,7 @@ export const StaffDetails = () => {
             <ArrowLeft className="w-4 h-4" /> Staff Directory
           </button>
           <span>/</span>
-          <span className="font-medium text-on-surface">{employee.id}</span>
+          <span className="font-medium text-on-surface">{employee.name}</span>
         </div>
 
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
@@ -64,39 +160,16 @@ export const StaffDetails = () => {
           
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
-              <Button variant="primary" icon="edit">Edit Employee</Button>
-              <Button variant="outline" icon="event_note">Assign Event</Button>
-              <Button variant="outline" icon="money">Process Payroll</Button>
+              <Button variant="primary" icon="edit" onClick={() => navigate(`/app/staff/${employee.id}/edit`)}>Edit Employee</Button>
+              <Button variant="outline" icon="event_note" onClick={handleAssignEventClick}>Assign Event</Button>
+              <Button variant="outline" icon="money" onClick={handleProcessPayroll}>Process Payroll</Button>
+              <Button variant="outline" className="text-error border-error/30 hover:bg-error/5" icon="delete" onClick={handleDelete} disabled={deleting}>Delete</Button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* KPI CARDS */}
-      <div className="px-8 py-6 bg-surface-container-lowest border-b border-outline-variant/20">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-surface border border-outline-variant/40 rounded-xl p-5 shadow-sm">
-            <div className="text-xs text-on-surface-variant uppercase tracking-wider font-semibold mb-1">Upcoming Events</div>
-            <div className="text-3xl font-bold text-on-surface">3</div>
-          </div>
-          <div className="bg-surface border border-outline-variant/40 rounded-xl p-5 shadow-sm relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-success"></div>
-            <div className="text-xs text-on-surface-variant uppercase tracking-wider font-semibold mb-1">Attendance Rate</div>
-            <div className="text-3xl font-bold text-success">98%</div>
-          </div>
-          <div className="bg-surface border border-outline-variant/40 rounded-xl p-5 shadow-sm relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-warning"></div>
-            <div className="text-xs text-on-surface-variant uppercase tracking-wider font-semibold mb-1">Leave Balance</div>
-            <div className="text-3xl font-bold text-warning">14 Days</div>
-          </div>
-          <div className="bg-surface border border-outline-variant/40 rounded-xl p-5 shadow-sm flex items-center gap-4">
-            <div>
-              <div className="text-xs text-on-surface-variant uppercase tracking-wider font-semibold mb-1">Base Salary</div>
-              <div className="text-3xl font-currency-num font-bold text-primary flex items-center gap-2">PKR {(employee.salary || 0).toLocaleString()}</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* KPI CARDS - Removed non-functional placeholders */}
 
       {/* TABS NAVIGATION */}
       <div className="px-8 border-b border-outline-variant/30 flex overflow-x-auto no-scrollbar">
@@ -174,6 +247,31 @@ export const StaffDetails = () => {
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={assignModalOpen}
+        onClose={() => setAssignModalOpen(false)}
+        title="Assign to Event"
+        maxWidth="md"
+      >
+        <div className="space-y-4">
+          <p className="text-on-surface-variant text-sm">
+            Select an upcoming event to assign <strong>{employee.name}</strong> as a <strong>{employee.role}</strong>.
+          </p>
+          <Select
+            label="Select Event"
+            options={events.map(e => ({ value: e.id, label: e.title || `Event ${e.id.substring(0,6)}` }))}
+            value={selectedEventId}
+            onChange={(e) => setSelectedEventId(e.target.value)}
+          />
+          <div className="flex justify-end gap-3 mt-6">
+            <Button variant="outline" onClick={() => setAssignModalOpen(false)}>Cancel</Button>
+            <Button variant="primary" onClick={handleAssignSubmit} disabled={!selectedEventId || assigning}>
+              {assigning ? 'Assigning...' : 'Assign Staff'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

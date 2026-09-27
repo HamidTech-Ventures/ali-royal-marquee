@@ -3,17 +3,17 @@ import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/forms/Input';
 import { Select } from '../../components/ui/forms/Select';
 import { FormActions } from '../../components/ui/forms/FormLayout';
-import { useMockData } from '../../context/MockDataContext';
 import { useToast } from '../../context/ToastContext';
+import { customersService } from '../../services/customersService';
 
 interface AddCustomerModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess: () => void;
 }
 
-export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose }) => {
-  const { addCustomer } = useMockData();
-  const { success } = useToast();
+export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, onSuccess }) => {
+  const { success, error } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -28,21 +28,18 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onCl
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      addCustomer({
-        id: `CUST-${Math.floor(Math.random() * 1000)}`,
-        name: formData.name,
-        phone: formData.phone,
-        email: formData.email,
-        tier: formData.tier as any,
-        totalSpent: 0
-      });
-      setIsSubmitting(false);
+    try {
+      await customersService.createCustomer(formData);
       success('Customer added successfully');
+      onSuccess();
       onClose();
-    }, 800);
+    } catch (err) {
+      error('Failed to add customer');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

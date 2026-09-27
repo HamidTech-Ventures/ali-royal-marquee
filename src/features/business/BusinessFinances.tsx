@@ -1,29 +1,40 @@
-// import React from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { TrendingUp } from 'lucide-react';
-import { useMockData } from '../../context/MockDataContext';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, Legend, LineChart, Line } from 'recharts';
+import { financesService } from '../../services/financesService';
+import { useToast } from '../../context/ToastContext';
 
 export const BusinessFinances = () => {
   const navigate = useNavigate();
-  const { bookings, expenses, payments } = useMockData();
+  const { error } = useToast();
+  
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>(null);
 
-  const totalRevenue = bookings.reduce((sum, b) => sum + b.totalAmount, 0);
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const netProfit = totalRevenue - totalExpenses;
-  const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
-  const receivables = totalRevenue - totalPaid;
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const result = await financesService.getOverview();
+        setData(result);
+      } catch (err) {
+        error('Failed to load financial overview');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
 
-  const monthlyData = [
-    { month: 'Jan', revenue: 4200000, expenses: 1800000, profit: 2400000 },
-    { month: 'Feb', revenue: 3800000, expenses: 1900000, profit: 1900000 },
-    { month: 'Mar', revenue: 5100000, expenses: 2200000, profit: 2900000 },
-    { month: 'Apr', revenue: 4800000, expenses: 2000000, profit: 2800000 },
-    { month: 'May', revenue: 5900000, expenses: 2400000, profit: 3500000 },
-    { month: 'Jun', revenue: 6200000, expenses: 2500000, profit: 3700000 },
-  ];
+  if (loading || !data) {
+    return <div className="p-8 text-center text-on-surface-variant">Loading financials...</div>;
+  }
+
+  const { totalRevenue, totalExpenses, netProfit, receivables, monthlyData } = data;
 
   return (
     <div className="w-full px-8 py-8 space-y-8">
@@ -44,17 +55,17 @@ export const BusinessFinances = () => {
         <div className="bg-surface border border-outline-variant/40 rounded-xl p-5 shadow-sm">
           <div className="text-xs text-on-surface-variant uppercase tracking-wider mb-1">Total Revenue (YTD)</div>
           <div className="text-2xl font-currency-num font-bold text-on-surface">PKR {(totalRevenue/1000000).toFixed(2)}M</div>
-          <div className="text-xs text-success flex items-center mt-2"><TrendingUp className="w-3 h-3 mr-1" /> +12.5%</div>
+          <div className="text-xs text-success flex items-center mt-2"><TrendingUp className="w-3 h-3 mr-1" /></div>
         </div>
         <div className="bg-surface border border-outline-variant/40 rounded-xl p-5 shadow-sm">
           <div className="text-xs text-on-surface-variant uppercase tracking-wider mb-1">Total Expenses</div>
           <div className="text-2xl font-currency-num font-bold text-on-surface">PKR {(totalExpenses/1000000).toFixed(2)}M</div>
-          <div className="text-xs text-error flex items-center mt-2"><TrendingUp className="w-3 h-3 mr-1" /> +4.2%</div>
+          <div className="text-xs text-error flex items-center mt-2"><TrendingUp className="w-3 h-3 mr-1" /></div>
         </div>
         <div className="bg-primary-container text-on-primary-container border border-outline-variant/40 rounded-xl p-5 shadow-sm">
           <div className="text-xs uppercase tracking-wider mb-1 opacity-80">Net Profit</div>
           <div className="text-2xl font-currency-num font-bold">PKR {(netProfit/1000000).toFixed(2)}M</div>
-          <div className="text-xs flex items-center mt-2 opacity-90"><TrendingUp className="w-3 h-3 mr-1" /> +18.4%</div>
+          <div className="text-xs flex items-center mt-2 opacity-90"><TrendingUp className="w-3 h-3 mr-1" /></div>
         </div>
         <div className="bg-surface border border-outline-variant/40 rounded-xl p-5 shadow-sm relative overflow-hidden">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
@@ -64,7 +75,7 @@ export const BusinessFinances = () => {
         <div className="bg-surface border border-outline-variant/40 rounded-xl p-5 shadow-sm relative overflow-hidden hidden lg:block">
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-warning"></div>
           <div className="text-xs text-on-surface-variant uppercase tracking-wider mb-1">Payables</div>
-          <div className="text-2xl font-currency-num font-bold text-warning">PKR 0.85M</div>
+          <div className="text-2xl font-currency-num font-bold text-warning">PKR 0.00M</div>
         </div>
       </div>
 

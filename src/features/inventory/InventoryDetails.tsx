@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useMockData } from '../../context/MockDataContext';
+import { inventoryService } from '../../services/inventoryService';
+import type { InventoryItem } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { ArrowLeft, Box } from 'lucide-react';
@@ -11,11 +12,40 @@ type TabType = 'overview' | 'movements' | 'reservations' | 'purchases' | 'wastag
 export const InventoryDetails = () => {
   const { itemId } = useParams<{ itemId: string }>();
   const navigate = useNavigate();
-  const { inventory } = useMockData();
+  const [item, setItem] = useState<InventoryItem | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
-  const item = inventory.find((i) => i.id === itemId);
+  useEffect(() => {
+    const fetchItem = async () => {
+      try {
+        const data = await inventoryService.getInventoryItems();
+        const found = data.find((i) => i.id === itemId);
+        setItem(found || null);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchItem();
+  }, [itemId]);
+
+  const handleDelete = async () => {
+    if (confirm('Are you sure you want to delete this inventory item?')) {
+      try {
+        await inventoryService.deleteInventoryItem(itemId!);
+        navigate('/app/inventory');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
+  if (loading) {
+    return <div className="p-8 text-center text-on-surface-variant">Loading inventory item...</div>;
+  }
 
   if (!item) {
     return <div className="p-8 text-center text-on-surface-variant">Inventory item not found.</div>;
@@ -39,7 +69,7 @@ export const InventoryDetails = () => {
             <ArrowLeft className="w-4 h-4" /> Inventory
           </button>
           <span>/</span>
-          <span className="font-medium text-on-surface">{item.id}</span>
+          <span className="font-medium text-on-surface">{item.name}</span>
         </div>
 
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
@@ -64,12 +94,9 @@ export const InventoryDetails = () => {
             <div className="flex items-center gap-2">
               <Button variant="primary" icon="add">Stock In</Button>
               <Button variant="secondary" icon="remove">Stock Out</Button>
-              <Button variant="outline" icon="edit">Edit Item</Button>
             </div>
             <div className="flex items-center justify-end gap-3 text-sm">
-              <button className="text-primary hover:underline flex items-center gap-1">Transfer</button>
-              <span className="text-outline-variant">•</span>
-              <button className="text-error hover:underline flex items-center gap-1">Record Wastage</button>
+              <button className="text-error hover:underline flex items-center gap-1" onClick={handleDelete}>Delete Item</button>
             </div>
           </div>
         </div>

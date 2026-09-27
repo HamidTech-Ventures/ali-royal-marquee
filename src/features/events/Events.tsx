@@ -1,20 +1,45 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Drawer } from '../../components/ui/Drawer';
-import { useMockData } from '../../context/MockDataContext';
-import type {  Event  } from '../../types';
+import { eventsService } from '../../services/eventsService';
 import { useNavigate } from 'react-router-dom';
 
 export const Events = () => {
-  const { events, bookings, customers } = useMockData();
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
 
-  const getBooking = (bookingId: string) => bookings.find(b => b.id === bookingId);
-  const getCustomer = (customerId?: string) => customerId ? customers.find(c => c.id === customerId) : null;
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  const loadEvents = async () => {
+    try {
+      setLoading(true);
+      const data = await eventsService.getEvents();
+      setEvents(data);
+    } catch (error) {
+      console.error('Failed to load events', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const todaysBanquets = events.filter(e => new Date(e.dateStr).toDateString() === new Date().toDateString());
+  const paxToday = todaysBanquets.reduce((sum, e) => sum + (e.guests || 0), 0);
+  const inPrep = events.filter(e => e.status === 'Upcoming' && e.readinessScore > 0 && e.readinessScore < 100);
+  const liveNow = events.filter(e => e.status === 'Ongoing');
+  const thisWeek = events.filter(e => {
+    const d = new Date(e.dateStr);
+    const now = new Date();
+    const weekFromNow = new Date();
+    weekFromNow.setDate(now.getDate() + 7);
+    return d >= now && d <= weekFromNow;
+  });
 
   return (
     <div className="w-full px-8 py-8">
@@ -30,17 +55,16 @@ export const Events = () => {
 
       <div className="flex flex-col w-full space-y-8">
         {/* OPERATIONAL KPI CARDS */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-primary-container"></div>
             <div className="flex items-center justify-between text-on-surface-variant mb-2">
               <span className="font-label-sm text-label-sm uppercase tracking-wider">Today's Banquets</span>
               <span className="material-symbols-outlined text-[20px] text-primary">celebration</span>
             </div>
-            <div className="font-display text-display text-primary leading-none mb-1.5">3</div>
+            <div className="font-display text-display text-primary leading-none mb-1.5">{todaysBanquets.length}</div>
             <div className="font-body-sm text-body-sm text-on-surface-variant flex items-center justify-between">
-              <span>2 Night · 1 Afternoon</span>
-              <span className="font-title-sm text-title-sm font-semibold text-secondary">1,350 Pax</span>
+              <span>{paxToday} Pax Today</span>
             </div>
           </div>
           <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm relative overflow-hidden">
@@ -49,9 +73,9 @@ export const Events = () => {
               <span className="font-label-sm text-label-sm uppercase tracking-wider">In Preparation</span>
               <span className="material-symbols-outlined text-[20px] text-secondary">handyman</span>
             </div>
-            <div className="font-display text-display text-secondary leading-none mb-1.5">2</div>
+            <div className="font-display text-display text-secondary leading-none mb-1.5">{inPrep.length}</div>
             <div className="font-body-sm text-body-sm text-on-surface-variant">
-              <span>Active stage dress & kitchen</span>
+              <span>Events getting ready</span>
             </div>
           </div>
           <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm relative overflow-hidden">
@@ -60,9 +84,9 @@ export const Events = () => {
               <span className="font-label-sm text-label-sm uppercase tracking-wider">Live In Progress</span>
               <span className="material-symbols-outlined text-[20px] text-surface-tint animate-pulse">radio_button_checked</span>
             </div>
-            <div className="font-display text-display text-on-surface leading-none mb-1.5">1</div>
+            <div className="font-display text-display text-on-surface leading-none mb-1.5">{liveNow.length}</div>
             <div className="font-body-sm text-body-sm text-on-surface-variant truncate">
-              Crystal Pavilion · Mehndi
+              {liveNow.map(e => e.hall).join(', ') || 'None'}
             </div>
           </div>
           <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm relative overflow-hidden">
@@ -71,20 +95,9 @@ export const Events = () => {
               <span className="font-label-sm text-label-sm uppercase tracking-wider">This Week's Horizon</span>
               <span className="material-symbols-outlined text-[20px] text-on-surface-variant">calendar_view_week</span>
             </div>
-            <div className="font-display text-display text-on-surface leading-none mb-1.5">8</div>
+            <div className="font-display text-display text-on-surface leading-none mb-1.5">{thisWeek.length}</div>
             <div className="font-body-sm text-body-sm text-on-surface-variant">
-              <span>Booked through Sunday</span>
-            </div>
-          </div>
-          <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-error"></div>
-            <div className="flex items-center justify-between text-on-surface-variant mb-2">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-error">Pending Tasks</span>
-              <span className="material-symbols-outlined text-[20px] text-error">notification_important</span>
-            </div>
-            <div className="font-display text-display text-error leading-none mb-1.5">14</div>
-            <div className="font-body-sm text-body-sm text-on-surface-variant">
-              <span>4 high priority checklist</span>
+              <span>Upcoming next 7 days</span>
             </div>
           </div>
         </section>
@@ -108,9 +121,11 @@ export const Events = () => {
         </div>
 
         {/* EVENTS GRID */}
+        {loading ? (
+          <div className="flex justify-center p-8"><span className="animate-spin material-symbols-outlined text-4xl text-primary">autorenew</span></div>
+        ) : (
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {events.map(event => {
-            const booking = getBooking(event.bookingId);
             return (
               <div 
                 key={event.id}
@@ -121,8 +136,8 @@ export const Events = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="font-currency-num text-currency-num text-primary font-bold">{event.id}</span>
-                      <span className="font-label-sm text-label-sm bg-primary/10 text-primary px-2 py-0.5 rounded uppercase font-bold">{booking?.hall}</span>
+                      <span className="font-currency-num text-currency-num text-primary font-bold">{event.referenceNumber}</span>
+                      <span className="font-label-sm text-label-sm bg-primary/10 text-primary px-2 py-0.5 rounded uppercase font-bold">{event.hall}</span>
                     </div>
                     {event.status === 'Ongoing' && (
                       <span className="flex items-center gap-1.5 bg-surface-container px-2.5 py-1 rounded text-xs font-bold text-on-surface">
@@ -141,13 +156,13 @@ export const Events = () => {
                       <h3 className="font-headline-sm text-headline-sm text-primary">{event.title}</h3>
                     </div>
                     <p className="font-body-sm text-body-sm text-secondary font-semibold mt-0.5">
-                      {event.dateStr} • {event.startTime} – {event.endTime} · {booking?.guests} Pax
+                      {event.dateStr} • {event.startTime} – {event.endTime} · {event.guests} Pax
                     </p>
                   </div>
                   <div className="p-3 bg-surface-container-low rounded-lg space-y-2">
                     <div className="flex justify-between items-center text-xs">
                       <span className="font-title-sm text-title-sm text-on-surface-variant">Manager on Duty</span>
-                      <span className="font-bold text-primary">{event.manager}</span>
+                      <span className="font-bold text-primary">{event.managerId}</span>
                     </div>
                   </div>
                 </div>
@@ -155,18 +170,19 @@ export const Events = () => {
             );
           })}
         </section>
+        )}
       </div>
 
       <Drawer
         isOpen={!!selectedEvent}
         onClose={() => setSelectedEvent(null)}
         title={selectedEvent?.title || ''}
-        subtitle={selectedEvent ? `Event ID: ${selectedEvent.id} | Booking: ${selectedEvent.bookingId}` : ''}
+        subtitle={selectedEvent ? `Ref: ${selectedEvent.referenceNumber}` : ''}
         width="md"
         footer={
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setSelectedEvent(null)}>Close</Button>
-            <Button variant="primary">Manage Event</Button>
+            <Button variant="primary" onClick={() => navigate(`/app/events/${selectedEvent?.id}`)}>Manage Event</Button>
           </div>
         }
       >
@@ -188,37 +204,23 @@ export const Events = () => {
                 </div>
                 <div>
                   <span className="text-on-surface-variant block mb-0.5">Venue</span>
-                  <span className="font-semibold">{getBooking(selectedEvent.bookingId)?.hall}</span>
+                  <span className="font-semibold">{selectedEvent.hall}</span>
                 </div>
                 <div>
                   <span className="text-on-surface-variant block mb-0.5">Manager</span>
-                  <span className="font-semibold">{selectedEvent.manager}</span>
+                  <span className="font-semibold">{selectedEvent.managerId}</span>
                 </div>
               </div>
             </div>
 
             <div className="bg-surface-container-low p-4 rounded-lg">
               <h3 className="font-title-md mb-3">Client Details</h3>
-              {(() => {
-                const b = getBooking(selectedEvent.bookingId);
-                const c = getCustomer(b?.customerId);
-                return (
-                  <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-body-sm">
-                    <div>
-                      <span className="text-on-surface-variant block mb-0.5">Name</span>
-                      <span className="font-semibold">{c?.name || 'N/A'}</span>
-                    </div>
-                    <div>
-                      <span className="text-on-surface-variant block mb-0.5">Phone</span>
-                      <span className="font-semibold">{c?.phone || 'N/A'}</span>
-                    </div>
-                    <div>
-                      <span className="text-on-surface-variant block mb-0.5">Guests</span>
-                      <span className="font-semibold">{b?.guests || 0} Pax</span>
-                    </div>
-                  </div>
-                );
-              })()}
+              <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-body-sm">
+                <div>
+                  <span className="text-on-surface-variant block mb-0.5">Guests</span>
+                  <span className="font-semibold">{selectedEvent.guests} Pax</span>
+                </div>
+              </div>
             </div>
           </div>
         )}

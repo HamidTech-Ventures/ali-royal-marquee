@@ -23,6 +23,7 @@ interface DataGridProps<T> {
   totalPages?: number;
   onPageChange?: (page: number) => void;
   totalItems?: number;
+  loading?: boolean;
 }
 
 export function DataGrid<T>({
@@ -36,7 +37,8 @@ export function DataGrid<T>({
   currentPage,
   totalPages,
   onPageChange,
-  totalItems
+  totalItems,
+  loading
 }: DataGridProps<T>) {
   
   const renderSortIcon = (colKey: string) => {
@@ -79,14 +81,16 @@ export function DataGrid<T>({
             </tr>
           </thead>
           <tbody className="divide-y divide-surface-container-highest">
-            {data.length === 0 ? (
+            {loading && <tr><td colSpan={columns.length} className="py-12 text-center">Loading...</td></tr>}
+            {loading && <tr><td colSpan={columns.length} className="py-12 text-center">Loading...</td></tr>}
+            {!loading && data.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="py-12 text-center text-on-surface-variant font-body-md">
                   No records found matching your criteria.
                 </td>
               </tr>
             ) : (
-              data.map((item) => (
+              !loading && !loading && data.map((item) => (
                 <tr 
                   key={keyExtractor(item)} 
                   className={clsx(

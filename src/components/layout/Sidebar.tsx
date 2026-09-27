@@ -22,12 +22,11 @@ const navItems = [
   {
     category: 'Business',
     items: [
-      { name: 'Overview', path: '/app/business/overview', icon: 'domain' },
-      { name: 'Finances', path: '/app/business/finances', icon: 'account_balance' },
-      { name: 'Packages', path: '/app/business/packages', icon: 'restaurant_menu' },
-      { name: 'Inventory', path: '/app/business/inventory', icon: 'inventory_2' },
-      { name: 'Vendors', path: '/app/business/vendors', icon: 'storefront' },
-      { name: 'Staff', path: '/app/business/staff', icon: 'badge' },
+      { name: 'Finances', path: '/app/payments', icon: 'account_balance' },
+      { name: 'Packages', path: '/app/packages', icon: 'restaurant_menu' },
+      { name: 'Inventory', path: '/app/inventory', icon: 'inventory_2' },
+      { name: 'Vendors', path: '/app/vendors', icon: 'storefront' },
+      { name: 'Staff', path: '/app/staff', icon: 'badge' },
     ],
   },
   {

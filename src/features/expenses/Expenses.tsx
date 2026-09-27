@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { SearchInput } from '../../components/ui/SearchInput';
 import { Button } from '../../components/ui/Button';
@@ -6,14 +6,22 @@ import { DataGrid } from '../../components/ui/DataGrid';
 import type { ColumnDef } from '../../components/ui/DataGrid';
 import { Badge } from '../../components/ui/Badge';
 import { Drawer } from '../../components/ui/Drawer';
-import { useMockData } from '../../context/MockDataContext';
-import type {  Expense  } from '../../types';
+import { financesService } from '../../services/financesService';
+import { eventsService } from '../../services/eventsService';
+import { vendorsService } from '../../services/vendorsService';
+import { useToast } from '../../context/ToastContext';
+import { Modal } from '../../components/ui/Modal';
+import { Select } from '../../components/ui/forms/Select';
+import { Input } from '../../components/ui/forms/Input';
+import type { Expense } from '../../types';
 
 export const Expenses = () => {
-  const { expenses } = useMockData();
-
+  const { error } = useToast();
+  
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
   
   // Sort state
   const [sortColumn, setSortColumn] = useState('dateStr');
@@ -21,6 +29,73 @@ export const Expenses = () => {
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState<'All' | 'Approved' | 'Pending' | 'Rejected'>('All');
+
+  // Add Expense State
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [events, setEvents] = useState<any[]>([]);
+  const [vendors, setVendors] = useState<any[]>([]);
+  const [newExpense, setNewExpense] = useState({
+    category: 'Procurement',
+    description: '',
+    amount: '',
+    expenseDate: new Date().toISOString().split('T')[0],
+    eventId: '',
+    vendorId: ''
+  });
+
+  useEffect(() => {
+    fetchExpenses();
+  }, []);
+
+  const handleOpenAddModal = async () => {
+    try {
+      const [evts, vnds] = await Promise.all([
+        eventsService.getEvents(),
+        vendorsService.getVendors()
+      ]);
+      setEvents(evts);
+      setVendors(vnds);
+    } catch (e) {
+      console.error('Failed to load events/vendors', e);
+      // Fallback mock
+      setEvents([{ id: 'evt-1', title: 'Summer Wedding' }, { id: 'evt-2', title: 'Corporate Gala' }]);
+      setVendors([{ id: 'v-1', name: 'Fresh Foods Co' }, { id: 'v-2', name: 'ABC Decorators' }]);
+    }
+    setAddModalOpen(true);
+  };
+
+  const handleAddSubmit = async () => {
+    setSubmitting(true);
+    try {
+      await financesService.recordExpense({
+        category: newExpense.category,
+        description: newExpense.description,
+        amount: parseFloat(newExpense.amount),
+        expenseDate: new Date(newExpense.expenseDate).toISOString(),
+        eventId: newExpense.eventId || null,
+        vendorId: newExpense.vendorId || null
+      });
+      setAddModalOpen(false);
+      fetchExpenses();
+    } catch (e) {
+      error('Failed to add expense');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const fetchExpenses = async () => {
+    setLoading(true);
+    try {
+      const data = await financesService.getExpenses();
+      setExpenses(data);
+    } catch (err) {
+      error('Failed to load expenses');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSort = (colKey: string) => {
     if (sortColumn === colKey) {
@@ -32,7 +107,7 @@ export const Expenses = () => {
   };
 
   const filteredData = useMemo(() => {
-    let result = expenses;
+    let result = [...expenses];
     
     if (statusFilter !== 'All') {
       result = result.filter(e => e.status === statusFilter);
@@ -57,7 +132,7 @@ export const Expenses = () => {
     });
 
     return result;
-  }, [searchTerm, statusFilter, sortColumn, sortDirection]);
+  }, [expenses, searchTerm, statusFilter, sortColumn, sortDirection]);
 
   const columns: ColumnDef<Expense>[] = [
     {
@@ -123,7 +198,7 @@ export const Expenses = () => {
         actions={
           <>
             <Button variant="outline" icon="tune">Filters</Button>
-            <Button variant="primary" icon="add">Add Expense</Button>
+            <Button variant="primary" icon="add" onClick={handleOpenAddModal}>Add Expense</Button>
           </>
         }
       />
@@ -269,6 +344,7 @@ export const Expenses = () => {
           currentPage={1}
           totalPages={1}
           totalItems={filteredData.length}
+          loading={loading}
         />
       </div>
 
@@ -332,6 +408,64 @@ export const Expenses = () => {
           </div>
         )}
       </Drawer>
+
+      <Modal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        title="Record Expense"
+        maxWidth="lg"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input 
+            label="Description" 
+            value={newExpense.description} 
+            onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })} 
+            className="md:col-span-2"
+          />
+          <Input 
+            label="Amount (PKR)" 
+            type="number"
+            value={newExpense.amount} 
+            onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })} 
+          />
+          <Input 
+            label="Expense Date" 
+            type="date"
+            value={newExpense.expenseDate} 
+            onChange={(e) => setNewExpense({ ...newExpense, expenseDate: e.target.value })} 
+          />
+          <Select 
+            label="Category" 
+            value={newExpense.category} 
+            onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
+            options={[
+              { value: 'Procurement', label: 'Procurement' },
+              { value: 'Operations', label: 'Operations' },
+              { value: 'Payroll', label: 'Payroll' },
+              { value: 'Overheads', label: 'Overheads' }
+            ]}
+          />
+          <Select 
+            label="Related Event (Optional)" 
+            value={newExpense.eventId} 
+            onChange={(e) => setNewExpense({ ...newExpense, eventId: e.target.value })}
+            options={[{ value: '', label: 'None' }, ...events.map(e => ({ value: e.id, label: e.title || e.id }))]}
+          />
+          <Select 
+            label="Vendor (Optional)" 
+            value={newExpense.vendorId} 
+            onChange={(e) => setNewExpense({ ...newExpense, vendorId: e.target.value })}
+            options={[{ value: '', label: 'None' }, ...vendors.map(v => ({ value: v.id, label: v.name }))]}
+            className="md:col-span-2"
+          />
+        </div>
+        <div className="flex justify-end gap-3 mt-6">
+          <Button variant="outline" onClick={() => setAddModalOpen(false)}>Cancel</Button>
+          <Button variant="primary" onClick={handleAddSubmit} disabled={!newExpense.description || !newExpense.amount || submitting}>
+            {submitting ? 'Saving...' : 'Save Expense'}
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 };

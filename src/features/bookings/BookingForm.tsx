@@ -1,18 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useMockData } from '../../context/MockDataContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/forms/Input';
 import { Select } from '../../components/ui/forms/Select';
 import { FormSection } from '../../components/ui/forms/FormLayout';
 import { useToast } from '../../context/ToastContext';
-import { Check, ChevronRight, User, Calendar, MapPin, DollarSign, Package } from 'lucide-react';
+import { Check, ChevronRight, User, Calendar, MapPin, DollarSign, Package as PackageIcon } from 'lucide-react';
+import { bookingsService } from '../../services/bookingsService';
+import { customersService } from '../../services/customersService';
+import { referenceService } from '../../services/referenceService';
+import { packagesService } from '../../services/packagesService';
+import type { VenueDto } from '../../services/referenceService';
+import type { Package } from '../../services/packagesService';
 
 const steps = [
   { id: 1, name: 'Customer', icon: User },
   { id: 2, name: 'Event', icon: Calendar },
   { id: 3, name: 'Venue', icon: MapPin },
-  { id: 4, name: 'Package', icon: Package },
+  { id: 4, name: 'Package', icon: PackageIcon },
   { id: 5, name: 'Payment', icon: DollarSign },
   { id: 6, name: 'Review', icon: Check },
 ];
@@ -20,15 +25,21 @@ const steps = [
 export const BookingForm = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { addBooking, addEvent, addPayment, addCustomer, customers } = useMockData();
-  const { success } = useToast();
+  const { error, success } = useToast();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [venues, setVenues] = useState<VenueDto[]>([]);
+  const [packages, setPackages] = useState<Package[]>([]);
+  const customers: any[] = []; // Temporary until GET /customers is implemented
+
+  useEffect(() => {
+    referenceService.getVenues().then(setVenues).catch(console.error);
+    packagesService.getPackages().then(setPackages).catch(console.error);
+  }, []);
 
   // Form State
   const [formData, setFormData] = useState({
-    // Customer
     customerId: location.state?.customer?.id || '',
     customerName: location.state?.customer?.name || '',
     customerPhone: location.state?.customer?.phone || '',
@@ -39,6 +50,8 @@ export const BookingForm = () => {
     guests: location.state?.fromEnquiry?.guests || 0,
     // Venue
     hall: 'Grand Ballroom',
+    // Package
+    packageId: '',
     // Financial
     totalAmount: 1500000,
     advanceAmount: 500000,
@@ -53,69 +66,58 @@ export const BookingForm = () => {
   const handleNext = () => setCurrentStep(prev => Math.min(prev + 1, steps.length));
   const handlePrev = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
       // 1. Create Customer if new
       let finalCustomerId = formData.customerId;
       if (!finalCustomerId) {
-        finalCustomerId = `CUST-${Math.floor(Math.random() * 1000)}`;
-        addCustomer({
-          id: finalCustomerId,
+        const custRes = await customersService.createCustomer({
           name: formData.customerName,
           phone: formData.customerPhone,
-          email: '',
-          tier: 'Standard',
-          totalSpent: 0
+          email: 'unknown@example.com'
         });
+        finalCustomerId = custRes.id;
       }
 
-      // 2. Create Booking
-      const bookingId = `BK-${Math.floor(Math.random() * 9000) + 1000}`;
-      addBooking({
-        id: bookingId,
-        customerId: finalCustomerId,
-        eventId: '',
-        hall: formData.hall as any,
-        dateStr: formData.date,
-        shift: formData.shift as any,
-        guests: Number(formData.guests),
-        totalAmount: formData.totalAmount,
-        paidAmount: formData.advanceAmount,
-        status: 'Confirmed',
-        paymentStatus: formData.advanceAmount >= formData.totalAmount ? 'Paid' : 'Partial',
-        createdAt: new Date().toISOString().split('T')[0]
-      });
+      // 2. Find Venue
+      const selectedVenue = venues.find(v => v.name === formData.hall) || venues[0];
+      if (!selectedVenue) throw new Error("Venue not found");
 
-      // 3. Create Event
-      const eventId = `EV-${Math.floor(Math.random() * 9000) + 1000}`;
-      addEvent({
-        id: eventId,
-        bookingId: bookingId,
-        title: formData.eventType,
-        dateStr: formData.date,
-        startTime: formData.shift === 'Night' ? '18:00' : '10:00',
-        endTime: formData.shift === 'Night' ? '23:30' : '15:30',
-        status: 'Upcoming',
-        manager: 'Unassigned'
-      });
+      const startTime = formData.shift === 'Night' ? '18:00:00' : '10:00:00';
+      const endTime = formData.shift === 'Night' ? '23:30:00' : '15:30:00';
+      const bookingDateStr = new Date(formData.date).toISOString().split('T')[0];
+
+      // 3. Create Booking
+      const bookingRes = await bookingsService.createBooking({
+        customerId: finalCustomerId,
+        venueId: selectedVenue.id,
+        bookingDate: bookingDateStr,
+        startTime: `${bookingDateStr}T${startTime}Z`,
+        endTime: `${bookingDateStr}T${endTime}Z`,
+        guestCount: Number(formData.guests),
+        totalAmount: Number(formData.totalAmount),
+        packageId: formData.packageId || undefined
+      } as any);
 
       // 4. Record Payment
-      addPayment({
-        id: `PAY-${Math.floor(Math.random() * 9000) + 1000}`,
-        bookingId: bookingId,
-        customerId: finalCustomerId,
-        amount: formData.advanceAmount,
-        method: formData.paymentMethod as any,
-        status: 'Completed',
-        dateStr: new Date().toISOString().split('T')[0],
-        reference: `TRX-${Math.floor(Math.random() * 90000)}`
-      });
+      if (Number(formData.advanceAmount) > 0) {
+        await bookingsService.addPayment(bookingRes.id, {
+          amount: Number(formData.advanceAmount),
+          method: formData.paymentMethod.replace(' ', ''),
+          referenceNumber: `TRX-${Math.floor(Math.random() * 90000)}`,
+          userId: '00000000-0000-0000-0000-000000000000'
+        } as any);
+      }
 
-      setIsSubmitting(false);
       success('Booking created successfully');
-      navigate(`/app/bookings/${bookingId}`);
-    }, 1000);
+      navigate(`/app/bookings/${bookingRes.id}`);
+    } catch (err) {
+      console.error(err);
+      error('Failed to create booking');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -266,9 +268,28 @@ export const BookingForm = () => {
         )}
 
         {currentStep === 4 && (
-          <div className="animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col items-center justify-center h-48">
-            <p className="text-on-surface-variant mb-4">Package selection interface would go here.</p>
-            <Button variant="outline" onClick={handleNext}>Skip for now</Button>
+          <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+            <FormSection title="Package Selection" description="Select a menu or service package for the event.">
+              <Select 
+                label="Event Package" 
+                name="packageId"
+                value={formData.packageId}
+                onChange={(e) => {
+                  handleChange(e);
+                  const pkg = packages.find(p => p.id === e.target.value);
+                  if (pkg) {
+                    setFormData(prev => ({
+                      ...prev,
+                      totalAmount: pkg.price * prev.guests // Basic estimation
+                    }));
+                  }
+                }}
+                options={[
+                  { label: '-- Select a Package --', value: '' },
+                  ...packages.map(p => ({ label: `${p.name} (PKR ${p.price.toLocaleString()} per guest)`, value: p.id }))
+                ]}
+              />
+            </FormSection>
           </div>
         )}
 

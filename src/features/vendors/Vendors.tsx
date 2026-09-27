@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { SearchInput } from '../../components/ui/SearchInput';
@@ -6,18 +6,19 @@ import { Button } from '../../components/ui/Button';
 import { DataGrid } from '../../components/ui/DataGrid';
 import type { ColumnDef } from '../../components/ui/DataGrid';
 import { Badge } from '../../components/ui/Badge';
-import { Drawer } from '../../components/ui/Drawer';
-import { useMockData } from '../../context/MockDataContext';
 import type { Vendor } from '../../types';
+import { vendorsService } from '../../services/vendorsService';
 
 export const Vendors = () => {
-  const { vendors } = useMockData();
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
   const navigate = useNavigate();
   const location = useLocation();
   const showBack = location.state?.fromBusiness;
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   
   // Sort state
   const [sortColumn, setSortColumn] = useState('name');
@@ -25,6 +26,36 @@ export const Vendors = () => {
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState<'All' | 'Active' | 'Inactive'>('All');
+
+  const fetchVendors = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const data = await vendorsService.getVendors();
+      setVendors(data);
+    } catch (err) {
+      console.error('Error fetching vendors:', err);
+      setError('Failed to load vendors.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVendors();
+  }, []);
+
+  const handleDelete = async (id: string, name: string) => {
+    if (window.confirm(`Are you sure you want to delete ${name}?`)) {
+      try {
+        await vendorsService.deleteVendor(id);
+        fetchVendors();
+      } catch (err) {
+        console.error('Error deleting vendor:', err);
+        alert('Failed to delete vendor.');
+      }
+    }
+  };
 
   const handleSort = (colKey: string) => {
     if (sortColumn === colKey) {
@@ -61,7 +92,7 @@ export const Vendors = () => {
     });
 
     return result;
-  }, [searchTerm, statusFilter, sortColumn, sortDirection]);
+  }, [vendors, searchTerm, statusFilter, sortColumn, sortDirection]);
 
   const columns: ColumnDef<Vendor>[] = [
     {
@@ -71,7 +102,6 @@ export const Vendors = () => {
       render: (item) => (
         <div>
           <div className="font-semibold text-on-surface">{item.name}</div>
-          <div className="text-[12px] text-on-surface-variant font-medium mt-0.5">{item.id}</div>
         </div>
       )
     },
@@ -104,6 +134,24 @@ export const Vendors = () => {
       render: (item) => (
         <Badge variant={item.status === 'Active' ? 'success' : 'neutral'}>{item.status}</Badge>
       )
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      render: (item) => (
+        <div className="flex items-center justify-end gap-1">
+          <Button variant="text" className="!p-2 text-on-surface-variant hover:text-primary" onClick={(e) => { e.stopPropagation(); navigate(`/app/vendors/${item.id}`); }} title="Manage">
+            <span className="material-symbols-outlined text-[18px]">visibility</span>
+          </Button>
+          <Button variant="text" className="!p-2 text-on-surface-variant hover:text-primary" onClick={(e) => { e.stopPropagation(); navigate(`/app/vendors/${item.id}/edit`); }} title="Edit">
+            <span className="material-symbols-outlined text-[18px]">edit</span>
+          </Button>
+          <Button variant="text" className="!p-2 text-error hover:bg-error/10" onClick={(e) => { e.stopPropagation(); handleDelete(item.id, item.name); }} title="Delete">
+            <span className="material-symbols-outlined text-[18px]">delete</span>
+          </Button>
+        </div>
+      )
     }
   ];
 
@@ -125,15 +173,15 @@ export const Vendors = () => {
 
       <div className="flex flex-col w-full space-y-6">
         {/* KPI Summary */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-surface-container-lowest p-4 rounded shadow-sm border border-surface-variant/70 relative overflow-hidden flex flex-col justify-between">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
             <div className="flex items-start justify-between">
               <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Registered Vendors</span>
-              <span className="material-symbols-outlined text-secondary text-[20px]">corporate_fare</span>
+              <span className="material-symbols-outlined text-primary text-[20px]">corporate_fare</span>
             </div>
             <div className="mt-3">
-              <div className="font-currency-num text-2xl text-on-surface font-bold tracking-tight">86</div>
+              <div className="text-3xl text-on-surface font-bold tracking-tight">{vendors.length}</div>
             </div>
           </div>
           <div className="bg-surface-container-lowest p-4 rounded shadow-sm border border-surface-variant/70 relative overflow-hidden flex flex-col justify-between">
@@ -143,59 +191,28 @@ export const Vendors = () => {
               <span className="material-symbols-outlined text-secondary text-[20px]">handshake</span>
             </div>
             <div className="mt-3">
-              <div className="font-currency-num text-2xl text-on-surface font-bold tracking-tight">72</div>
+              <div className="text-3xl text-on-surface font-bold tracking-tight">{vendors.filter(v => v.status === 'Active').length}</div>
             </div>
           </div>
           <div className="bg-surface-container-lowest p-4 rounded shadow-sm border border-surface-variant/70 relative overflow-hidden flex flex-col justify-between">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
             <div className="flex items-start justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Outstanding Payables</span>
-              <span className="material-symbols-outlined text-error text-[20px]">pending_actions</span>
+              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Inactive Vendors</span>
+              <span className="material-symbols-outlined text-error text-[20px]">block</span>
             </div>
             <div className="mt-3">
-              <div className="font-currency-num text-2xl text-on-surface font-bold tracking-tight">PKR 1.24M</div>
-            </div>
-          </div>
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm border border-surface-variant/70 relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary-fixed-dim"></div>
-            <div className="flex items-start justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Purchases (Month)</span>
-              <span className="material-symbols-outlined text-secondary text-[20px]">receipt_long</span>
-            </div>
-            <div className="mt-3">
-              <div className="font-currency-num text-2xl text-on-surface font-bold tracking-tight">PKR 845k</div>
+              <div className="text-3xl text-on-surface font-bold tracking-tight">{vendors.filter(v => v.status === 'Inactive').length}</div>
             </div>
           </div>
           <div className="bg-surface-container-lowest p-4 rounded shadow-sm border border-surface-variant/70 relative overflow-hidden flex flex-col justify-between">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
             <div className="flex items-start justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Top-Tier Partner</span>
-              <span className="material-symbols-outlined text-secondary text-[20px]">verified</span>
+              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Service Categories</span>
+              <span className="material-symbols-outlined text-on-surface-variant text-[20px]">category</span>
             </div>
             <div className="mt-3">
-              <div className="font-title-md text-title-md text-primary font-bold truncate">Royal Foods Pvt Ltd</div>
+              <div className="text-3xl text-on-surface font-bold tracking-tight">{new Set(vendors.map(v => v.category)).size}</div>
             </div>
-          </div>
-        </div>
-
-        {/* Operational Alert Banner */}
-        <div className="rounded-xl p-5 bg-gradient-to-r from-primary-fixed/20 via-surface-container-low to-surface-container-lowest border border-outline-variant/60 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
-              <span className="material-symbols-outlined text-[20px]">notification_important</span>
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-title-sm text-title-sm text-primary font-bold">Attention Required: Pending Vendor Payables</span>
-                <span className="px-2 py-0.5 rounded-full bg-primary text-on-primary font-label-sm text-label-sm uppercase tracking-wider">Urgent Action</span>
-              </div>
-              <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-                3 vendor disbursements totaling <strong className="text-primary font-semibold">PKR 185,000</strong> are pending clearance before tonight's event.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center">
-            <Button variant="primary">Clear Pending Payables</Button>
           </div>
         </div>
 
@@ -234,63 +251,24 @@ export const Vendors = () => {
         </div>
 
         {/* DATA GRID */}
-        <DataGrid 
-          data={filteredData}
-          columns={columns}
-          keyExtractor={(item) => item.id}
-          onRowClick={(item) => setSelectedVendor(item)}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-          currentPage={1}
-          totalPages={1}
-          totalItems={filteredData.length}
-        />
-      </div>
-
-      <Drawer
-        isOpen={!!selectedVendor}
-        onClose={() => setSelectedVendor(null)}
-        title={selectedVendor?.name || ''}
-        subtitle={selectedVendor ? `Vendor ID: ${selectedVendor.id} | Category: ${selectedVendor.category}` : ''}
-        width="md"
-        footer={
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setSelectedVendor(null)}>Close</Button>
-            <Button variant="primary" onClick={() => {
-              navigate(`/app/vendors/${selectedVendor?.id}`);
-              setSelectedVendor(null);
-            }}>Manage Vendor</Button>
-          </div>
-        }
-      >
-        {selectedVendor && (
-          <div className="space-y-6">
-            <div className="bg-surface-container-low p-4 rounded-lg">
-              <h3 className="font-title-md mb-3 flex items-center justify-between">
-                <span>Contact Profile</span>
-                <Badge variant={selectedVendor.status === 'Active' ? 'success' : 'neutral'}>{selectedVendor.status}</Badge>
-              </h3>
-              <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-body-sm">
-                <div>
-                  <span className="text-on-surface-variant block mb-0.5">Primary Contact</span>
-                  <span className="font-semibold text-on-surface">{selectedVendor.contactName}</span>
-                </div>
-                <div>
-                  <span className="text-on-surface-variant block mb-0.5">Phone</span>
-                  <span className="font-semibold text-on-surface">{selectedVendor.phone}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-surface-container-low p-4 rounded-lg border border-surface-container-highest">
-              <h3 className="font-title-md mb-3 text-on-surface">Financial Standing</h3>
-              <p className="text-body-sm text-on-surface-variant mb-4">No outstanding payables currently registered for this vendor.</p>
-              <Button variant="outline" className="w-full">View Ledger History</Button>
-            </div>
-          </div>
+        {error && <div className="text-error">{error}</div>}
+        {loading ? (
+          <div className="flex justify-center p-8">Loading vendors...</div>
+        ) : (
+          <DataGrid 
+            data={filteredData}
+            columns={columns}
+            keyExtractor={(item) => item.id}
+            onRowClick={(item) => navigate(`/app/vendors/${item.id}`)}
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onSort={handleSort}
+            currentPage={1}
+            totalPages={1}
+            totalItems={filteredData.length}
+          />
         )}
-      </Drawer>
+      </div>
     </div>
   );
 };

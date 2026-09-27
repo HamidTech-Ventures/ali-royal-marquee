@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { SearchInput } from '../../components/ui/SearchInput';
 import { Button } from '../../components/ui/Button';
@@ -6,16 +6,20 @@ import { DataGrid } from '../../components/ui/DataGrid';
 import type { ColumnDef } from '../../components/ui/DataGrid';
 import { Drawer } from '../../components/ui/Drawer';
 import { Badge } from '../../components/ui/Badge';
-import { useMockData } from '../../context/MockDataContext';
 import type {  Booking  } from '../../types';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../context/ToastContext';
+import { bookingsService } from '../../services/bookingsService';
 
 export const Bookings = () => {
-  const { bookings, customers, events } = useMockData();
   const navigate = useNavigate();
+  const { error } = useToast();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [allBookings, setAllBookings] = useState<any[]>([]);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
   
   // Sort state
   const [sortColumn, setSortColumn] = useState('dateStr');
@@ -23,6 +27,37 @@ export const Bookings = () => {
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState<'All' | 'Confirmed' | 'Tentative'>('All');
+
+  // Debounce search
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  const fetchBookings = async () => {
+    try {
+      const response = await bookingsService.getBookings({
+        searchTerm: debouncedSearch,
+        status: statusFilter === 'Tentative' ? 'Pending' : statusFilter
+      });
+      setBookings(response.items || []);
+    } catch (err) {
+      console.error(err);
+      error('Failed to load bookings');
+    }
+  };
+
+  useEffect(() => {
+    bookingsService.getBookings({}).then(res => {
+      setAllBookings(res.items || []);
+    }).catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [debouncedSearch, statusFilter]);
 
   const handleSort = (colKey: string) => {
     if (sortColumn === colKey) {
@@ -33,29 +68,8 @@ export const Bookings = () => {
     }
   };
 
-  const getCustomer = (id: string) => customers.find(c => c.id === id);
-  const getEvent = (id?: string) => events.find(e => e.id === id);
-
   const filteredData = useMemo(() => {
-    let result = bookings;
-    
-    if (statusFilter !== 'All') {
-      result = result.filter(b => statusFilter === 'Tentative' ? b.status === 'Pending' : b.status === statusFilter);
-    }
-
-    if (searchTerm) {
-      const lowerSearch = searchTerm.toLowerCase();
-      result = result.filter(b => {
-        const c = getCustomer(b.customerId);
-        const e = getEvent(b.eventId);
-        return (
-          b.id.toLowerCase().includes(lowerSearch) ||
-          c?.name.toLowerCase().includes(lowerSearch) ||
-          e?.title.toLowerCase().includes(lowerSearch) ||
-          b.hall.toLowerCase().includes(lowerSearch)
-        );
-      });
-    }
+    let result = [...bookings];
     
     // Sort
     result.sort((a, b) => {
@@ -67,24 +81,49 @@ export const Bookings = () => {
     });
 
     return result;
-  }, [searchTerm, statusFilter, sortColumn, sortDirection]);
+  }, [bookings, sortColumn, sortDirection]);
+
+  const stats = useMemo(() => {
+    const total = allBookings.length;
+    const confirmed = allBookings.filter(b => b.status === 'Confirmed').length;
+    const tentative = allBookings.filter(b => b.status === 'Pending').length;
+    const balance = allBookings.reduce((sum, b) => sum + ((b.totalAmount || 0) - (b.paidAmount || 0)), 0);
+    
+    // Upcoming (next 14 days)
+    const now = new Date();
+    const in14Days = new Date();
+    in14Days.setDate(now.getDate() + 14);
+    
+    const upcoming = allBookings.filter(b => {
+      if (!b.dateStr) return false;
+      const bDate = new Date(b.dateStr);
+      return bDate >= now && bDate <= in14Days;
+    }).length;
+
+    const formatCurrency = (val: number) => {
+      if (val >= 1000000) return (val / 1000000).toFixed(2) + 'M';
+      if (val >= 1000) return (val / 1000).toFixed(1) + 'K';
+      return val.toString();
+    };
+
+    return { total, confirmed, tentative, upcoming, balanceStr: formatCurrency(balance) };
+  }, [allBookings]);
 
   const columns: ColumnDef<Booking>[] = [
     {
       key: 'id',
       header: 'Booking ID',
       sortable: true,
-      render: (item) => <span className="font-semibold text-primary">{item.id}</span>
+      render: (item) => <span className="font-semibold text-primary">{item.referenceNumber || item.id}</span>
     },
     {
       key: 'customer',
       header: 'Customer',
       render: (item) => {
-        const c = getCustomer(item.customerId);
         return (
           <div>
-            <div className="font-semibold">{c?.name || 'Unknown'}</div>
-            <div className="text-on-surface-variant text-[12px]">{c?.phone}</div>
+            <div className="font-semibold">{item.customerName || 'Unknown'}</div>
+            <div className="text-on-surface-variant text-[12px]">{item.customerPhone}</div>
           </div>
         );
       }
@@ -93,10 +132,9 @@ export const Bookings = () => {
       key: 'event',
       header: 'Event Details',
       render: (item) => {
-        const e = getEvent(item.eventId);
         return (
           <div>
-            <div className="font-semibold text-on-surface">{e?.title || 'Unknown Event'}</div>
+            <div className="font-semibold text-on-surface">{item.eventTitle || 'Unknown Event'}</div>
             <div className="flex items-center gap-1.5 text-on-surface-variant text-[12px] mt-0.5">
               <span className="material-symbols-outlined text-[14px]">calendar_month</span>
               <span>{item.dateStr} • {item.shift}</span>
@@ -180,35 +218,35 @@ export const Bookings = () => {
               <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Total Bookings</span>
               <span className="material-symbols-outlined text-[18px] text-primary-container">event_available</span>
             </div>
-            <div className="mt-3 font-headline-md text-headline-md text-primary font-bold">148</div>
+            <div className="mt-3 font-headline-md text-headline-md text-primary font-bold">{stats.total}</div>
           </div>
           <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Confirmed</span>
               <span className="w-2.5 h-2.5 rounded-full bg-secondary"></span>
             </div>
-            <div className="mt-3 font-headline-md text-headline-md text-on-surface font-bold">96</div>
+            <div className="mt-3 font-headline-md text-headline-md text-on-surface font-bold">{stats.confirmed}</div>
           </div>
           <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Tentative</span>
               <span className="material-symbols-outlined text-[18px] text-secondary-container">schedule</span>
             </div>
-            <div className="mt-3 font-headline-md text-headline-md text-on-surface font-bold">21</div>
+            <div className="mt-3 font-headline-md text-headline-md text-on-surface font-bold">{stats.tentative}</div>
           </div>
           <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
             <div className="flex items-center justify-between">
               <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Upcoming (14d)</span>
               <span className="material-symbols-outlined text-[18px] text-primary">celebration</span>
             </div>
-            <div className="mt-3 font-headline-md text-headline-md text-on-surface font-bold">18</div>
+            <div className="mt-3 font-headline-md text-headline-md text-on-surface font-bold">{stats.upcoming}</div>
           </div>
           <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden col-span-2 md:col-span-1">
             <div className="flex items-center justify-between">
               <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Balance</span>
               <span className="material-symbols-outlined text-[18px] text-error">receipt_long</span>
             </div>
-            <div className="mt-3 font-currency-num text-currency-num text-primary font-bold">PKR 2.48M</div>
+            <div className="mt-3 font-currency-num text-currency-num text-primary font-bold">PKR {stats.balanceStr}</div>
           </div>
         </div>
 
@@ -265,8 +303,8 @@ export const Bookings = () => {
       <Drawer
         isOpen={!!selectedBooking}
         onClose={() => setSelectedBooking(null)}
-        title={selectedBooking ? `Booking ${selectedBooking.id}` : ''}
-        subtitle={selectedBooking ? getCustomer(selectedBooking.customerId)?.name : ''}
+        title={selectedBooking ? `Booking ${selectedBooking.referenceNumber || selectedBooking.id}` : ''}
+        subtitle={selectedBooking ? selectedBooking.customerName : ''}
         width="md"
         footer={
           <div className="flex justify-end gap-3">
@@ -297,7 +335,7 @@ export const Bookings = () => {
                 </div>
                 <div>
                   <span className="text-on-surface-variant block mb-0.5">Event Type</span>
-                  <span className="font-semibold">{getEvent(selectedBooking.eventId)?.title || 'N/A'}</span>
+                  <span className="font-semibold">{selectedBooking.eventTitle || 'N/A'}</span>
                 </div>
               </div>
             </div>

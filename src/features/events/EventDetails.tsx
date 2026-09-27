@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useMockData } from '../../context/MockDataContext';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { ArrowLeft, Clock, Users, Calendar as CalendarIcon, MapPin, AlertCircle, FileText, DollarSign, CheckCircle2 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
+import { eventsService } from '../../services/eventsService';
 import clsx from 'clsx';
 
 type TabType = 'overview' | 'operations' | 'menu' | 'staff' | 'tasks' | 'expenses' | 'payments' | 'activity';
@@ -12,29 +12,46 @@ type TabType = 'overview' | 'operations' | 'menu' | 'staff' | 'tasks' | 'expense
 export const EventDetails = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
-  const { events, bookings, customers, expenses, payments } = useMockData();
   const { } = useToast();
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [event, setEvent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const event = events.find((e) => e.id === eventId);
-  const booking = bookings.find((b) => b.id === event?.bookingId);
-  const customer = customers.find((c) => c.id === booking?.customerId);
-  const eventExpenses = expenses.filter((e) => e.bookingId === booking?.id);
-  const eventPayments = payments.filter((p) => p.bookingId === booking?.id);
+  useEffect(() => {
+    if (eventId) {
+      loadEvent(eventId);
+    }
+  }, [eventId]);
 
-  if (!event || !booking || !customer) {
+  const loadEvent = async (id: string) => {
+    try {
+      setLoading(true);
+      const data = await eventsService.getEventById(id);
+      setEvent(data);
+    } catch (error) {
+      console.error('Failed to load event', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="p-8 text-center"><span className="animate-spin material-symbols-outlined text-4xl text-primary">autorenew</span></div>;
+  }
+
+  if (!event) {
     return <div className="p-8 text-center text-on-surface-variant">Event not found.</div>;
   }
 
-  // Derived KPIs
-  const totalPaid = eventPayments.reduce((sum, p) => sum + p.amount, 0);
-  const totalExpense = eventExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-  const outstanding = booking.totalAmount - totalPaid;
-  const estProfit = booking.totalAmount - totalExpense;
-  const readiness = event.readinessScore || 72;
-  const staffAssigned = 12;
-  const staffRequired = 14;
+  // Derived KPIs (mocking payments/expenses since they aren't part of event payload yet)
+  const totalPaid = 0; 
+  const totalExpense = 0;
+  const outstanding = event.totalAmount - totalPaid;
+  const estProfit = event.totalAmount - totalExpense;
+  const readiness = event.readinessScore || 0;
+  const staffAssigned = event.staff?.length || 0;
+  const staffRequired = event.staffRequired || 0;
 
   const tabs: { id: TabType; label: string }[] = [
     { id: 'overview', label: 'Overview' },
@@ -62,15 +79,15 @@ export const EventDetails = () => {
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
           <div>
             <div className="flex items-center gap-4 mb-2">
-              <h1 className="text-3xl font-bold text-on-surface">{event.title} — {customer.name}</h1>
+              <h1 className="text-3xl font-bold text-on-surface">{event.title} — {event.customerName}</h1>
               <Badge variant={event.status === 'Ongoing' ? 'success' : event.status === 'Upcoming' ? 'primary' : 'neutral'} className="text-sm px-3 py-1">
                 {event.status}
               </Badge>
             </div>
             <div className="flex items-center flex-wrap gap-4 text-on-surface-variant mt-3">
               <div className="flex items-center gap-1.5"><CalendarIcon className="w-4 h-4" /> {event.dateStr}</div>
-              <div className="flex items-center gap-1.5"><MapPin className="w-4 h-4" /> {booking.hall}</div>
-              <div className="flex items-center gap-1.5"><Users className="w-4 h-4" /> {booking.guests} Guests</div>
+              <div className="flex items-center gap-1.5"><MapPin className="w-4 h-4" /> {event.hall}</div>
+              <div className="flex items-center gap-1.5"><Users className="w-4 h-4" /> {event.guests} Guests</div>
               <div className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {event.startTime} - {event.endTime}</div>
             </div>
           </div>
@@ -111,7 +128,7 @@ export const EventDetails = () => {
           </div>
           <div className="bg-surface border border-outline-variant/40 rounded-xl p-4 shadow-sm">
             <div className="text-xs text-on-surface-variant uppercase tracking-wider font-semibold mb-1">Guest Count</div>
-            <div className="text-2xl font-bold text-on-surface">{booking.guests}</div>
+            <div className="text-2xl font-bold text-on-surface">{event.guests}</div>
           </div>
           <div className="bg-surface border border-outline-variant/40 rounded-xl p-4 shadow-sm relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
@@ -173,7 +190,7 @@ export const EventDetails = () => {
                 <div className="bg-surface rounded-xl border border-outline-variant/40 p-5 space-y-4">
                   <div className="grid grid-cols-3 gap-4">
                     <div className="col-span-1 text-on-surface-variant text-sm">Customer</div>
-                    <div className="col-span-2 font-medium">{customer.name}</div>
+                    <div className="col-span-2 font-medium">{event.customerName}</div>
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div className="col-span-1 text-on-surface-variant text-sm">Event Type</div>
@@ -185,7 +202,7 @@ export const EventDetails = () => {
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div className="col-span-1 text-on-surface-variant text-sm">Coordinator</div>
-                    <div className="col-span-2 font-medium">Kamran Manager</div>
+                    <div className="col-span-2 font-medium">{event.managerId}</div>
                   </div>
                 </div>
               </section>
@@ -211,18 +228,12 @@ export const EventDetails = () => {
               <h3 className="font-title-lg">Operational Readiness</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                { title: 'Venue Setup', status: 'In Progress', progress: 60, assignee: 'Ali Raza', due: '14:00' },
-                { title: 'Decoration', status: 'Pending', progress: 0, assignee: 'Zain Decors', due: '15:30' },
-                { title: 'Catering Preparation', status: 'In Progress', progress: 80, assignee: 'Chef Usman', due: '18:00' },
-                { title: 'Sound & AV', status: 'Pending', progress: 0, assignee: 'Tech Team', due: '16:00' },
-                { title: 'Seating Arrangement', status: 'Completed', progress: 100, assignee: 'Ali Raza', due: '13:00' },
-              ].map(op => (
-                <div key={op.title} className="bg-surface border border-outline-variant/40 p-4 rounded-xl flex flex-col gap-3">
+              {event.tasks?.length > 0 ? event.tasks.map((op: any) => (
+                <div key={op.id} className="bg-surface border border-outline-variant/40 p-4 rounded-xl flex flex-col gap-3">
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className="font-semibold">{op.title}</h4>
-                      <div className="text-xs text-on-surface-variant mt-0.5">Assignee: {op.assignee} • Due: {op.due}</div>
+                      <div className="text-xs text-on-surface-variant mt-0.5">Assignee: {op.assignee || 'Unassigned'} • Due: {op.dueTime || 'N/A'}</div>
                     </div>
                     <Badge variant={op.progress === 100 ? 'success' : op.progress > 0 ? 'secondary' : 'neutral'}>
                       {op.status}
@@ -232,7 +243,11 @@ export const EventDetails = () => {
                     <div className={clsx("h-full rounded-full", op.progress === 100 ? "bg-success" : "bg-primary")} style={{ width: `${op.progress}%` }}></div>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="col-span-2 p-8 text-center text-on-surface-variant border border-dashed border-outline-variant rounded-xl">
+                  No operations tasks created yet.
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -249,38 +264,107 @@ export const EventDetails = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-surface border border-outline-variant/40 rounded-xl p-5">
-                <h4 className="font-semibold text-primary mb-3 uppercase text-xs tracking-wider">Starters & Welcome</h4>
+                <h4 className="font-semibold text-primary mb-3 uppercase text-xs tracking-wider">Food Items</h4>
                 <ul className="space-y-2 text-sm">
-                  <li className="flex justify-between border-b border-outline-variant/20 pb-2"><span>Mint Margarita</span> <span className="text-on-surface-variant">450 servings</span></li>
-                  <li className="flex justify-between border-b border-outline-variant/20 pb-2"><span>Chicken Seekh Kebab</span> <span className="text-on-surface-variant">450 servings</span></li>
-                </ul>
-                
-                <h4 className="font-semibold text-primary mb-3 mt-6 uppercase text-xs tracking-wider">Main Course</h4>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex justify-between border-b border-outline-variant/20 pb-2"><span>Chicken Qorma (Special)</span> <span className="text-on-surface-variant">450 servings</span></li>
-                  <li className="flex justify-between border-b border-outline-variant/20 pb-2"><span>Mutton Karahi</span> <span className="text-on-surface-variant">450 servings</span></li>
-                  <li className="flex justify-between border-b border-outline-variant/20 pb-2"><span>Chicken Biryani</span> <span className="text-on-surface-variant">450 servings</span></li>
-                  <li className="flex justify-between border-b border-outline-variant/20 pb-2"><span>Assorted Naan</span> <span className="text-on-surface-variant">900 pcs</span></li>
+                  {event.menuItems?.length > 0 ? event.menuItems.filter((m: any) => m.category !== 'Dessert' && m.category !== 'Drinks').map((item: any) => (
+                    <li key={item.id} className="flex justify-between border-b border-outline-variant/20 pb-2">
+                      <span>{item.name} {item.notes && <span className="text-xs text-on-surface-variant">({item.notes})</span>}</span> 
+                      <span className="text-on-surface-variant">{item.quantity} servings</span>
+                    </li>
+                  )) : <li className="text-on-surface-variant">No items selected.</li>}
                 </ul>
               </div>
               <div className="bg-surface border border-outline-variant/40 rounded-xl p-5">
-                <h4 className="font-semibold text-primary mb-3 uppercase text-xs tracking-wider">Desserts</h4>
+                <h4 className="font-semibold text-primary mb-3 uppercase text-xs tracking-wider">Desserts & Drinks</h4>
                 <ul className="space-y-2 text-sm">
-                  <li className="flex justify-between border-b border-outline-variant/20 pb-2"><span>Gajar Halwa</span> <span className="text-on-surface-variant">450 servings</span></li>
-                  <li className="flex justify-between border-b border-outline-variant/20 pb-2"><span>Ice Cream</span> <span className="text-on-surface-variant">450 servings</span></li>
-                </ul>
-                
-                <h4 className="font-semibold text-primary mb-3 mt-6 uppercase text-xs tracking-wider">Tea & Coffee</h4>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex justify-between border-b border-outline-variant/20 pb-2"><span>Green Tea</span> <span className="text-on-surface-variant">On demand</span></li>
+                  {event.menuItems?.length > 0 ? event.menuItems.filter((m: any) => m.category === 'Dessert' || m.category === 'Drinks').map((item: any) => (
+                    <li key={item.id} className="flex justify-between border-b border-outline-variant/20 pb-2">
+                      <span>{item.name} {item.notes && <span className="text-xs text-on-surface-variant">({item.notes})</span>}</span> 
+                      <span className="text-on-surface-variant">{item.quantity} servings</span>
+                    </li>
+                  )) : <li className="text-on-surface-variant">No items selected.</li>}
                 </ul>
               </div>
             </div>
           </div>
         )}
 
+        {activeTab === 'staff' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-title-lg">Assigned Staff</h3>
+              <Button variant="primary" icon="person_add">Assign Staff</Button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {event.staff?.length > 0 ? event.staff.map((s: any) => (
+                <div key={s.id} className="bg-surface border border-outline-variant/40 rounded-xl p-4 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold">
+                    {s.name.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="font-medium">{s.name}</div>
+                    <div className="text-xs text-on-surface-variant uppercase tracking-wider">{s.role}</div>
+                  </div>
+                </div>
+              )) : (
+                <div className="col-span-full p-8 text-center text-on-surface-variant border border-dashed border-outline-variant rounded-xl">
+                  No staff assigned yet.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'tasks' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-title-lg">Task Management</h3>
+              <Button variant="primary" icon="add">Create Task</Button>
+            </div>
+            <div className="bg-surface border border-outline-variant/40 rounded-xl overflow-hidden">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-surface-variant/30 text-on-surface-variant font-medium">
+                  <tr>
+                    <th className="px-4 py-3 border-b border-outline-variant/30">Task Name</th>
+                    <th className="px-4 py-3 border-b border-outline-variant/30">Assignee</th>
+                    <th className="px-4 py-3 border-b border-outline-variant/30">Due Time</th>
+                    <th className="px-4 py-3 border-b border-outline-variant/30">Status</th>
+                    <th className="px-4 py-3 border-b border-outline-variant/30">Progress</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/20">
+                  {event.tasks?.length > 0 ? event.tasks.map((task: any) => (
+                    <tr key={task.id} className="hover:bg-surface-variant/10">
+                      <td className="px-4 py-3 font-medium">{task.title}</td>
+                      <td className="px-4 py-3 text-on-surface-variant">{task.assignee || '-'}</td>
+                      <td className="px-4 py-3 text-on-surface-variant">{task.dueTime || '-'}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant={task.status === 'Completed' ? 'success' : task.status === 'In Progress' ? 'secondary' : 'neutral'}>
+                          {task.status}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-24 bg-surface-variant h-1.5 rounded-full overflow-hidden">
+                            <div className={clsx("h-full rounded-full", task.progress === 100 ? "bg-success" : "bg-primary")} style={{ width: `${task.progress}%` }}></div>
+                          </div>
+                          <span className="text-xs text-on-surface-variant">{task.progress}%</span>
+                        </div>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-8 text-center text-on-surface-variant">No tasks available.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* Placeholders for other tabs for brevity, to be fully implemented next if needed, but keeping them rich enough */}
-        {['staff', 'tasks', 'expenses', 'payments', 'activity'].includes(activeTab) && (
+        {['expenses', 'payments', 'activity'].includes(activeTab) && (
           <div className="flex flex-col items-center justify-center py-20 text-on-surface-variant">
             <CheckCircle2 className="w-12 h-12 text-primary/40 mb-4" />
             <h3 className="text-xl font-medium text-on-surface mb-2">{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Workspace</h3>

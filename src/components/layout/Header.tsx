@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import clsx from 'clsx';
 import { useMockData } from '../../context/MockDataContext';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 interface HeaderProps {
   isSidebarExpanded: boolean;
@@ -9,9 +10,11 @@ interface HeaderProps {
 
 export const Header = ({ isSidebarExpanded }: HeaderProps) => {
   const { notifications } = useMockData();
+  const { currentUser, logout } = useAuth();
 
   const [currentDate, setCurrentDate] = useState('');
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -55,7 +58,7 @@ export const Header = ({ isSidebarExpanded }: HeaderProps) => {
       <div className="h-20 w-full px-8 flex items-center justify-between">
         <div className="flex flex-col justify-center">
           <div className="font-headline-sm text-headline-sm text-primary">
-            Good morning, Admin
+            Good morning, {currentUser?.fullName?.split(' ')[0] || 'User'}
           </div>
           <div className="font-body-sm text-body-sm text-on-surface-variant">
             Here's what's happening with Ali Royal Marquee today.
@@ -146,20 +149,55 @@ export const Header = ({ isSidebarExpanded }: HeaderProps) => {
             )}
           </div>
 
-          <div className="flex items-center gap-3 pl-2 border-l border-surface-container-highest">
-            <img
-              alt="Profile"
-              className="w-9 h-9 rounded-full object-cover ring-2 ring-surface-container hover:ring-primary transition-all cursor-pointer"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBq-YcXzfe5UKkE1m4GTHA39VTO0So9umUsSzzQGAGIdtBdD_IupKaVkOGK0yGu1vGYrt8qdGJHF37eO8mPdMt3S1-AttHOWLzLFRFWsaxHQ4GwvUIF8U0DaadHTH4OdYPgP9gfrECJMtprVXIWfpMLiXawzf3h3Bg9mZE5QM9M0yXTSQQbZPqjZadRS8DYIb052RKkoPid8i1Nkd9TCwDq_S0Hrvg3957zgOdJattCDERvsP9FnoK0uQ"
-            />
-            <div className="hidden 2xl:flex flex-col">
-              <span className="font-title-sm text-title-sm text-on-surface leading-tight font-semibold">
-                Ali Raza
-              </span>
-              <span className="font-label-sm text-label-sm text-on-surface-variant">
-                General Manager
-              </span>
+          <div className="relative">
+            <div 
+              className="flex items-center gap-3 pl-2 border-l border-surface-container-highest cursor-pointer"
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+            >
+              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-title-sm font-semibold ring-2 ring-surface-container hover:ring-primary transition-all">
+                {currentUser?.fullName?.charAt(0) || 'U'}
+              </div>
+              <div className="hidden 2xl:flex flex-col">
+                <span className="font-title-sm text-title-sm text-on-surface leading-tight font-semibold">
+                  {currentUser?.fullName || 'User'}
+                </span>
+                <span className="font-label-sm text-label-sm text-on-surface-variant capitalize">
+                  {currentUser?.role || 'Role'}
+                </span>
+              </div>
             </div>
+
+            {isProfileOpen && (
+              <>
+                <div className="fixed inset-0 z-[45]" onClick={() => setIsProfileOpen(false)}></div>
+                <div className="absolute right-0 top-12 mt-2 w-48 bg-surface-container-lowest rounded-lg shadow-xl ring-1 ring-surface-container-highest z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="px-4 py-3 border-b border-surface-container-highest bg-surface-container-low flex flex-col">
+                     <span className="font-title-sm font-semibold">{currentUser?.fullName}</span>
+                     <span className="text-label-sm text-on-surface-variant">{currentUser?.email}</span>
+                  </div>
+                  <div className="p-1">
+                    <button 
+                      onClick={() => {
+                         setIsProfileOpen(false);
+                         navigate('/settings/profile');
+                      }}
+                      className="w-full text-left px-3 py-2 text-on-surface hover:bg-surface-container-lowest/50 rounded-md transition-colors"
+                    >
+                      Profile Settings
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        logout();
+                      }}
+                      className="w-full text-left px-3 py-2 text-error hover:bg-error/10 rounded-md transition-colors"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

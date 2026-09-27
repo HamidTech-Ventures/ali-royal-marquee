@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 
 type Role = 'admin' | 'ops' | 'accounts';
 
 export const Login = () => {
   const navigate = useNavigate();
   const [role, setRole] = useState<Role>('admin');
-  const [email, setEmail] = useState('admin@aliroyalmarquee.com');
-  const [password, setPassword] = useState('RoyalMarquee2024!');
+  const [email, setEmail] = useState('admin@codepispor.com');
+  const [password, setPassword] = useState('ADMIN#2026');
   const [showPassword, setShowPassword] = useState(false);
-  const [] = useState(false);
-  const [loginState, setLoginState] = useState<'idle' | 'loading' | 'success'>('idle');
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleRoleSelect = (selectedRole: Role) => {
     setRole(selectedRole);
@@ -20,15 +22,29 @@ export const Login = () => {
     else if (selectedRole === 'accounts') setEmail('accounts@aliroyalmarquee.com');
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const { login } = useAuth();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoginState('loading');
-    setTimeout(() => {
-      setLoginState('success');
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 1200);
-    }, 900);
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      // For development, testing Auth
+      if (email === 'admin@codepispor.com' && password === 'ADMIN#2026') {
+        const response = await api.post('/auth/login', { email, password });
+        login(response.data.accessToken, response.data.user);
+        navigate('/app/dashboard', { replace: true });
+      } else {
+        const response = await api.post('/auth/login', { email, password });
+        login(response.data.accessToken, response.data.user);
+        navigate('/app/dashboard', { replace: true });
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Invalid email or password');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -214,7 +230,7 @@ export const Login = () => {
                 </div>
 
                 {/* Authentication Form */}
-                <form className="space-y-4" onSubmit={handleLogin}>
+                <form className="space-y-4" onSubmit={handleSubmit}>
                   {/* Email / Staff ID Field */}
                   <div className="space-y-1.5">
                     <label
@@ -298,14 +314,14 @@ export const Login = () => {
                     </span>
                   </div>
 
-                  {/* Submit Action */}
                   <div className="pt-2">
+                    {error && <div className="text-error text-label-sm mb-2">{error}</div>}
                     <button
                       className="w-full py-3 px-6 rounded bg-primary text-on-primary font-title-sm text-title-sm flex items-center justify-center gap-2 shadow-md hover:bg-primary-container active:scale-[0.99] transition-all duration-150 group"
-                      disabled={loginState !== 'idle'}
+                      disabled={isLoading}
                       type="submit"
                     >
-                      {loginState === 'idle' && (
+                      {!isLoading && (
                         <>
                           <span>Sign In to Executive Portal</span>
                           <span className="material-symbols-outlined text-secondary-fixed transition-transform duration-200 group-hover:translate-x-1">
@@ -313,20 +329,12 @@ export const Login = () => {
                           </span>
                         </>
                       )}
-                      {loginState === 'loading' && (
+                      {isLoading && (
                         <>
                           <span className="material-symbols-outlined animate-spin text-secondary-fixed text-sm">
                             sync
                           </span>
                           <span>Authenticating Staff Credentials...</span>
-                        </>
-                      )}
-                      {loginState === 'success' && (
-                        <>
-                          <span className="material-symbols-outlined text-secondary-fixed text-sm">
-                            check_circle
-                          </span>
-                          <span>Access Verified &bull; Redirecting</span>
                         </>
                       )}
                     </button>

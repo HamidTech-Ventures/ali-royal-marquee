@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { SearchInput } from '../../components/ui/SearchInput';
@@ -6,20 +6,39 @@ import { Button } from '../../components/ui/Button';
 import { DataGrid } from '../../components/ui/DataGrid';
 import type { ColumnDef } from '../../components/ui/DataGrid';
 import { Badge } from '../../components/ui/Badge';
-import { useMockData } from '../../context/MockDataContext';
-import type { Payment } from '../../types';
+import { useToast } from '../../context/ToastContext';
+import { financesService } from '../../services/financesService';
+
 
 export const Payments = () => {
-  const { payments, customers } = useMockData();
   const navigate = useNavigate();
   const location = useLocation();
+  const { error } = useToast();
   const showBack = location.state?.fromBusiness;
 
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   
   // Sort state
   const [sortColumn, setSortColumn] = useState('dateStr');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
+  useEffect(() => {
+    fetchPayments();
+  }, []);
+
+  const fetchPayments = async () => {
+    setLoading(true);
+    try {
+      const data = await financesService.getPayments();
+      setPayments(data);
+    } catch (err) {
+      error('Failed to load payments');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSort = (colKey: string) => {
     if (sortColumn === colKey) {
@@ -30,20 +49,16 @@ export const Payments = () => {
     }
   };
 
-  const getCustomer = (id: string) => customers.find(c => c.id === id);
-
-
   const filteredData = useMemo(() => {
-    let result = payments;
+    let result = [...payments];
     
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
       result = result.filter(p => {
-        const c = getCustomer(p.customerId);
         return (
           p.id.toLowerCase().includes(lowerSearch) ||
-          p.reference.toLowerCase().includes(lowerSearch) ||
-          c?.name.toLowerCase().includes(lowerSearch) ||
+          (p.reference && p.reference.toLowerCase().includes(lowerSearch)) ||
+          (p.customerName && p.customerName.toLowerCase().includes(lowerSearch)) ||
           p.bookingId.toLowerCase().includes(lowerSearch)
         );
       });
@@ -59,9 +74,9 @@ export const Payments = () => {
     });
 
     return result;
-  }, [searchTerm, sortColumn, sortDirection]);
+  }, [payments, searchTerm, sortColumn, sortDirection]);
 
-  const columns: ColumnDef<Payment>[] = [
+  const columns: ColumnDef<any>[] = [
     {
       key: 'dateStr',
       header: 'Date',
@@ -80,10 +95,9 @@ export const Payments = () => {
       key: 'customer',
       header: 'Client & Booking',
       render: (item) => {
-        const c = getCustomer(item.customerId);
         return (
           <div>
-            <div className="font-semibold text-on-surface">{c?.name || 'Unknown'}</div>
+            <div className="font-semibold text-on-surface">Client ID: {item.customerId}</div>
             <div className="text-[12px] text-on-surface-variant font-medium mt-0.5">{item.bookingId}</div>
           </div>
         );
@@ -158,7 +172,9 @@ export const Payments = () => {
               <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Total Collected</span>
               <span className="material-symbols-outlined text-[18px] text-secondary">account_balance_wallet</span>
             </div>
-            <div className="mt-3 font-headline-sm text-headline-sm text-primary font-bold">PKR 8.42M</div>
+            <div className="mt-3 font-headline-sm text-headline-sm text-primary font-bold">
+              PKR {(payments.filter(p => p.status === 'Completed').reduce((acc, p) => acc + p.amount, 0) / 1000000).toFixed(2)}M
+            </div>
           </div>
           <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
@@ -166,23 +182,29 @@ export const Payments = () => {
               <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Outstanding</span>
               <span className="material-symbols-outlined text-[18px] text-primary-container">pending_actions</span>
             </div>
-            <div className="mt-3 font-headline-sm text-headline-sm text-on-surface font-bold">PKR 2.48M</div>
+            <div className="mt-3 font-headline-sm text-headline-sm text-on-surface font-bold">
+              PKR {(payments.filter(p => p.status === 'Pending').reduce((acc, p) => acc + p.amount, 0) / 1000000).toFixed(2)}M
+            </div>
           </div>
           <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
             <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-error font-semibold">Overdue</span>
+              <span className="font-label-sm text-label-sm uppercase tracking-wider text-error font-semibold">Failed</span>
               <span className="material-symbols-outlined text-[18px] text-error">warning</span>
             </div>
-            <div className="mt-3 font-headline-sm text-headline-sm text-error font-bold">PKR 640k</div>
+            <div className="mt-3 font-headline-sm text-headline-sm text-error font-bold">
+              PKR {(payments.filter(p => p.status === 'Failed').reduce((acc, p) => acc + p.amount, 0) / 1000).toFixed(0)}k
+            </div>
           </div>
           <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary-fixed-dim"></div>
             <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Due This Week</span>
+              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Total Payments</span>
               <span className="material-symbols-outlined text-[18px] text-secondary">calendar_clock</span>
             </div>
-            <div className="mt-3 font-headline-sm text-headline-sm text-on-surface font-bold">PKR 920k</div>
+            <div className="mt-3 font-headline-sm text-headline-sm text-on-surface font-bold">
+              {payments.length}
+            </div>
           </div>
           <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden col-span-2 md:col-span-1">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-on-surface-variant"></div>
@@ -190,7 +212,9 @@ export const Payments = () => {
               <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Refunds</span>
               <span className="material-symbols-outlined text-[18px] text-on-surface-variant">receipt_long</span>
             </div>
-            <div className="mt-3 font-headline-sm text-headline-sm text-on-surface font-bold">PKR 85k</div>
+            <div className="mt-3 font-headline-sm text-headline-sm text-on-surface font-bold">
+              PKR {(payments.filter(p => p.status === 'Refunded').reduce((acc, p) => acc + p.amount, 0) / 1000).toFixed(0)}k
+            </div>
           </div>
         </div>
 
@@ -218,6 +242,7 @@ export const Payments = () => {
           currentPage={1}
           totalPages={1}
           totalItems={filteredData.length}
+          loading={loading}
         />
       </div>
     </div>
