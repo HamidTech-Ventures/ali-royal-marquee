@@ -1,19 +1,17 @@
 import { useState, useEffect } from 'react';
 import clsx from 'clsx';
-import { useMockData } from '../../context/MockDataContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { NotificationBell } from './NotificationBell';
 
 interface HeaderProps {
   isSidebarExpanded: boolean;
 }
 
 export const Header = ({ isSidebarExpanded }: HeaderProps) => {
-  const { notifications } = useMockData();
   const { currentUser, logout } = useAuth();
 
   const [currentDate, setCurrentDate] = useState('');
-  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -38,15 +36,6 @@ export const Header = ({ isSidebarExpanded }: HeaderProps) => {
     const interval = setInterval(updateTime, 60000); // update every minute
     return () => clearInterval(interval);
   }, []);
-
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  const handleNotifClick = (link?: string) => {
-    setIsNotifOpen(false);
-    if (link) {
-      navigate(link);
-    }
-  };
 
   return (
     <header 
@@ -73,81 +62,7 @@ export const Header = ({ isSidebarExpanded }: HeaderProps) => {
             <span>{currentDate}</span>
           </div>
 
-          <div className="relative">
-            <button
-              onClick={() => setIsNotifOpen(!isNotifOpen)}
-              className={clsx(
-                "w-10 h-10 flex items-center justify-center rounded-full transition-colors",
-                isNotifOpen ? "bg-surface-container text-primary" : "hover:bg-surface-container-low text-on-surface-variant"
-              )}
-              type="button"
-            >
-              <span className="material-symbols-outlined text-[22px]">notifications</span>
-              {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-error ring-2 ring-surface-container-lowest animate-pulse"></span>
-              )}
-            </button>
-            
-            {/* Notification Dropdown */}
-            {isNotifOpen && (
-              <>
-                <div className="fixed inset-0 z-[45]" onClick={() => setIsNotifOpen(false)}></div>
-                <div className="absolute right-0 top-12 mt-2 w-96 bg-surface-container-lowest rounded-lg shadow-xl ring-1 ring-surface-container-highest z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="px-4 py-3 border-b border-surface-container-highest flex items-center justify-between bg-surface-container-low">
-                    <span className="font-title-md text-title-md text-on-surface font-semibold">Notifications</span>
-                    {unreadCount > 0 && (
-                      <button className="text-primary hover:text-secondary text-label-sm font-label-sm font-semibold transition-colors">
-                        Mark all read
-                      </button>
-                    )}
-                  </div>
-                  <div className="max-h-96 overflow-y-auto">
-                    {notifications.length === 0 ? (
-                      <div className="p-6 text-center text-on-surface-variant font-body-sm">
-                        You're all caught up!
-                      </div>
-                    ) : (
-                      notifications.map(notif => (
-                        <div 
-                          key={notif.id}
-                          onClick={() => handleNotifClick(notif.link)}
-                          className={clsx(
-                            "px-4 py-3 border-b border-surface-container-highest hover:bg-surface-container-lowest/50 cursor-pointer transition-colors",
-                            !notif.read && "bg-primary/5"
-                          )}
-                        >
-                          <div className="flex gap-3">
-                            <div className="mt-0.5">
-                              {notif.type === 'alert' && <span className="material-symbols-outlined text-error text-[20px]">error</span>}
-                              {notif.type === 'warning' && <span className="material-symbols-outlined text-secondary text-[20px]">warning</span>}
-                              {notif.type === 'success' && <span className="material-symbols-outlined text-emerald-600 text-[20px]">check_circle</span>}
-                              {notif.type === 'info' && <span className="material-symbols-outlined text-primary text-[20px]">info</span>}
-                            </div>
-                            <div className="flex-1 flex flex-col gap-0.5">
-                              <div className="flex items-start justify-between gap-2">
-                                <span className={clsx("font-title-sm text-title-sm", !notif.read ? "text-on-surface font-semibold" : "text-on-surface-variant")}>
-                                  {notif.title}
-                                </span>
-                                <span className="text-[10px] text-on-surface-variant whitespace-nowrap">{notif.timestamp}</span>
-                              </div>
-                              <p className="font-body-sm text-body-sm text-on-surface-variant text-balance">
-                                {notif.description}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                  <div className="px-4 py-2 border-t border-surface-container-highest text-center bg-surface-container-lowest">
-                    <button className="text-primary hover:text-secondary text-label-md font-label-md font-semibold transition-colors">
-                      View all activity
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+          <NotificationBell />
 
           <div className="relative">
             <div 
