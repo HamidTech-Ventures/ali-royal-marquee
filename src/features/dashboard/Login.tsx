@@ -4,23 +4,13 @@ import clsx from 'clsx';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 
-type Role = 'admin' | 'ops' | 'accounts';
-
 export const Login = () => {
   const navigate = useNavigate();
-  const [role, setRole] = useState<Role>('admin');
   const [email, setEmail] = useState('admin@codepispor.com');
   const [password, setPassword] = useState('ADMIN#2026');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  const handleRoleSelect = (selectedRole: Role) => {
-    setRole(selectedRole);
-    if (selectedRole === 'admin') setEmail('admin@aliroyalmarquee.com');
-    else if (selectedRole === 'ops') setEmail('operations@aliroyalmarquee.com');
-    else if (selectedRole === 'accounts') setEmail('accounts@aliroyalmarquee.com');
-  };
 
   const { login } = useAuth();
 
@@ -49,16 +39,22 @@ export const Login = () => {
 
   return (
     <main className="w-full min-h-screen bg-background flex flex-col justify-center items-center">
-      <div className="flex flex-col w-full">
-        <div className="w-full min-h-[920px] flex items-center justify-center p-4 sm:p-6 lg:p-12 relative overflow-hidden bg-surface">
+      <div className="flex flex-col w-full relative">
+        <div className="w-full h-screen sm:min-h-[920px] sm:h-auto flex items-center justify-center p-0 sm:p-6 lg:p-12 relative overflow-hidden bg-surface">
+          {/* Mobile Background Image */}
+          <div 
+            className="absolute inset-0 bg-cover bg-center sm:hidden z-0"
+            style={{ backgroundImage: "url('/mobile-bg.png')" }}
+          ></div>
+
           {/* Ambient architectural subtle illumination */}
-          <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-secondary/10 blur-3xl pointer-events-none"></div>
-          <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-primary-container/15 blur-3xl pointer-events-none"></div>
+          <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-secondary/10 blur-3xl pointer-events-none hidden sm:block"></div>
+          <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-primary-container/15 blur-3xl pointer-events-none hidden sm:block"></div>
 
           {/* Main Panoramic Canvas Split */}
-          <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 bg-surface-container-lowest rounded-xl shadow-xl overflow-hidden relative">
-            {/* Left Cinematic Showcase Panel (7 cols) */}
-            <div className="lg:col-span-7 relative min-h-[480px] lg:min-h-[780px] flex flex-col justify-between p-8 sm:p-12 overflow-hidden">
+          <div className="w-full h-full sm:h-auto max-w-7xl grid grid-cols-1 lg:grid-cols-12 bg-transparent sm:bg-surface-container-lowest sm:rounded-xl sm:shadow-xl overflow-hidden relative">
+            {/* Left Cinematic Showcase Panel (7 cols) - Hidden on mobile so form is visible without scroll */}
+            <div className="hidden lg:flex lg:col-span-7 relative min-h-[480px] lg:min-h-[780px] flex-col justify-between p-8 sm:p-12 overflow-hidden">
               {/* Photography Background using exact placeholder */}
               <div
                 className="absolute inset-0 w-full h-full bg-cover bg-center transition-transform duration-1000 scale-105"
@@ -147,7 +143,7 @@ export const Login = () => {
             </div>
 
             {/* Right Executive Authentication Card (5 cols) */}
-            <div className="lg:col-span-5 bg-surface-container-lowest p-6 sm:p-10 lg:p-12 flex flex-col justify-between relative z-20">
+            <div className="lg:col-span-5 bg-surface-container-lowest/80 sm:bg-surface-container-lowest backdrop-blur-xl sm:backdrop-blur-none p-6 sm:p-10 lg:p-12 flex flex-col justify-center sm:justify-between relative z-20 h-full sm:h-auto overflow-y-auto">
               {/* Header Section with Official Crest */}
               <div>
                 <div className="flex items-center justify-between pb-6 border-b border-surface-container">
@@ -184,48 +180,10 @@ export const Login = () => {
                   </p>
                 </div>
 
-                {/* Role Selector Tabs */}
+                {/* Role Selector Tabs - Removed as per request, kept only GM/Admin conceptually */}
                 <div className="mb-6">
-                  <label className="block font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">
-                    Access Partition
-                  </label>
-                  <div className="grid grid-cols-3 gap-1.5 p-1 bg-surface-container rounded-lg">
-                    <button
-                      className={clsx(
-                        'font-label-sm text-label-sm py-2 px-2 text-center rounded transition-all duration-200 truncate',
-                        role === 'admin'
-                          ? 'bg-surface-container-lowest text-primary font-bold shadow-sm'
-                          : 'text-on-surface-variant hover:text-on-surface'
-                      )}
-                      onClick={() => handleRoleSelect('admin')}
-                      type="button"
-                    >
-                      GM / Admin
-                    </button>
-                    <button
-                      className={clsx(
-                        'font-label-sm text-label-sm py-2 px-2 text-center rounded transition-all duration-200 truncate',
-                        role === 'ops'
-                          ? 'bg-surface-container-lowest text-primary font-bold shadow-sm'
-                          : 'text-on-surface-variant hover:text-on-surface'
-                      )}
-                      onClick={() => handleRoleSelect('ops')}
-                      type="button"
-                    >
-                      Event Ops
-                    </button>
-                    <button
-                      className={clsx(
-                        'font-label-sm text-label-sm py-2 px-2 text-center rounded transition-all duration-200 truncate',
-                        role === 'accounts'
-                          ? 'bg-surface-container-lowest text-primary font-bold shadow-sm'
-                          : 'text-on-surface-variant hover:text-on-surface'
-                      )}
-                      onClick={() => handleRoleSelect('accounts')}
-                      type="button"
-                    >
-                      Accounts
-                    </button>
+                  <div className="inline-flex items-center justify-center w-full py-2 px-4 rounded bg-surface-container-lowest text-primary font-bold shadow-sm border border-surface-container">
+                    GM / Admin Portal
                   </div>
                 </div>
 
@@ -264,12 +222,6 @@ export const Login = () => {
                       >
                         Security Passkey
                       </label>
-                      <a
-                        className="font-label-sm text-label-sm text-primary hover:text-primary-container font-semibold transition-colors"
-                        href="#recovery"
-                      >
-                        Forgot Password?
-                      </a>
                     </div>
                     <div className="relative flex items-center">
                       <span className="material-symbols-outlined absolute left-3.5 text-on-surface-variant text-lg pointer-events-none">
@@ -373,7 +325,7 @@ export const Login = () => {
                   <span>Ali Royal Hospitality Group © 2024.</span>
                   <span className="flex items-center gap-1">
                     <span className="material-symbols-outlined text-xs">call</span>
-                    VIP Desk: +92 51 844 9200
+                    VIP Desk: +92 325 1486878
                   </span>
                 </div>
               </div>

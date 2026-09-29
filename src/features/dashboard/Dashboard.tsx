@@ -47,122 +47,106 @@ export const Dashboard = () => {
     .slice(0, 2); // Show top 2 upcoming
 
   return (
-    <div className="w-full px-8 py-8">
-      <div className="flex flex-col w-full space-y-8">
+    <div className="w-full px-4 md:px-8 py-6 bg-[#FAF8F5] min-h-screen">
+      <div className="flex flex-col w-full space-y-6 md:space-y-8">
         
         <PageHeader 
           title="Command Center Overview"
           category="Business Pulse"
-          icon="dashboard"
-          description="Real-time pulse of Ali Royal Marquee estate operations, revenue tracking, and immediate action items."
+          icon="grid_view"
+          description="Real-time pulse of operations, bookings, revenue and key actions."
           actions={
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="primary" icon="add_circle" onClick={() => navigate('/app/bookings/new')}>New Booking</Button>
-              <Button variant="outline" icon="person_add" onClick={() => navigate('/app/customers')}>Add Customer</Button>
-              <Button variant="outline" icon="credit_card" onClick={() => navigate('/app/payments/new')}>Record Payment</Button>
+            <div className="flex overflow-x-auto md:flex-wrap items-center gap-2 pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0" style={{ scrollbarWidth: 'none' }}>
+              <Button variant="primary" icon="add_circle" onClick={() => navigate('/app/bookings/new')} className="whitespace-nowrap shrink-0 !bg-[#5C0A1E]">New Booking</Button>
+              <Button variant="outline" icon="person_add" onClick={() => navigate('/app/customers')} className="whitespace-nowrap shrink-0 !text-[#4a1420] !border-surface-variant">Add Customer</Button>
+              <Button variant="outline" icon="payment" onClick={() => navigate('/app/payments/new')} className="whitespace-nowrap shrink-0 !text-[#4a1420] !border-surface-variant">Record Payment</Button>
             </div>
           }
         />
 
         {/* 2. KPI Cards Row */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="relative bg-surface-container-lowest p-5 rounded-lg shadow-sm flex flex-col justify-between overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="font-label-sm text-label-sm uppercase text-on-surface-variant">
-                  Total Revenue
-                </span>
-                <div className="mt-1 font-headline-sm text-headline-sm text-on-surface font-semibold">
-                  PKR {(totalRevenue / 1000000).toFixed(2)}M
-                </div>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary">
-                <span className="material-symbols-outlined text-[18px]">
-                  account_balance_wallet
-                </span>
+        <section className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
+          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#5C0A1E]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#5C0A1E]/10 flex items-center justify-center text-[#5C0A1E]">
+              <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">
+                Total Revenue
+              </span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold">
+                PKR {(totalRevenue / 1000000).toFixed(2)}M
               </div>
             </div>
           </div>
 
-          <div className="relative bg-surface-container-lowest p-5 rounded-lg shadow-sm flex flex-col justify-between overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="font-label-sm text-label-sm uppercase text-on-surface-variant">
-                  Confirmed Bookings
-                </span>
-                <div className="mt-1 font-headline-sm text-headline-sm text-on-surface font-semibold">
-                  {confirmedBookingsCount}
-                </div>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary">
-                <span className="material-symbols-outlined text-[18px]">event_seat</span>
+          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#5C0A1E]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#F2EFE9] flex items-center justify-center text-[#6e5e4f]">
+              <span className="material-symbols-outlined text-[20px]">chair</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">
+                Confirmed Bookings
+              </span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold">
+                {confirmedBookingsCount}
               </div>
             </div>
           </div>
 
-          <div className="relative bg-surface-container-lowest p-5 rounded-lg shadow-sm flex flex-col justify-between overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="font-label-sm text-label-sm uppercase text-on-surface-variant">
-                  Outstanding
-                </span>
-                <div className="mt-1 font-headline-sm text-headline-sm text-on-surface font-semibold">
-                  PKR {(receivables / 1000000).toFixed(2)}M
-                </div>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
-                <span className="material-symbols-outlined text-[18px]">pending_actions</span>
+          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#b0891d]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#b0891d]/10 flex items-center justify-center text-[#b0891d]">
+              <span className="material-symbols-outlined text-[20px]">work_history</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">
+                Outstanding
+              </span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold">
+                PKR {(receivables / 1000000).toFixed(2)}M
               </div>
             </div>
           </div>
 
-          <div className="relative bg-surface-container-lowest p-5 rounded-lg shadow-sm flex flex-col justify-between overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="font-label-sm text-label-sm uppercase text-on-surface-variant">
-                  Total Expenses
-                </span>
-                <div className="mt-1 font-headline-sm text-headline-sm text-on-surface font-semibold">
-                  PKR {(totalExpenses / 1000000).toFixed(2)}M
-                </div>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-error-container flex items-center justify-center text-on-error-container">
-                <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#e02424]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#e02424]/10 flex items-center justify-center text-[#e02424]">
+              <span className="material-symbols-outlined text-[20px]">receipt_long</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">
+                Total Expenses
+              </span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold">
+                PKR {(totalExpenses / 1000000).toFixed(2)}M
               </div>
             </div>
           </div>
 
-          <div className="relative bg-surface-container-lowest p-5 rounded-lg shadow-sm flex flex-col justify-between overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="font-label-sm text-label-sm uppercase text-on-surface-variant">
-                  Estimated Net Profit
-                </span>
-                <div className="mt-1 font-headline-sm text-headline-sm text-on-surface font-semibold">
-                  PKR {(netProfit / 1000000).toFixed(2)}M
-                </div>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed">
-                <span className="material-symbols-outlined text-[18px]">workspace_premium</span>
+          <div className="col-span-2 lg:col-span-1 bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#b0891d]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#b0891d]/10 flex items-center justify-center text-[#b0891d]">
+              <span className="material-symbols-outlined text-[20px]">workspace_premium</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">
+                Estimated Net Profit
+              </span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold">
+                PKR {(netProfit / 1000000).toFixed(2)}M
               </div>
             </div>
           </div>
         </section>
 
         {/* 3. Charts & Performance Row */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-7 bg-surface-container-lowest p-6 rounded-lg shadow-sm flex flex-col justify-between">
+        <section className="grid grid-cols-2 lg:grid-cols-12 gap-3 md:gap-6">
+          <div className="col-span-1 lg:col-span-7 bg-white p-4 md:p-6 rounded-xl shadow-sm flex flex-col justify-between relative">
             <div>
-              <div className="flex flex-wrap items-center justify-between gap-4 pb-4">
-                <div>
-                  <h3 className="font-headline-sm text-headline-sm text-primary">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-2">
+                <div className="w-full relative">
+                  <h3 className="font-serif text-sm md:text-headline-sm font-bold text-[#4a1420]">
                     Revenue Overview
                   </h3>
+                  <span className="material-symbols-outlined absolute right-0 top-0 text-on-surface-variant text-[16px] md:hidden">chevron_right</span>
                   <p className="font-body-sm text-body-sm text-on-surface-variant">
                     Monthly cash flow & profitability trajectory
                   </p>
@@ -184,12 +168,13 @@ export const Dashboard = () => {
             </div>
           </div>
 
-          {/* Right Column: Booking Performance */}
-          <div className="lg:col-span-5 bg-surface-container-lowest p-6 rounded-lg shadow-sm flex flex-col justify-between">
+          {/* Right Column: Booking Pipeline */}
+          <div className="col-span-1 lg:col-span-5 bg-white p-4 md:p-6 rounded-xl shadow-sm flex flex-col justify-between relative">
             <div>
-              <div className="pb-3">
-                <h3 className="font-headline-sm text-headline-sm text-primary">Booking Pipeline</h3>
-                <p className="font-body-sm text-body-sm text-on-surface-variant">Breakdown by status</p>
+              <div className="pb-2 relative">
+                <h3 className="font-serif text-sm md:text-headline-sm font-bold text-[#4a1420]">Booking Pipeline</h3>
+                <span className="material-symbols-outlined absolute right-0 top-0 text-on-surface-variant text-[16px] md:hidden">chevron_right</span>
+                <p className="text-[9px] md:text-body-sm text-on-surface-variant">Breakdown by status</p>
               </div>
               <div className="flex flex-col items-center justify-around gap-6 py-3">
                   <div className="relative w-44 h-44 flex items-center justify-center">

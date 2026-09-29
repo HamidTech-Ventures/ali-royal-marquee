@@ -14,7 +14,7 @@ export const PageHeader = ({ title, description, icon, category, actions, onBack
   return (
     <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-6 pb-6 border-b border-surface-container-highest mb-6">
       <div className="space-y-1.5 max-w-2xl">
-        <div className="flex items-center gap-2 text-secondary font-label-md text-label-md uppercase tracking-widest font-semibold mb-2">
+        <div className="flex items-center gap-2 text-[#b0891d] font-label-md text-[11px] uppercase tracking-widest font-bold mb-1">
           {onBack && (
             <button 
               onClick={onBack}
@@ -24,10 +24,10 @@ export const PageHeader = ({ title, description, icon, category, actions, onBack
               <span className="material-symbols-outlined text-[18px]">arrow_back</span>
             </button>
           )}
-          {icon && <span className="material-symbols-outlined text-[18px]">{icon}</span>}
+          {icon && <span className="material-symbols-outlined text-[14px]">{icon}</span>}
           <span>{category}</span>
         </div>
-        <h1 className="font-display text-display text-primary tracking-tight">
+        <h1 className="font-serif text-3xl md:font-display md:text-display text-[#4a1420] md:text-primary tracking-tight font-bold">
           {title}
         </h1>
         {description && (

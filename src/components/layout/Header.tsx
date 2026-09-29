@@ -40,21 +40,36 @@ export const Header = ({ isSidebarExpanded }: HeaderProps) => {
   return (
     <header 
       className={clsx(
-        "fixed top-0 right-0 h-20 bg-surface-container-lowest z-40 shadow-[0_1px_8px_rgba(0,0,0,0.04)] transition-[left] duration-300 ease-in-out",
-        isSidebarExpanded ? "left-64" : "left-20"
+        "fixed top-0 right-0 bg-[#FAF8F5] md:bg-surface-container-lowest z-40 md:shadow-[0_1px_8px_rgba(0,0,0,0.04)] transition-[left] duration-300 ease-in-out",
+        isSidebarExpanded ? "md:left-64" : "md:left-20",
+        "left-0 md:h-20 pb-2 md:pb-0 pt-6 md:pt-0"
       )}
     >
-      <div className="h-20 w-full px-8 flex items-center justify-between">
-        <div className="flex flex-col justify-center">
-          <div className="font-headline-sm text-headline-sm text-primary">
-            Good morning, {currentUser?.fullName?.split(' ')[0] || 'User'}
+      <div className="h-full w-full px-4 md:px-8 flex items-start md:items-center justify-between">
+        
+        <div className="flex gap-3">
+          {/* Mobile AR Logo */}
+          <div className="md:hidden w-12 h-12 rounded-xl bg-[#5a1827] flex items-center justify-center shrink-0">
+            <span className="text-[#d8b871] font-bold text-xl font-serif">AR</span>
           </div>
-          <div className="font-body-sm text-body-sm text-on-surface-variant">
-            Here's what's happening with Ali Royal Marquee today.
+          
+          <div className="flex flex-col justify-center">
+            <div className="font-headline-sm text-headline-sm text-[#4a1420] md:text-primary font-bold">
+              Good morning, {currentUser?.fullName?.split(' ')[0] || 'System'}
+            </div>
+            <div className="font-body-sm text-body-sm text-on-surface-variant mb-1">
+              Here's what's happening today.
+            </div>
+            
+            {/* Mobile Calendar Badge */}
+            <div className="md:hidden flex items-center gap-1.5 text-on-surface-variant bg-[#efece4] px-2.5 py-1 rounded-full w-fit">
+              <span className="material-symbols-outlined text-[13px] text-secondary">calendar_today</span>
+              <span className="text-[11px] font-medium">{currentDate}</span>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 md:gap-6 mt-1 md:mt-0">
           <div className="hidden xl:flex items-center gap-2 text-on-surface-variant font-label-md text-label-md bg-surface-container-lowest px-3 py-1.5 rounded-full ring-1 ring-surface-container-highest">
             <span className="material-symbols-outlined text-[16px] text-secondary">
               calendar_today
