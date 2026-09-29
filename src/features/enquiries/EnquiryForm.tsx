@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { PageHeader } from '../../components/ui/PageHeader';
 import { Input } from '../../components/ui/forms/Input';
 import { Select } from '../../components/ui/forms/Select';
 import { FormSection, FormActions } from '../../components/ui/forms/FormLayout';
@@ -158,10 +159,16 @@ export const EnquiryForm = () => {
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-3xl mx-auto w-full">
-      <h1 className="text-2xl font-bold text-on-surface">{isEditMode ? 'Edit Enquiry' : 'New Enquiry'}</h1>
+    <div className="w-full px-4 md:px-8 py-6 bg-[#FAF8F5] min-h-screen">
+      <div className="max-w-3xl mx-auto w-full flex flex-col gap-6">
+        <PageHeader 
+          title={isEditMode ? 'Edit Enquiry' : 'New Enquiry'}
+          category="Form"
+          icon={isEditMode ? 'edit_document' : 'add_circle'}
+          onBack={() => navigate(-1)}
+        />
 
-      <div className="bg-surface border border-outline-variant rounded-xl p-6 shadow-sm flex flex-col gap-0">
+        <div className="bg-white border border-[#e8e4db] rounded-xl p-4 md:p-8 shadow-sm flex flex-col gap-0">
         
         <FormSection title="Customer Details">
           <div>
@@ -354,6 +361,7 @@ export const EnquiryForm = () => {
           isSaving={isSubmitting} 
           saveLabel={isEditMode ? 'Update Enquiry' : 'Create Enquiry'} 
         />
+        </div>
       </div>
     </div>
   );

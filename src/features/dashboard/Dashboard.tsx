@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Button } from '../../components/ui/Button';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
 import { financesService } from '../../services/financesService';
 import { bookingsService } from '../../services/bookingsService';
 
@@ -176,24 +176,68 @@ export const Dashboard = () => {
                 <span className="material-symbols-outlined absolute right-0 top-0 text-on-surface-variant text-[16px] md:hidden">chevron_right</span>
                 <p className="text-[9px] md:text-body-sm text-on-surface-variant">Breakdown by status</p>
               </div>
-              <div className="flex flex-col items-center justify-around gap-6 py-3">
-                  <div className="relative w-44 h-44 flex items-center justify-center">
-                    <span className="font-headline-md text-headline-md font-bold text-primary leading-none">{totalBookingsCount}</span>
-                  </div>
-                  <div className="space-y-3 w-full">
-                    <div className="flex items-center justify-between gap-6">
-                      <span className="font-body-sm text-body-sm text-on-surface">Confirmed</span>
-                      <span className="font-title-sm text-title-sm font-semibold text-on-surface">{confirmedBookingsCount}</span>
+              <div className="flex flex-col items-center gap-4 py-2">
+                  <div className="relative w-40 h-40 flex items-center justify-center mt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: 'Confirmed', value: confirmedBookingsCount || 1 },
+                            { name: 'Pending', value: bookingsData.filter(b => b.status === 'Pending').length || 5 },
+                            { name: 'In Progress', value: bookingsData.filter(b => b.status === 'In Progress' || b.status === 'Completed').length || 1 }
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={46}
+                          outerRadius={75}
+                          paddingAngle={0}
+                          dataKey="value"
+                          stroke="none"
+                        >
+                          <Cell key={`cell-0`} fill="#4a1420" />
+                          <Cell key={`cell-1`} fill="#d4bca0" />
+                          <Cell key={`cell-2`} fill="#b0891d" />
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-white rounded-full m-auto w-[90px] h-[90px] shadow-sm pointer-events-none">
+                      <span className="font-serif text-2xl font-bold text-[#4a1420] leading-none">{totalBookingsCount}</span>
+                      <span className="text-[10px] text-on-surface-variant font-medium">Total</span>
                     </div>
-                    <div className="flex items-center justify-between gap-6">
-                      <span className="font-body-sm text-body-sm text-on-surface">Pending</span>
-                      <span className="font-title-sm text-title-sm font-semibold text-on-surface">{bookingsData.filter(b => b.status === 'Pending').length}</span>
+                  </div>
+                  <div className="space-y-2.5 w-full px-2 mt-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-3 h-3 rounded-full bg-[#4a1420]"></div>
+                        <span className="text-[13px] text-on-surface-variant font-medium tracking-wide">Confirmed</span>
+                      </div>
+                      <span className="font-bold text-[13px] text-[#4a1420]">{confirmedBookingsCount}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-3 h-3 rounded-full bg-[#d4bca0]"></div>
+                        <span className="text-[13px] text-on-surface-variant font-medium tracking-wide">Pending</span>
+                      </div>
+                      <span className="font-bold text-[13px] text-[#4a1420]">{bookingsData.filter(b => b.status === 'Pending').length}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-3 h-3 rounded-full bg-[#b0891d]"></div>
+                        <span className="text-[13px] text-on-surface-variant font-medium tracking-wide">In Progress</span>
+                      </div>
+                      <span className="font-bold text-[13px] text-[#4a1420]">{bookingsData.filter(b => b.status === 'In Progress' || b.status === 'Completed').length}</span>
                     </div>
                   </div>
               </div>
             </div>
-            <div className="pt-3 bg-surface-container-low p-3 rounded flex items-center justify-between">
-              <a className="font-title-sm text-title-sm text-primary font-semibold hover:underline" href="/app/bookings">View Pipeline</a>
+            <div className="pt-4 mt-1">
+              <button 
+                onClick={() => navigate('/app/bookings')}
+                className="w-full bg-[#F2EFE9] p-3 rounded-lg flex items-center justify-between text-[#4a1420] hover:bg-[#e8e4db] transition-colors"
+              >
+                <span className="font-bold text-sm">View Pipeline</span>
+                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+              </button>
             </div>
           </div>
         </section>

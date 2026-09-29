@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { PageHeader } from '../../components/ui/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/forms/Input';
 import { Select } from '../../components/ui/forms/Select';
@@ -121,29 +122,32 @@ export const BookingForm = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-on-surface">New Booking</h1>
-        <Button variant="outline" onClick={() => navigate('/app/bookings')}>Cancel</Button>
-      </div>
+    <div className="w-full px-4 md:px-8 py-6 bg-[#FAF8F5] min-h-screen">
+      <div className="max-w-4xl mx-auto w-full flex flex-col gap-6">
+        <PageHeader 
+          title="New Booking"
+          category="Operations"
+          icon="event_available"
+          onBack={() => navigate(-1)}
+        />
 
-      {/* Stepper */}
-      <div className="bg-surface border border-outline-variant rounded-xl p-6 shadow-sm">
-        <div className="flex items-center justify-between relative">
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-0.5 bg-outline-variant/50 -z-10" />
+        {/* Stepper */}
+        <div className="bg-white border border-[#e8e4db] rounded-xl p-4 md:p-6 shadow-sm overflow-x-auto hide-scrollbar">
+          <div className="flex items-center justify-between relative min-w-[600px]">
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-0.5 bg-outline-variant/50 -z-10" />
           {steps.map((step) => {
             const Icon = step.icon;
             const isActive = step.id === currentStep;
             const isCompleted = step.id < currentStep;
             
             return (
-              <div key={step.id} className="flex flex-col items-center gap-2 bg-surface px-2">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors ${
-                  isActive ? 'border-primary bg-primary text-on-primary' : 
-                  isCompleted ? 'border-primary bg-primary-container text-on-primary-container' : 
-                  'border-outline-variant bg-surface text-on-surface-variant'
+              <div key={step.id} className="flex flex-col items-center gap-2 bg-white px-2">
+                <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center border-2 transition-colors ${
+                  isActive ? 'border-[#5C0A1E] bg-[#5C0A1E] text-white' : 
+                  isCompleted ? 'border-[#10b981] bg-[#10b981] text-white' : 
+                  'border-[#e8e4db] bg-[#FAF8F5] text-on-surface-variant'
                 }`}>
-                  {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+                  {isCompleted ? <Check className="w-4 h-4 md:w-5 md:h-5" /> : <Icon className="w-4 h-4 md:w-5 md:h-5" />}
                 </div>
                 <span className={`text-xs font-medium ${isActive || isCompleted ? 'text-primary' : 'text-on-surface-variant'}`}>
                   {step.name}
@@ -152,10 +156,10 @@ export const BookingForm = () => {
             );
           })}
         </div>
-      </div>
+        </div>
 
       {/* Form Content */}
-      <div className="bg-surface border border-outline-variant rounded-xl shadow-sm p-6 min-h-[400px]">
+      <div className="bg-white border border-[#e8e4db] rounded-xl shadow-sm p-4 md:p-6 min-h-[400px]">
         
         {currentStep === 1 && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
@@ -363,6 +367,8 @@ export const BookingForm = () => {
         )}
       </div>
 
+      </div>
     </div>
+  </div>
   );
 };

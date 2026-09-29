@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, NavLink } from 'react-router-dom';
 import { Sidebar } from '../components/layout/Sidebar';
 import { Header } from '../components/layout/Header';
 import clsx from 'clsx';
@@ -19,7 +19,7 @@ export const DashboardLayout = () => {
         )}
       >
         <Header isSidebarExpanded={isSidebarExpanded} />
-        <main className="w-full pt-20 bg-background min-h-screen">
+        <main className="w-full pt-[130px] md:pt-20 bg-background min-h-screen">
           <Outlet />
         </main>
         

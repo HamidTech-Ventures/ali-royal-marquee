@@ -170,67 +170,93 @@ export const Enquiries = () => {
   ];
 
   return (
-    <div className="w-full px-8 py-8">
+    <div className="w-full px-4 md:px-8 py-6 bg-[#FAF8F5] min-h-screen">
       <PageHeader 
         title="Enquiries Ledger"
         category="Hospitality Inbound Inquiries"
         icon="contact_mail"
         description="Manage prospective wedding parties, corporate galas, personalized walkthroughs, and banquet proposals."
         actions={
-          <Button variant="primary" icon="add" onClick={() => navigate('/app/enquiries/new')}>
-            New Enquiry
-          </Button>
+          <div className="flex overflow-x-auto md:flex-wrap items-center gap-2 pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0" style={{ scrollbarWidth: 'none' }}>
+            <Button variant="primary" icon="add" onClick={() => navigate('/app/enquiries/new')} className="whitespace-nowrap shrink-0 !bg-[#5C0A1E]">
+              New Enquiry
+            </Button>
+          </div>
         }
       />
 
-      <div className="flex flex-col w-full space-y-6">
+      <div className="flex flex-col w-full space-y-6 md:space-y-8">
         {/* SUMMARY KPI METRIC CARDS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="bg-surface-container-lowest p-5 rounded-lg shadow-sm relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
-            <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Total Enquiries</span>
-            <div className="font-display text-[32px] leading-tight text-primary mt-1 font-bold">{stats?.totalEnquiries ?? '-'}</div>
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
+          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#5C0A1E]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#5C0A1E]/10 flex items-center justify-center text-[#5C0A1E]">
+              <span className="material-symbols-outlined text-[20px]">all_inbox</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Total Enquiries</span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">{stats?.totalEnquiries ?? '-'}</div>
+            </div>
           </div>
-          <div className="bg-surface-container-lowest p-5 rounded-lg shadow-sm relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
-            <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">New This Week</span>
-            <div className="font-display text-[32px] leading-tight text-on-surface mt-1 font-bold">{stats?.newThisWeek ?? '-'}</div>
+          
+          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#b0891d]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#b0891d]/10 flex items-center justify-center text-[#b0891d]">
+              <span className="material-symbols-outlined text-[20px]">new_releases</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">New This Week</span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">{stats?.newThisWeek ?? '-'}</div>
+            </div>
           </div>
-          <div className="bg-surface-container-lowest p-5 rounded-lg shadow-sm relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
-            <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Follow-ups Due</span>
-            <div className="font-display text-[32px] leading-tight text-error mt-1 font-bold">{stats?.followUpsDue ?? '-'}</div>
+          
+          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#e02424]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#e02424]/10 flex items-center justify-center text-[#e02424]">
+              <span className="material-symbols-outlined text-[20px]">notification_important</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Follow-ups Due</span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">{stats?.followUpsDue ?? '-'}</div>
+            </div>
           </div>
-          <div className="bg-surface-container-lowest p-5 rounded-lg shadow-sm relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary-container"></div>
-            <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Hot Leads</span>
-            <div className="font-display text-[32px] leading-tight text-primary-container mt-1 font-bold">{stats?.hotLeads ?? '-'}</div>
+          
+          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#5C0A1E]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#F2EFE9] flex items-center justify-center text-[#6e5e4f]">
+              <span className="material-symbols-outlined text-[20px]">local_fire_department</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Hot Leads</span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">{stats?.hotLeads ?? '-'}</div>
+            </div>
           </div>
-          <div className="bg-surface-container-lowest p-5 rounded-lg shadow-sm relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
-            <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Conversion Rate</span>
-            <div className="font-display text-[32px] leading-tight text-on-surface mt-1 font-bold">{stats?.conversionRate ? `${stats.conversionRate.toFixed(1)}%` : '-'}</div>
+          
+          <div className="col-span-2 lg:col-span-1 bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#b0891d]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#b0891d]/10 flex items-center justify-center text-[#b0891d]">
+              <span className="material-symbols-outlined text-[20px]">monitoring</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Conversion Rate</span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">{stats?.conversionRate ? `${stats.conversionRate.toFixed(1)}%` : '-'}</div>
+            </div>
           </div>
         </div>
 
         {/* WORKFLOW STAGE PIPELINE FUNNEL */}
-        <div className="bg-surface-container-lowest p-5 rounded-lg shadow-sm space-y-4">
+        <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <span className="font-headline-sm text-headline-sm text-primary">Inquiry Lifecycle</span>
+            <h2 className="font-serif text-lg md:text-title-md font-bold text-[#4a1420]">Inquiry Lifecycle</h2>
             <div className="flex gap-1.5">
               <Button 
                 variant={lifecycleScope === 'all' ? 'primary' : 'secondary'} 
-                className="py-1 px-3 text-label-sm"
+                className={lifecycleScope === 'all' ? "py-1 px-3 text-label-sm !bg-[#5C0A1E]" : "py-1 px-3 text-label-sm"}
                 onClick={() => setLifecycleScope('all')}
               >All</Button>
               <Button 
                 variant={lifecycleScope === 'hot' ? 'primary' : 'secondary'} 
-                className="py-1 px-3 text-label-sm"
+                className={lifecycleScope === 'hot' ? "py-1 px-3 text-label-sm !bg-[#5C0A1E]" : "py-1 px-3 text-label-sm"}
                 onClick={() => setLifecycleScope('hot')}
               >Hot Leads</Button>
             </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2.5 pt-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 pt-2">
             {[
               { stage: 'New', count: lifecycle?.new ?? 0 }, 
               { stage: 'Contacted', count: lifecycle?.contacted ?? 0 }, 
@@ -241,9 +267,9 @@ export const Enquiries = () => {
               { stage: 'Converted', count: lifecycle?.converted ?? 0 }, 
               { stage: 'Lost', count: lifecycle?.lost ?? 0 }
             ].map((item, i) => (
-              <div key={item.stage} className="bg-surface-container-low p-3 rounded text-left border-t-2 border-secondary-fixed/50">
-                <div className="font-label-sm text-label-sm text-on-surface-variant uppercase font-semibold">{i+1}. {item.stage}</div>
-                <div className="font-headline-sm text-headline-sm text-primary font-bold mt-1">
+              <div key={item.stage} className="bg-[#FAF8F5] p-3 rounded-lg text-left border-t-2 border-[#b0891d]">
+                <div className="font-label-sm text-[10px] md:text-label-sm text-on-surface-variant uppercase font-semibold">{i+1}. {item.stage}</div>
+                <div className="font-serif text-xl md:text-headline-sm text-[#4a1420] font-bold mt-1">
                   {item.count}
                 </div>
               </div>
@@ -252,40 +278,46 @@ export const Enquiries = () => {
         </div>
 
         {/* CONTROLS */}
-        <div className="flex items-center justify-between gap-4">
-          <SearchInput 
-            placeholder="Search enquiries..." 
-            value={searchTerm} 
-            onChange={(val) => {
-              setSearchTerm(val);
-              setPageNumber(1);
-            }} 
-          />
-          <div className="flex items-center gap-2">
-            <Button variant="outline" icon="download" onClick={handleExport}>Export</Button>
-            <Button variant="primary" icon="add" onClick={() => navigate('/app/enquiries/new')}>
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+          <div className="w-full md:w-auto">
+            <SearchInput 
+              placeholder="Search enquiries..." 
+              value={searchTerm} 
+              onChange={(val) => {
+                setSearchTerm(val);
+                setPageNumber(1);
+              }} 
+            />
+          </div>
+          <div className="flex overflow-x-auto items-center gap-2 hide-scrollbar pb-1 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
+            <Button variant="outline" icon="download" onClick={handleExport} className="shrink-0 !text-[#4a1420] !border-surface-variant">Export</Button>
+            <Button variant="primary" icon="add" onClick={() => navigate('/app/enquiries/new')} className="shrink-0 !bg-[#5C0A1E]">
               New Enquiry
             </Button>
           </div>
         </div>
 
         {/* DATA GRID */}
-        {loading ? (
-          <div className="py-8 text-center text-on-surface-variant">Loading enquiries...</div>
-        ) : (
-          <DataGrid 
-            data={enquiries}
-            columns={columns}
-            keyExtractor={(item) => item.id}
-            onRowClick={(item) => navigate(`/app/enquiries/${item.id}`)}
-            sortColumn={sortColumn}
-            sortDirection={sortDirection}
-            onSort={handleSort}
-            currentPage={pageNumber}
-            totalPages={Math.ceil(totalCount / pageSize)}
-            totalItems={totalCount}
-          />
-        )}
+        <div className="bg-white rounded-xl shadow-sm border border-[#e8e4db] overflow-hidden">
+          <div className="overflow-x-auto w-full">
+            {loading ? (
+              <div className="py-8 text-center text-on-surface-variant">Loading enquiries...</div>
+            ) : (
+              <DataGrid 
+                data={enquiries}
+                columns={columns}
+                keyExtractor={(item) => item.id}
+                onRowClick={(item) => navigate(`/app/enquiries/${item.id}`)}
+                sortColumn={sortColumn}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+                currentPage={pageNumber}
+                totalPages={Math.ceil(totalCount / pageSize)}
+                totalItems={totalCount}
+              />
+            )}
+          </div>
+        </div>
       </div>
 
       <Drawer

@@ -196,108 +196,130 @@ export const Bookings = () => {
   ];
 
   return (
-    <div className="w-full px-8 py-8">
+    <div className="w-full px-4 md:px-8 py-6 bg-[#FAF8F5] min-h-screen">
       <PageHeader 
         title="Bookings"
         category="Operations"
         icon="event_available"
         description="Manage venue reservations, event details, payments, and booking status across Grand Ballroom, Crystal Pavilion & Garden Marquee."
         actions={
-          <>
-            <Button variant="outline" icon="download">Export</Button>
-            <Button variant="primary" icon="add" onClick={() => navigate('/app/bookings/new')}>New Booking</Button>
-          </>
+          <div className="flex overflow-x-auto md:flex-wrap items-center gap-2 pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0" style={{ scrollbarWidth: 'none' }}>
+            <Button variant="outline" icon="download" className="shrink-0 !text-[#4a1420] !border-surface-variant">Export</Button>
+            <Button variant="primary" icon="add" onClick={() => navigate('/app/bookings/new')} className="whitespace-nowrap shrink-0 !bg-[#5C0A1E]">
+              New Booking
+            </Button>
+          </div>
         }
       />
 
-      <div className="flex flex-col w-full space-y-6">
+      <div className="flex flex-col w-full space-y-6 md:space-y-8">
         {/* KPI Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Total Bookings</span>
-              <span className="material-symbols-outlined text-[18px] text-primary-container">event_available</span>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#5C0A1E]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#5C0A1E]/10 flex items-center justify-center text-[#5C0A1E]">
+              <span className="material-symbols-outlined text-[20px]">event_available</span>
             </div>
-            <div className="mt-3 font-headline-md text-headline-md text-primary font-bold">{stats.total}</div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Total Bookings</span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">{stats.total}</div>
+            </div>
           </div>
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Confirmed</span>
-              <span className="w-2.5 h-2.5 rounded-full bg-secondary"></span>
+          
+          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#10b981]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#10b981]"></span>
             </div>
-            <div className="mt-3 font-headline-md text-headline-md text-on-surface font-bold">{stats.confirmed}</div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Confirmed</span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">{stats.confirmed}</div>
+            </div>
           </div>
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Tentative</span>
-              <span className="material-symbols-outlined text-[18px] text-secondary-container">schedule</span>
+          
+          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#b0891d]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#b0891d]/10 flex items-center justify-center text-[#b0891d]">
+              <span className="material-symbols-outlined text-[20px]">schedule</span>
             </div>
-            <div className="mt-3 font-headline-md text-headline-md text-on-surface font-bold">{stats.tentative}</div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Tentative</span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">{stats.tentative}</div>
+            </div>
           </div>
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Upcoming (14d)</span>
-              <span className="material-symbols-outlined text-[18px] text-primary">celebration</span>
+          
+          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#4a1420]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#4a1420]/10 flex items-center justify-center text-[#4a1420]">
+              <span className="material-symbols-outlined text-[20px]">celebration</span>
             </div>
-            <div className="mt-3 font-headline-md text-headline-md text-on-surface font-bold">{stats.upcoming}</div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Upcoming (14d)</span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">{stats.upcoming}</div>
+            </div>
           </div>
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden col-span-2 md:col-span-1">
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Balance</span>
-              <span className="material-symbols-outlined text-[18px] text-error">receipt_long</span>
+          
+          <div className="col-span-2 md:col-span-1 bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#e02424]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#e02424]/10 flex items-center justify-center text-[#e02424]">
+              <span className="material-symbols-outlined text-[20px]">receipt_long</span>
             </div>
-            <div className="mt-3 font-currency-num text-currency-num text-primary font-bold">PKR {stats.balanceStr}</div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Balance</span>
+              <div className="font-serif text-base md:text-headline-sm text-[#e02424] font-bold mt-1">PKR {stats.balanceStr}</div>
+            </div>
           </div>
         </div>
 
         {/* CONTROLS */}
-        <div className="bg-surface-container-lowest p-3 rounded shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center overflow-x-auto no-scrollbar gap-1.5">
+        <div className="bg-white p-3 md:p-4 border border-[#e8e4db] rounded-xl shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-center overflow-x-auto hide-scrollbar gap-1.5 -mx-3 px-3 md:mx-0 md:px-0">
             <Button 
               variant={statusFilter === 'All' ? 'primary' : 'text'} 
-              className={statusFilter === 'All' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-on-surface-variant'} 
+              className={statusFilter === 'All' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
               onClick={() => setStatusFilter('All')}
             >
               All
             </Button>
             <Button 
               variant={statusFilter === 'Confirmed' ? 'primary' : 'text'} 
-              className={statusFilter === 'Confirmed' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-on-surface-variant'} 
+              className={statusFilter === 'Confirmed' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
               onClick={() => setStatusFilter('Confirmed')}
             >
               Confirmed
             </Button>
             <Button 
               variant={statusFilter === 'Tentative' ? 'primary' : 'text'} 
-              className={statusFilter === 'Tentative' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-on-surface-variant'} 
+              className={statusFilter === 'Tentative' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
               onClick={() => setStatusFilter('Tentative')}
             >
               Tentative
             </Button>
           </div>
-          <div className="flex items-center gap-4">
-            <SearchInput 
-              placeholder="Search bookings..." 
-              value={searchTerm} 
-              onChange={setSearchTerm} 
-            />
-            <Button variant="outline" icon="filter_list">More Filters</Button>
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <div className="w-full md:w-auto">
+              <SearchInput 
+                placeholder="Search bookings..." 
+                value={searchTerm} 
+                onChange={setSearchTerm} 
+              />
+            </div>
+            <Button variant="outline" icon="filter_list" className="shrink-0 !text-[#4a1420] !border-surface-variant">More Filters</Button>
           </div>
         </div>
 
         {/* DATA GRID */}
-        <DataGrid 
-          data={filteredData}
-          columns={columns}
-          keyExtractor={(item) => item.id}
-          onRowClick={(item) => navigate(`/app/bookings/${item.id}`)}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-          currentPage={1}
-          totalPages={1}
-          totalItems={filteredData.length}
-        />
+        <div className="bg-white rounded-xl shadow-sm border border-[#e8e4db] overflow-hidden">
+          <div className="overflow-x-auto w-full">
+            <DataGrid 
+              data={filteredData}
+              columns={columns}
+              keyExtractor={(item) => item.id}
+              onRowClick={(item) => navigate(`/app/bookings/${item.id}`)}
+              sortColumn={sortColumn}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+              currentPage={1}
+              totalPages={1}
+              totalItems={filteredData.length}
+            />
+          </div>
+        </div>
       </div>
 
       <Drawer
