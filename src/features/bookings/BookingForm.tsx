@@ -369,6 +369,5 @@ export const BookingForm = () => {
 
       </div>
     </div>
-  </div>
   );
 };
