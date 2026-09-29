@@ -68,9 +68,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     initAuth();
   }, []);
 
-  const login = (_accessToken: string, user: User) => {
-    // In-memory access token storage is handled by Axios interceptor globally
-    // We just update the state here.
+  const login = async (accessToken: string, user: User) => {
+    const { setAccessToken } = await import('../services/api');
+    setAccessToken(accessToken);
     setIsAuthenticated(true);
     setCurrentUser(user);
   };
@@ -81,9 +81,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (err) {
       console.error('Logout error', err);
     } finally {
+      const { setAccessToken } = await import('../services/api');
+      setAccessToken(null);
       setIsAuthenticated(false);
       setCurrentUser(null);
-      // Remove token from Axios (handled in api.ts)
     }
   };
 
