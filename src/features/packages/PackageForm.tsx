@@ -98,7 +98,7 @@ export const PackageForm = () => {
   if (isLoading) return <div className="p-8 text-center text-on-surface-variant">Loading package data...</div>;
 
   return (
-    <div className="w-full px-8 py-8 max-w-4xl mx-auto space-y-8 pb-32">
+    <div className="w-full px-4 md:px-8 py-6 max-w-4xl mx-auto space-y-6 md:space-y-8 pb-32">
       <PageHeader 
         title={isEditMode ? "Edit Package" : "Create New Package"} 
         category="Packages" 
@@ -106,7 +106,7 @@ export const PackageForm = () => {
         onBack={() => navigate(-1)}
       />
 
-      <div className="bg-surface rounded-xl border border-outline-variant/40 overflow-hidden shadow-sm p-8">
+      <div className="bg-white rounded-xl border border-[#e8e4db] overflow-hidden shadow-sm p-4 md:p-8">
         <FormSection title="Package Configuration" description="Define tier pricing and base details.">
           <Input 
             label="Package Name" 

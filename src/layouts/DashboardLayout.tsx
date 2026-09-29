@@ -12,7 +12,14 @@ const moreMenuItems = [
   { name: 'Inventory', path: '/app/inventory', icon: 'inventory_2' },
   { name: 'Vendors', path: '/app/vendors', icon: 'storefront' },
   { name: 'Staff', path: '/app/staff', icon: 'badge' },
-  { name: 'Insights', path: '/app/insights/overview', icon: 'insights' },
+  { name: 'Insights Overview', path: '/app/insights/overview', icon: 'insights' },
+  { name: 'Revenue Insights', path: '/app/insights/revenue', icon: 'trending_up' },
+  { name: 'Booking Insights', path: '/app/insights/bookings', icon: 'event_note' },
+  { name: 'Customer Insights', path: '/app/insights/customers', icon: 'group' },
+  { name: 'Operations Insights', path: '/app/insights/operations', icon: 'local_shipping' },
+  { name: 'Financial Insights', path: '/app/insights/financial', icon: 'account_balance_wallet' },
+  { name: 'Forecast Insights', path: '/app/insights/forecast', icon: 'online_prediction' },
+  { name: 'Settings', path: '/app/settings', icon: 'settings' },
 ];
 
 export const DashboardLayout = () => {
@@ -21,7 +28,7 @@ export const DashboardLayout = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-surface font-body-md text-body-md text-on-surface antialiased min-h-screen">
+    <div className="bg-surface font-body-md text-body-md text-on-surface antialiased min-h-screen overflow-x-hidden w-full max-w-[100vw]">
       <div className="hidden md:block">
         <Sidebar isExpanded={isSidebarExpanded} onHoverChange={setIsSidebarExpanded} />
       </div>
@@ -32,7 +39,7 @@ export const DashboardLayout = () => {
         )}
       >
         <Header isSidebarExpanded={isSidebarExpanded} />
-        <main className="w-full pt-[130px] md:pt-20 bg-background min-h-screen">
+        <main className="w-full pt-[130px] md:pt-20 bg-[#FAF8F5] min-h-screen overflow-x-hidden max-w-[100vw]">
           <Outlet />
         </main>
         

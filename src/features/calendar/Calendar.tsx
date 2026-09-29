@@ -292,7 +292,7 @@ export const Calendar = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto no-scrollbar -mx-3 md:mx-0 px-3 md:px-0">
+          <div className="overflow-x-auto no-scrollbar w-full">
             <div className="min-w-[700px] w-full">
               <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2">
                 {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (

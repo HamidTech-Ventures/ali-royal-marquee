@@ -154,8 +154,8 @@ export const Packages = () => {
   ];
 
   return (
-    <div className="flex flex-col h-full bg-surface-container-lowest">
-      <div className="px-8 py-8">
+    <div className="w-full px-4 md:px-8 py-6 bg-[#FAF8F5] min-h-screen">
+      <div className="flex flex-col w-full space-y-6 md:space-y-8">
         <PageHeader 
           title="Event Packages"
           category="Sales & Marketing"
@@ -163,55 +163,67 @@ export const Packages = () => {
           description="Manage predefined event packages, catering menus, decor bundles, and seasonal promotions."
           onBack={showBack ? () => navigate(-1) : undefined}
           actions={
-            <>
-              <Button variant="outline" icon="sync" onClick={fetchPackages}>Refresh</Button>
-              <Button variant="primary" icon="add" onClick={() => navigate('/app/packages/new')}>Create Package</Button>
-            </>
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <Button variant="outline" icon="sync" onClick={fetchPackages} className="flex-1 md:flex-auto flex items-center justify-center gap-2 bg-white hover:bg-[#e8e4db] text-[#4a1420] px-3 md:px-4 py-2 rounded-lg shadow-sm transition-all border border-[#e8e4db] text-xs md:text-sm font-medium">Refresh</Button>
+              <Button variant="primary" icon="add" onClick={() => navigate('/app/packages/new')} className="flex-1 md:flex-auto flex items-center justify-center gap-2 bg-[#5C0A1E] hover:bg-[#4a1420] text-white px-3 md:px-5 py-2 rounded-lg shadow-md hover:shadow-lg transition-all text-xs md:text-sm">Create Package</Button>
+            </div>
           }
         />
 
-        <div className="flex flex-col w-full space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-surface-container-lowest p-4 rounded shadow-sm border border-surface-variant/70 relative overflow-hidden flex flex-col justify-between">
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
-              <div className="flex items-start justify-between">
-                <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Total Packages</span>
-                <span className="material-symbols-outlined text-primary text-[20px]">loyalty</span>
-              </div>
-              <div className="mt-3">
-                <div className="text-3xl text-on-surface font-bold tracking-tight">{packages.length}</div>
-              </div>
-            </div>
-            <div className="bg-surface-container-lowest p-4 rounded shadow-sm border border-surface-variant/70 relative overflow-hidden flex flex-col justify-between">
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-success"></div>
-              <div className="flex items-start justify-between">
-                <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Active Packages</span>
-                <span className="material-symbols-outlined text-success text-[20px]">check_circle</span>
-              </div>
-              <div className="mt-3">
-                <div className="text-3xl text-on-surface font-bold tracking-tight">{packages.filter(p => p.status === 'Active').length}</div>
-              </div>
-            </div>
-            <div className="bg-surface-container-lowest p-4 rounded shadow-sm border border-surface-variant/70 relative overflow-hidden flex flex-col justify-between">
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
-              <div className="flex items-start justify-between">
-                <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Avg Price (Pax)</span>
-                <span className="material-symbols-outlined text-secondary text-[20px]">payments</span>
-              </div>
-              <div className="mt-3">
-                <div className="text-2xl font-currency-num text-on-surface font-bold tracking-tight">
-                  PKR {packages.length ? Math.round(packages.reduce((sum, p) => sum + p.price, 0) / packages.length).toLocaleString() : 0}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-8">
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#5C0A1E]"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Total Packages</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-2xl md:text-4xl text-[#4a1420] font-bold leading-none">{packages.length}</span>
                 </div>
               </div>
-            </div>
-            <div className="bg-surface-container-lowest p-4 rounded shadow-sm border border-surface-variant/70 relative overflow-hidden flex flex-col justify-between">
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
-              <div className="flex items-start justify-between">
-                <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Package Types</span>
-                <span className="material-symbols-outlined text-on-surface-variant text-[20px]">category</span>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-[#5C0A1E]/10 flex items-center justify-center text-[#5C0A1E]">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">loyalty</span>
               </div>
-              <div className="mt-3">
-                <div className="text-3xl text-on-surface font-bold tracking-tight">{new Set(packages.map(p => p.type)).size}</div>
+            </div>
+          </div>
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#10b981]"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Active Packages</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-2xl md:text-4xl text-[#4a1420] font-bold leading-none">{packages.filter(p => p.status === 'Active').length}</span>
+                </div>
+              </div>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">check_circle</span>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#b0891d]"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Avg Price (Pax)</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-lg md:text-2xl text-[#4a1420] font-bold leading-none">PKR {packages.length ? Math.round(packages.reduce((sum, p) => sum + p.price, 0) / packages.length).toLocaleString() : 0}</span>
+                </div>
+              </div>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-[#b0891d]/10 flex items-center justify-center text-[#b0891d]">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">payments</span>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#4a1420]"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Package Types</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-2xl md:text-4xl text-[#4a1420] font-bold leading-none">{new Set(packages.map(p => p.type)).size}</span>
+                </div>
+              </div>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-[#4a1420]/10 flex items-center justify-center text-[#4a1420]">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">category</span>
               </div>
             </div>
           </div>

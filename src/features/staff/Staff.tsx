@@ -189,7 +189,7 @@ export const Staff = () => {
   ];
 
   return (
-    <div className="w-full px-8 py-8">
+    <div className="w-full px-4 md:px-8 py-6 bg-[#FAF8F5] min-h-screen">
       <PageHeader 
         title="Human Resources & Staffing"
         category="Operations & Administration"
@@ -197,81 +197,93 @@ export const Staff = () => {
         description="Manage venue management personnel, operational teams, scheduling, payroll, and event assignments."
         onBack={showBack ? () => navigate(-1) : undefined}
         actions={
-          <>
-            <Button variant="outline" icon="print" onClick={handleExportPayroll}>Export Payroll</Button>
-            <Button variant="primary" icon="person_add" onClick={() => navigate('/app/staff/new')}>Add Employee</Button>
-          </>
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <Button variant="outline" icon="print" onClick={handleExportPayroll} className="flex-1 md:flex-auto flex items-center justify-center gap-2 bg-white hover:bg-[#e8e4db] text-[#4a1420] px-3 md:px-4 py-2 rounded-lg shadow-sm transition-all border border-[#e8e4db] text-xs md:text-sm font-medium">Export Payroll</Button>
+            <Button variant="primary" icon="person_add" onClick={() => navigate('/app/staff/new')} className="flex-1 md:flex-auto flex items-center justify-center gap-2 bg-[#5C0A1E] hover:bg-[#4a1420] text-white px-3 md:px-5 py-2 rounded-lg shadow-md hover:shadow-lg transition-all text-xs md:text-sm">Add Employee</Button>
+          </div>
         }
       />
 
-      <div className="flex flex-col w-full space-y-6">
+      <div className="flex flex-col w-full space-y-6 md:space-y-8 mt-6">
         {/* KPI Summary */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="relative bg-surface-container-lowest p-5 rounded shadow-sm flex flex-col justify-between overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Total Staff</span>
-              <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary">
-                <span className="material-symbols-outlined text-[18px]">groups</span>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-8">
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#5C0A1E]"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Total Staff</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-2xl md:text-4xl text-[#4a1420] font-bold leading-none">{totalStaff}</span>
+                </div>
+              </div>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-[#5C0A1E]/10 flex items-center justify-center text-[#5C0A1E]">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">groups</span>
               </div>
             </div>
-            <div className="font-headline-lg text-headline-lg text-primary tracking-tight">{totalStaff}</div>
           </div>
-          <div className="relative bg-surface-container-lowest p-5 rounded shadow-sm flex flex-col justify-between overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Active Roster</span>
-              <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-secondary">
-                <span className="material-symbols-outlined text-[18px]">verified_user</span>
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#10b981]"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Active Roster</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-2xl md:text-4xl text-[#4a1420] font-bold leading-none">{activeStaff}</span>
+                </div>
+              </div>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">verified_user</span>
               </div>
             </div>
-            <div className="font-headline-lg text-headline-lg text-primary tracking-tight">{activeStaff}</div>
           </div>
-          <div className="relative bg-surface-container-lowest p-5 rounded shadow-sm flex flex-col justify-between overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary-fixed-dim"></div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Available Today</span>
-              <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant">
-                <span className="material-symbols-outlined text-[18px]">how_to_reg</span>
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#b0891d]"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Available Today</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-2xl md:text-4xl text-[#4a1420] font-bold leading-none">{availableToday}</span>
+                </div>
+              </div>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-[#b0891d]/10 flex items-center justify-center text-[#b0891d]">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">how_to_reg</span>
               </div>
             </div>
-            <div className="font-headline-lg text-headline-lg text-primary tracking-tight">{availableToday}</div>
           </div>
         </div>
 
         {/* CONTROLS */}
-        <div className="bg-surface-container-lowest p-3 rounded shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+        <div className="bg-white p-3 md:p-4 border border-[#e8e4db] rounded-xl shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-center overflow-x-auto hide-scrollbar gap-1.5 w-full">
             <Button 
               variant={shiftFilter === 'All' ? 'primary' : 'text'} 
-              className={shiftFilter === 'All' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-on-surface-variant'} 
+              className={shiftFilter === 'All' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
               onClick={() => setShiftFilter('All')}
             >
               All Shifts
             </Button>
             <Button 
               variant={shiftFilter === 'Morning' ? 'primary' : 'text'} 
-              className={shiftFilter === 'Morning' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-on-surface-variant'} 
+              className={shiftFilter === 'Morning' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
               onClick={() => setShiftFilter('Morning')}
             >
               Morning
             </Button>
             <Button 
               variant={shiftFilter === 'Evening' ? 'primary' : 'text'} 
-              className={shiftFilter === 'Evening' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-on-surface-variant'} 
+              className={shiftFilter === 'Evening' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
               onClick={() => setShiftFilter('Evening')}
             >
               Evening
             </Button>
             <Button 
               variant={shiftFilter === 'Night' ? 'primary' : 'text'} 
-              className={shiftFilter === 'Night' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-on-surface-variant'} 
+              className={shiftFilter === 'Night' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
               onClick={() => setShiftFilter('Night')}
             >
               Night
             </Button>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 w-full md:w-auto">
             <SearchInput 
               placeholder="Search staff members..." 
               value={searchTerm} 
@@ -281,6 +293,8 @@ export const Staff = () => {
         </div>
 
         {/* DATA GRID */}
+        <div className="bg-white rounded-xl shadow-sm border border-[#e8e4db] overflow-hidden">
+          <div className="overflow-x-auto w-full">
         <DataGrid 
           data={filteredData}
           columns={columns}
@@ -293,6 +307,8 @@ export const Staff = () => {
           totalPages={1}
           totalItems={filteredData.length}
         />
+          </div>
+        </div>
       </div>
 
       <Drawer

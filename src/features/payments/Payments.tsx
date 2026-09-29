@@ -148,7 +148,7 @@ export const Payments = () => {
   ];
 
   return (
-    <div className="w-full px-8 py-8">
+    <div className="w-full px-4 md:px-8 py-6 bg-[#FAF8F5] min-h-screen">
       <PageHeader 
         title="Payments & Commercial Settlements"
         category="Commercial & Financial Settlements"
@@ -156,94 +156,127 @@ export const Payments = () => {
         description="Monitor revenue collections, scheduled milestone receivables, multi-channel gateways, and daily accounts reconciliation."
         onBack={showBack ? () => navigate(-1) : undefined}
         actions={
-          <>
-            <Button variant="outline" icon="download">Export Ledger</Button>
-            <Button variant="primary" icon="add" onClick={() => navigate('/app/payments/new')}>Record Payment</Button>
-          </>
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <Button variant="outline" icon="download" className="flex-1 md:flex-auto flex items-center justify-center gap-2 bg-white hover:bg-[#e8e4db] text-[#4a1420] px-3 md:px-4 py-2 rounded-lg shadow-sm transition-all border border-[#e8e4db] text-xs md:text-sm font-medium">Export Ledger</Button>
+            <Button variant="primary" icon="add" onClick={() => navigate('/app/payments/new')} className="flex-1 md:flex-auto flex items-center justify-center gap-2 bg-[#5C0A1E] hover:bg-[#4a1420] text-white px-3 md:px-5 py-2 rounded-lg shadow-md hover:shadow-lg transition-all text-xs md:text-sm">Record Payment</Button>
+          </div>
         }
       />
 
-      <div className="flex flex-col w-full space-y-6">
+      <div className="flex flex-col w-full space-y-6 md:space-y-8 mt-6">
         {/* KPI Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Total Collected</span>
-              <span className="material-symbols-outlined text-[18px] text-secondary">account_balance_wallet</span>
-            </div>
-            <div className="mt-3 font-headline-sm text-headline-sm text-primary font-bold">
-              PKR {(payments.filter(p => p.status === 'Completed').reduce((acc, p) => acc + p.amount, 0) / 1000000).toFixed(2)}M
-            </div>
-          </div>
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Outstanding</span>
-              <span className="material-symbols-outlined text-[18px] text-primary-container">pending_actions</span>
-            </div>
-            <div className="mt-3 font-headline-sm text-headline-sm text-on-surface font-bold">
-              PKR {(payments.filter(p => p.status === 'Pending').reduce((acc, p) => acc + p.amount, 0) / 1000000).toFixed(2)}M
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-4 md:mb-8">
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#5C0A1E]"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Total Collected</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-2xl md:text-4xl text-[#4a1420] font-bold leading-none">
+                    PKR {(payments.filter(p => p.status === 'Completed').reduce((acc, p) => acc + p.amount, 0) / 1000000).toFixed(2)}M
+                  </span>
+                </div>
+              </div>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-[#5C0A1E]/10 flex items-center justify-center text-[#5C0A1E]">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">account_balance_wallet</span>
+              </div>
             </div>
           </div>
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-error font-semibold">Failed</span>
-              <span className="material-symbols-outlined text-[18px] text-error">warning</span>
-            </div>
-            <div className="mt-3 font-headline-sm text-headline-sm text-error font-bold">
-              PKR {(payments.filter(p => p.status === 'Failed').reduce((acc, p) => acc + p.amount, 0) / 1000).toFixed(0)}k
-            </div>
-          </div>
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary-fixed-dim"></div>
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Total Payments</span>
-              <span className="material-symbols-outlined text-[18px] text-secondary">calendar_clock</span>
-            </div>
-            <div className="mt-3 font-headline-sm text-headline-sm text-on-surface font-bold">
-              {payments.length}
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#b0891d]"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Outstanding</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-2xl md:text-4xl text-[#4a1420] font-bold leading-none">
+                    PKR {(payments.filter(p => p.status === 'Pending').reduce((acc, p) => acc + p.amount, 0) / 1000000).toFixed(2)}M
+                  </span>
+                </div>
+              </div>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-[#b0891d]/10 flex items-center justify-center text-[#b0891d]">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">pending_actions</span>
+              </div>
             </div>
           </div>
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden col-span-2 md:col-span-1">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-on-surface-variant"></div>
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Refunds</span>
-              <span className="material-symbols-outlined text-[18px] text-on-surface-variant">receipt_long</span>
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-600"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Failed</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-lg md:text-2xl text-red-600 font-bold leading-none">
+                    PKR {(payments.filter(p => p.status === 'Failed').reduce((acc, p) => acc + p.amount, 0) / 1000).toFixed(0)}k
+                  </span>
+                </div>
+              </div>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-red-600/10 flex items-center justify-center text-red-600">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">warning</span>
+              </div>
             </div>
-            <div className="mt-3 font-headline-sm text-headline-sm text-on-surface font-bold">
-              PKR {(payments.filter(p => p.status === 'Refunded').reduce((acc, p) => acc + p.amount, 0) / 1000).toFixed(0)}k
+          </div>
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#10b981]"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Total Payments</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-2xl md:text-4xl text-[#4a1420] font-bold leading-none">{payments.length}</span>
+                </div>
+              </div>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">calendar_clock</span>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow col-span-2 md:col-span-1">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gray-500"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Refunds</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-lg md:text-2xl text-gray-700 font-bold leading-none">
+                    PKR {(payments.filter(p => p.status === 'Refunded').reduce((acc, p) => acc + p.amount, 0) / 1000).toFixed(0)}k
+                  </span>
+                </div>
+              </div>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-gray-500/10 flex items-center justify-center text-gray-500">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">receipt_long</span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* CONTROLS */}
-        <div className="bg-surface-container-lowest p-3 rounded shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+        {/* CONTROLS */}
+        <div className="bg-white p-3 md:p-4 border border-[#e8e4db] rounded-xl shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-center gap-4 w-full md:w-auto">
             <SearchInput 
-              placeholder="Search by voucher, client, or booking..." 
+              placeholder="Search by voucher, client..." 
               value={searchTerm} 
               onChange={setSearchTerm} 
             />
-            <Button variant="outline" icon="filter_list">More Filters</Button>
+            <Button variant="outline" icon="filter_list" className="hidden md:flex">More Filters</Button>
           </div>
         </div>
 
         {/* DATA GRID */}
-        <DataGrid 
-          data={filteredData}
-          columns={columns}
-          keyExtractor={(item) => item.id}
-          onRowClick={(item) => navigate(`/app/payments/${item.id}`)}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-          currentPage={1}
-          totalPages={1}
-          totalItems={filteredData.length}
-          loading={loading}
-        />
+        <div className="bg-white rounded-xl shadow-sm border border-[#e8e4db] overflow-hidden">
+          <div className="overflow-x-auto w-full">
+            <DataGrid 
+              data={filteredData}
+              columns={columns}
+              keyExtractor={(item) => item.id}
+              onRowClick={(item) => navigate(`/app/payments/${item.id}`)}
+              sortColumn={sortColumn}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+              currentPage={1}
+              totalPages={1}
+              totalItems={filteredData.length}
+              loading={loading}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

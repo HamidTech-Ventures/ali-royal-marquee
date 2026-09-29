@@ -68,6 +68,23 @@ export const BookingForm = () => {
   const handlePrev = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
   const handleSubmit = async () => {
+    if (!formData.customerName || !formData.customerPhone) {
+      error("Customer Name and Phone are required.");
+      return;
+    }
+    if (!formData.date) {
+      error("Event Date is required to create a booking.");
+      return;
+    }
+    if (!formData.guests || Number(formData.guests) <= 0) {
+      error("Please enter a valid number of expected guests.");
+      return;
+    }
+    if (!formData.totalAmount || Number(formData.totalAmount) <= 0) {
+      error("Please enter a valid total amount.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // 1. Create Customer if new

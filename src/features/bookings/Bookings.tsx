@@ -203,7 +203,7 @@ export const Bookings = () => {
         icon="event_available"
         description="Manage venue reservations, event details, payments, and booking status across Grand Ballroom, Crystal Pavilion & Garden Marquee."
         actions={
-          <div className="flex overflow-x-auto md:flex-wrap items-center gap-2 pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex overflow-x-auto items-center gap-2 hide-scrollbar pb-1 md:pb-0 w-full md:w-auto">
             <Button variant="outline" icon="download" className="shrink-0 !text-[#4a1420] !border-surface-variant">Export</Button>
             <Button variant="primary" icon="add" onClick={() => navigate('/app/bookings/new')} className="whitespace-nowrap shrink-0 !bg-[#5C0A1E]">
               New Booking
@@ -268,7 +268,7 @@ export const Bookings = () => {
 
         {/* CONTROLS */}
         <div className="bg-white p-3 md:p-4 border border-[#e8e4db] rounded-xl shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center overflow-x-auto hide-scrollbar gap-1.5 -mx-3 px-3 md:mx-0 md:px-0">
+          <div className="flex items-center overflow-x-auto hide-scrollbar gap-1.5 w-full">
             <Button 
               variant={statusFilter === 'All' ? 'primary' : 'text'} 
               className={statusFilter === 'All' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 

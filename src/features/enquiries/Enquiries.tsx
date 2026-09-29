@@ -177,7 +177,7 @@ export const Enquiries = () => {
         icon="contact_mail"
         description="Manage prospective wedding parties, corporate galas, personalized walkthroughs, and banquet proposals."
         actions={
-          <div className="flex overflow-x-auto md:flex-wrap items-center gap-2 pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex overflow-x-auto items-center gap-2 hide-scrollbar pb-1 md:pb-0 w-full md:w-auto">
             <Button variant="primary" icon="add" onClick={() => navigate('/app/enquiries/new')} className="whitespace-nowrap shrink-0 !bg-[#5C0A1E]">
               New Enquiry
             </Button>
@@ -289,7 +289,7 @@ export const Enquiries = () => {
               }} 
             />
           </div>
-          <div className="flex overflow-x-auto items-center gap-2 hide-scrollbar pb-1 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="flex overflow-x-auto items-center gap-2 hide-scrollbar pb-1 md:pb-0 w-full md:w-auto">
             <Button variant="outline" icon="download" onClick={handleExport} className="shrink-0 !text-[#4a1420] !border-surface-variant">Export</Button>
             <Button variant="primary" icon="add" onClick={() => navigate('/app/enquiries/new')} className="shrink-0 !bg-[#5C0A1E]">
               New Enquiry

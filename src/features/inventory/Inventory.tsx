@@ -157,7 +157,7 @@ export const Inventory = () => {
   ];
 
   return (
-    <div className="w-full px-8 py-8">
+    <div className="w-full px-4 md:px-8 py-6 bg-[#FAF8F5] min-h-screen">
       <PageHeader 
         title="Asset & Inventory Master"
         category="Operations & Logistics"
@@ -165,72 +165,86 @@ export const Inventory = () => {
         description="Track physical assets, catering supplies, decor materials, and monitor reorder levels in real-time."
         onBack={showBack ? () => navigate(-1) : undefined}
         actions={
-          <>
-            <Button variant="outline" icon="sync" onClick={fetchInventory}>Refresh Stock</Button>
-            <Button variant="primary" icon="add" onClick={() => navigate('/app/inventory/new')}>Add Item</Button>
-          </>
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <Button variant="outline" icon="sync" onClick={fetchInventory} className="flex-1 md:flex-auto flex items-center justify-center gap-2 bg-white hover:bg-[#e8e4db] text-[#4a1420] px-3 md:px-4 py-2 rounded-lg shadow-sm transition-all border border-[#e8e4db] text-xs md:text-sm font-medium">Refresh Stock</Button>
+            <Button variant="primary" icon="add" onClick={() => navigate('/app/inventory/new')} className="flex-1 md:flex-auto flex items-center justify-center gap-2 bg-[#5C0A1E] hover:bg-[#4a1420] text-white px-3 md:px-5 py-2 rounded-lg shadow-md hover:shadow-lg transition-all text-xs md:text-sm">Add Item</Button>
+          </div>
         }
       />
 
-      <div className="flex flex-col w-full space-y-6">
+      <div className="flex flex-col w-full space-y-6 md:space-y-8 mt-6">
         {/* KPI Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-4">
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Cataloged Items</span>
-              <span className="material-symbols-outlined text-[18px] text-secondary">shelves</span>
-            </div>
-            <div className="mt-3 font-headline-md text-headline-md text-primary font-bold">{inventory.length}</div>
-          </div>
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary-container"></div>
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Low Stock</span>
-              <span className="material-symbols-outlined text-[18px] text-secondary">notifications_active</span>
-            </div>
-            <div className="mt-3 font-headline-md text-headline-md text-secondary font-bold">
-              {inventory.filter(i => i.status === 'Low Stock').length}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-8">
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#5C0A1E]"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Cataloged Items</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-2xl md:text-4xl text-[#4a1420] font-bold leading-none">{inventory.length}</span>
+                </div>
+              </div>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-[#5C0A1E]/10 flex items-center justify-center text-[#5C0A1E]">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">shelves</span>
+              </div>
             </div>
           </div>
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-error font-semibold">Out of Stock</span>
-              <span className="material-symbols-outlined text-[18px] text-error">warning</span>
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#b0891d]"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Low Stock</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-2xl md:text-4xl text-[#4a1420] font-bold leading-none">{inventory.filter(i => i.status === 'Low Stock').length}</span>
+                </div>
+              </div>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-[#b0891d]/10 flex items-center justify-center text-[#b0891d]">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">notifications_active</span>
+              </div>
             </div>
-            <div className="mt-3 font-headline-md text-headline-md text-error font-bold">
-              {inventory.filter(i => i.status === 'Out of Stock').length}
+          </div>
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow col-span-2 md:col-span-1">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-600"></div>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Out of Stock</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-2xl md:text-4xl text-red-600 font-bold leading-none">{inventory.filter(i => i.status === 'Out of Stock').length}</span>
+                </div>
+              </div>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-red-600/10 flex items-center justify-center text-red-600">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">warning</span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* CONTROLS */}
-        <div className="bg-surface-container-lowest p-3 rounded shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+        <div className="bg-white p-3 md:p-4 border border-[#e8e4db] rounded-xl shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-center overflow-x-auto hide-scrollbar gap-1.5 w-full">
             <Button 
               variant={statusFilter === 'All' ? 'primary' : 'text'} 
-              className={statusFilter === 'All' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-on-surface-variant'} 
+              className={statusFilter === 'All' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
               onClick={() => setStatusFilter('All')}
             >
               All Items
             </Button>
             <Button 
               variant={statusFilter === 'Low Stock' ? 'primary' : 'text'} 
-              className={statusFilter === 'Low Stock' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-on-surface-variant'} 
+              className={statusFilter === 'Low Stock' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
               onClick={() => setStatusFilter('Low Stock')}
             >
               Low Stock
             </Button>
             <Button 
               variant={statusFilter === 'Out of Stock' ? 'primary' : 'text'} 
-              className={statusFilter === 'Out of Stock' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-error hover:text-error'} 
+              className={statusFilter === 'Out of Stock' ? 'py-1.5 px-3 !bg-red-600' : 'py-1.5 px-3 text-red-600 hover:text-red-600'} 
               onClick={() => setStatusFilter('Out of Stock')}
             >
               Out of Stock
             </Button>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 w-full md:w-auto">
             <SearchInput 
               placeholder="Search items or SKUs..." 
               value={searchTerm} 
@@ -240,19 +254,23 @@ export const Inventory = () => {
         </div>
 
         {/* DATA GRID */}
-        <DataGrid 
-          data={filteredData}
-          columns={columns}
-          keyExtractor={(item) => item.id}
-          onRowClick={(item) => setSelectedItem(item)}
-          loading={loading}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-          currentPage={1}
-          totalPages={1}
-          totalItems={filteredData.length}
-        />
+        <div className="bg-white rounded-xl shadow-sm border border-[#e8e4db] overflow-hidden">
+          <div className="overflow-x-auto w-full">
+            <DataGrid 
+              data={filteredData}
+              columns={columns}
+              keyExtractor={(item) => item.id}
+              onRowClick={(item) => setSelectedItem(item)}
+              loading={loading}
+              sortColumn={sortColumn}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+              currentPage={1}
+              totalPages={1}
+              totalItems={filteredData.length}
+            />
+          </div>
+        </div>
       </div>
 
       <Drawer

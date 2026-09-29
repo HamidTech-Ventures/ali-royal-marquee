@@ -100,7 +100,7 @@ export const Reports = () => {
                 <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
               </div>
             </div>
-            <div className="mt-4 pt-3 flex flex-col gap-1 bg-surface-container-low/40 -mx-5 -mb-5 px-5 py-3">
+            <div className="mt-4 pt-3 flex flex-col gap-1 bg-surface-container-low/40 px-3 py-3 rounded-b-xl w-full">
               <div className="flex items-center gap-1.5 text-secondary font-semibold font-label-md text-label-md">
                 <span className="material-symbols-outlined text-[16px]">trending_up</span>
                 <span>+14.6% vs Aug 2026</span>
@@ -119,7 +119,7 @@ export const Reports = () => {
                 <span className="material-symbols-outlined text-[20px]">receipt_long</span>
               </div>
             </div>
-            <div className="mt-4 pt-3 flex flex-col gap-1 bg-surface-container-low/40 -mx-5 -mb-5 px-5 py-3">
+            <div className="mt-4 pt-3 flex flex-col gap-1 bg-surface-container-low/40 px-3 py-3 rounded-b-xl w-full">
               <div className="flex items-center gap-1.5 text-on-surface-variant font-semibold font-label-md text-label-md">
                 <span className="material-symbols-outlined text-[16px]">trending_up</span>
                 <span>+8.2% vs Aug 2026</span>
@@ -161,7 +161,7 @@ export const Reports = () => {
                 <span className="material-symbols-outlined text-[20px]">pie_chart</span>
               </div>
             </div>
-            <div className="mt-4 pt-3 flex flex-col gap-1 bg-surface-container-low/40 -mx-5 -mb-5 px-5 py-3">
+            <div className="mt-4 pt-3 flex flex-col gap-1 bg-surface-container-low/40 px-3 py-3 rounded-b-xl w-full">
               <div className="flex items-center gap-1.5 text-secondary font-semibold font-label-md text-label-md">
                 <span className="material-symbols-outlined text-[16px]">check_circle</span>
                 <span>+2.1% net expansion</span>
@@ -180,7 +180,7 @@ export const Reports = () => {
                 <span className="material-symbols-outlined text-[20px]">event_available</span>
               </div>
             </div>
-            <div className="mt-4 pt-3 flex flex-col gap-1 bg-surface-container-low/40 -mx-5 -mb-5 px-5 py-3">
+            <div className="mt-4 pt-3 flex flex-col gap-1 bg-surface-container-low/40 px-3 py-3 rounded-b-xl w-full">
               <div className="flex items-center gap-1.5 text-secondary font-semibold font-label-md text-label-md">
                 <span className="material-symbols-outlined text-[16px]">trending_up</span>
                 <span>+12.0% volume</span>
@@ -199,7 +199,7 @@ export const Reports = () => {
                 <span className="material-symbols-outlined text-[20px]">notification_important</span>
               </div>
             </div>
-            <div className="mt-4 pt-3 flex flex-col gap-1 bg-surface-container-low/40 -mx-5 -mb-5 px-5 py-3">
+            <div className="mt-4 pt-3 flex flex-col gap-1 bg-surface-container-low/40 px-3 py-3 rounded-b-xl w-full">
               <div className="flex items-center gap-1.5 text-error font-semibold font-label-md text-label-md">
                 <span className="material-symbols-outlined text-[16px]">priority_high</span>
                 <span>8 overdue accounts</span>

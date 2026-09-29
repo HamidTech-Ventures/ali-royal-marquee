@@ -35,14 +35,14 @@ export const InventoryForm = () => {
   };
 
   return (
-    <div className="w-full px-8 py-8">
+    <div className="w-full px-4 md:px-8 py-6 bg-[#FAF8F5] min-h-screen">
       <PageHeader 
         title="Add Inventory Item"
         category="Operations & Logistics"
         onBack={() => navigate(-1)}
       />
 
-      <div className="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/60 p-8 max-w-4xl mx-auto">
+      <div className="bg-white rounded-xl border border-[#e8e4db] shadow-sm p-4 md:p-8 max-w-4xl mx-auto mt-6 md:mt-8">
         <FormSection title="Item Details" description="Add a new physical asset or consumable.">
           <Input 
             label="Item Name" 

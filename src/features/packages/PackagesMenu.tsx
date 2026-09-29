@@ -21,6 +21,7 @@ export const PackagesMenu = () => {
   const [activeTab, setActiveTab] = useState<'packages' | 'menu' | 'addons' | 'pricing'>('packages');
   const [sortColumn, setSortColumn] = useState('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [featuredPackageId, setFeaturedPackageId] = useState<string | null>(null);
 
   const [packages, setPackages] = useState<Package[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -84,6 +85,13 @@ export const PackagesMenu = () => {
     });
     return result;
   }, [searchTerm, sortColumn, sortDirection, packages]);
+
+  const featuredPackage = useMemo(() => {
+    if (featuredPackageId) {
+      return packages.find(p => p.id === featuredPackageId) || filteredData[0];
+    }
+    return filteredData[0];
+  }, [featuredPackageId, packages, filteredData]);
 
   const handleDeletePackage = async (id: string, name: string) => {
     if (window.confirm(`Are you sure you want to delete the package "${name}"?`)) {
@@ -228,8 +236,8 @@ export const PackagesMenu = () => {
   };
 
   return (
-    <div className="w-full px-8 py-8">
-      <div className="flex flex-col w-full">
+    <div className="w-full px-4 md:px-8 py-6 bg-[#FAF8F5] min-h-screen">
+      <div className="flex flex-col w-full space-y-6">
         <PageHeader 
           title="Packages & Menu Management"
           category="Commercial Operations"
@@ -237,8 +245,8 @@ export const PackagesMenu = () => {
           description="Curate luxury banquet tiers, culinary riders, per-head rate cards, and bespoke event add-ons across Ali Royal Marquee venues."
           onBack={showBack ? () => navigate(-1) : undefined}
           actions={
-            <>
-              <div className="flex items-center bg-surface-container-lowest px-3.5 py-2 rounded-lg shadow-sm border border-outline-variant/60">
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <div className="hidden md:flex items-center bg-white px-3.5 py-2 rounded-lg shadow-sm border border-[#e8e4db]">
                 <span className="material-symbols-outlined text-[20px] text-on-surface-variant mr-2">search</span>
                 <input 
                   className="bg-transparent text-on-surface font-body-sm text-body-sm outline-none w-48 placeholder:text-on-surface-variant/60" 
@@ -250,123 +258,123 @@ export const PackagesMenu = () => {
                 <span className="font-label-sm text-label-sm bg-surface-container px-2 py-0.5 rounded text-on-surface-variant ml-2 font-medium">⌘K</span>
               </div>
               <button 
-                className="flex items-center gap-2 bg-surface-container-lowest hover:bg-surface-container-low text-primary-container px-4 py-2 rounded-lg shadow-sm transition-all border border-outline-variant/60 font-title-sm text-title-sm font-medium" 
+                className="flex-1 md:flex-auto flex items-center justify-center gap-2 bg-white hover:bg-[#e8e4db] text-[#4a1420] px-3 md:px-4 py-2 rounded-lg shadow-sm transition-all border border-[#e8e4db] text-xs md:text-sm font-medium" 
                 type="button"
                 onClick={() => setIsMenuModalOpen(true)}
               >
                 <span className="material-symbols-outlined text-[18px]">add_circle</span>
-                <span>Add Menu Item</span>
+                <span className="whitespace-nowrap">Menu Item</span>
               </button>
-              <button className="flex items-center gap-2.5 bg-primary-container hover:bg-primary text-on-primary px-5 py-2 rounded-lg shadow-md hover:shadow-lg transition-all" type="button" onClick={() => navigate('/app/packages/new')}>
-                <span className="material-symbols-outlined text-[20px] text-secondary-fixed">layers</span>
-                <span className="font-title-sm text-title-sm font-semibold tracking-wide">Create Package</span>
+              <button className="flex-1 md:flex-auto flex items-center justify-center gap-2 bg-[#5C0A1E] hover:bg-[#4a1420] text-white px-3 md:px-5 py-2 rounded-lg shadow-md hover:shadow-lg transition-all" type="button" onClick={() => navigate('/app/packages/new')}>
+                <span className="material-symbols-outlined text-[20px] text-[#b0891d]">layers</span>
+                <span className="text-xs md:text-sm font-semibold tracking-wide whitespace-nowrap">Create Package</span>
               </button>
-            </>
+            </div>
           }
         />
 
-        {/* Executive Summary KPI Cards (5 Cards) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5 mb-8">
-          <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
+        {/* Executive Summary KPI Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-5 mb-4 md:mb-8">
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#5C0A1E]"></div>
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Active Packages</p>
-                <div className="flex items-baseline gap-2 mt-2">
-                  <span className="font-display text-display text-primary leading-none">{filteredData.length}</span>
-                  <span className="font-label-sm text-label-sm text-secondary font-medium">Tiers</span>
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Active Packages</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-2xl md:text-4xl text-[#4a1420] font-bold leading-none">{filteredData.length}</span>
+                  <span className="text-[10px] md:text-xs text-[#b0891d] font-medium">Tiers</span>
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-primary-container">
-                <span className="material-symbols-outlined text-[22px]">auto_awesome_motion</span>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-[#5C0A1E]/10 flex items-center justify-center text-[#5C0A1E]">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">auto_awesome_motion</span>
               </div>
             </div>
-            <div className="mt-4 pt-3 flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low/50 -mx-5 -mb-5 px-5 py-2.5">
+            <div className="mt-4 pt-3 flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low/50 px-3 py-2.5 rounded-b-xl w-full">
               <span>Across 4 Venue Halls</span>
               <span className="font-label-sm text-label-sm text-secondary font-semibold">+2 Seasonal</span>
             </div>
           </div>
           
-          <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#10b981]"></div>
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Culinary Dishes</p>
-                <div className="flex items-baseline gap-2 mt-2">
-                  <span className="font-display text-display text-on-surface leading-none">{menuItems.length}</span>
-                  <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Collections</span>
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Culinary Dishes</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-2xl md:text-4xl text-[#4a1420] font-bold leading-none">{menuItems.length}</span>
+                  <span className="text-[10px] md:text-xs text-on-surface-variant font-medium">Collections</span>
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-lg bg-secondary-container/40 flex items-center justify-center text-secondary">
-                <span className="material-symbols-outlined text-[22px]">restaurant</span>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">restaurant</span>
               </div>
             </div>
-            <div className="mt-4 pt-3 flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low/50 -mx-5 -mb-5 px-5 py-2.5">
+            <div className="mt-4 pt-3 flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low/50 px-3 py-2.5 rounded-b-xl w-full">
               <span className="truncate">Desi, Continental & Mughal</span>
               <span className="font-label-sm text-label-sm text-primary font-semibold">Live Live</span>
             </div>
           </div>
           
-          <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#b0891d]"></div>
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Add-on Inventory</p>
-                <div className="flex items-baseline gap-2 mt-2">
-                  <span className="font-display text-display text-on-surface leading-none">{addons.length}</span>
-                  <span className="font-label-sm text-label-sm text-on-surface-variant font-medium">Upgrades</span>
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Add-on Inventory</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-2xl md:text-4xl text-[#4a1420] font-bold leading-none">{addons.length}</span>
+                  <span className="text-[10px] md:text-xs text-[#b0891d] font-medium">Upgrades</span>
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-primary-container">
-                <span className="material-symbols-outlined text-[22px]">room_service</span>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-[#b0891d]/10 flex items-center justify-center text-[#b0891d]">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">room_service</span>
               </div>
             </div>
-            <div className="mt-4 pt-3 flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low/50 -mx-5 -mb-5 px-5 py-2.5">
+            <div className="mt-4 pt-3 flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low/50 px-3 py-2.5 rounded-b-xl w-full">
               <span className="truncate">Live Stalls, Floral, FX</span>
               <span className="font-label-sm text-label-sm text-secondary font-semibold">Active</span>
             </div>
           </div>
 
-          <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#4a1420]"></div>
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Top Revenue Tier</p>
-                <div className="flex items-baseline gap-2 mt-2">
-                  <span className="font-headline-md text-headline-md text-primary font-bold">
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Top Revenue Tier</p>
+                <div className="flex items-baseline gap-2 mt-1 md:mt-2">
+                  <span className="font-serif text-lg md:text-2xl text-[#4a1420] font-bold truncate max-w-[120px]">
                     {filteredData.length > 0 ? [...filteredData].sort((a,b) => b.price - a.price)[0].name : 'N/A'}
                   </span>
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-lg bg-secondary-container/30 flex items-center justify-center text-secondary">
-                <span className="material-symbols-outlined text-[22px]">hotel_class</span>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-[#4a1420]/10 flex items-center justify-center text-[#4a1420]">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">hotel_class</span>
               </div>
             </div>
-            <div className="mt-4 pt-3 flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low/50 -mx-5 -mb-5 px-5 py-2.5">
+            <div className="mt-4 pt-3 flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low/50 px-3 py-2.5 rounded-b-xl w-full">
               <span>42 Confirmed Events</span>
               <span className="font-currency-num text-[13px] text-primary font-bold">PKR 32.8M</span>
             </div>
           </div>
 
-          <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
+          <div className="bg-white p-3 md:p-5 rounded-xl border border-[#e8e4db] shadow-sm relative overflow-hidden flex flex-col justify-between group hover:shadow-md transition-shadow">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#10b981]"></div>
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Average Head Yield</p>
-                <div className="flex items-baseline gap-1 mt-2">
-                  <span className="font-currency-num text-headline-md text-primary font-bold">
+                <p className="text-[9px] md:text-xs uppercase tracking-wider text-on-surface-variant font-semibold">Average Head Yield</p>
+                <div className="flex items-baseline gap-1 mt-1 md:mt-2">
+                  <span className="font-serif text-2xl md:text-4xl text-[#4a1420] font-bold leading-none">
                     {filteredData.length > 0 ? Math.round(filteredData.reduce((acc, curr) => acc + curr.price, 0) / filteredData.length).toLocaleString() : '0'}
                   </span>
-                  <span className="font-label-sm text-label-sm text-on-surface-variant font-normal">PKR/Pax</span>
+                  <span className="text-[10px] md:text-xs text-on-surface-variant font-medium">PKR/Pax</span>
                 </div>
               </div>
-              <div className="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-primary-container">
-                <span className="material-symbols-outlined text-[22px]">trending_up</span>
+              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
+                <span className="material-symbols-outlined text-[16px] md:text-[22px]">trending_up</span>
               </div>
             </div>
-            <div className="mt-4 pt-3 flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low/50 -mx-5 -mb-5 px-5 py-2.5">
+            <div className="mt-4 pt-3 flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm bg-surface-container-low/50 px-3 py-2.5 rounded-b-xl w-full">
               <span>Season Index 2025</span>
-              <span className="font-label-sm text-label-sm text-secondary font-bold flex items-center gap-0.5">
+              <span className="font-label-sm text-label-sm text-[#10b981] font-bold flex items-center gap-0.5">
                 <span className="material-symbols-outlined text-[14px]">arrow_upward</span>14% YoY
               </span>
             </div>
@@ -420,75 +428,75 @@ export const PackagesMenu = () => {
         {activeTab === 'packages' && (
           <>
         {/* FEATURED BANQUET PACKAGE */}
-        {filteredData.length > 0 && (
-        <div className="bg-surface-container-lowest rounded-xl shadow-sm mb-10 overflow-hidden relative">
-          <div className="h-1.5 w-full bg-secondary"></div>
-          <div className="p-6 lg:p-8 flex flex-col xl:flex-row gap-8">
+        {featuredPackage && (
+        <div className="bg-white rounded-xl border border-[#e8e4db] shadow-sm mb-6 md:mb-10 overflow-hidden relative transition-all duration-300">
+          <div className="h-1.5 w-full bg-[#5C0A1E]"></div>
+          <div className="p-4 md:p-6 lg:p-8 flex flex-col xl:flex-row gap-6 md:gap-8">
             <div className="xl:w-5/12 flex flex-col justify-between space-y-6">
               <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="bg-secondary text-on-secondary px-3 py-1 rounded-full font-label-sm text-label-sm font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-3">
+                  <span className="bg-[#5C0A1E] text-white px-3 py-1 rounded-full font-label-sm text-[10px] md:text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
                     <span className="material-symbols-outlined text-[14px]">star</span>
-                    Flagship · Most Popular
+                    Selected Package
                   </span>
                   <div className="space-y-4">
-                    <span className="bg-secondary-fixed/50 text-secondary px-2.5 py-0.5 rounded font-label-sm text-label-sm font-semibold">
-                      Peak Season 2025
+                    <span className="bg-[#b0891d]/20 text-[#b0891d] px-2.5 py-0.5 rounded font-label-sm text-[10px] md:text-xs font-semibold">
+                      Featured
                     </span>
                   </div>
                 </div>
-                <h2 className="font-headline-lg text-headline-lg text-primary tracking-tight">{filteredData[0].name}</h2>
-                <p className="font-body-md text-body-md text-on-surface-variant mt-2 leading-relaxed">
-                  {filteredData[0].type} Tier offering.
+                <h2 className="font-serif text-2xl md:text-3xl text-[#4a1420] font-bold tracking-tight">{featuredPackage.name}</h2>
+                <p className="font-body-md text-sm md:text-base text-on-surface-variant mt-2 leading-relaxed">
+                  {featuredPackage.type} Tier offering.
                 </p>
               </div>
-              <div className="relative rounded-xl overflow-hidden shadow-sm h-48 w-full bg-surface-container-high flex items-center justify-center text-on-surface-variant">
+              <div className="relative rounded-xl overflow-hidden shadow-sm h-40 md:h-48 w-full bg-surface-container-high flex items-center justify-center text-on-surface-variant">
                 [Image: Luxurious wedding marquee]
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-transparent to-transparent flex items-end p-4">
-                  <div className="flex items-center gap-3 text-on-primary">
-                    <span className="material-symbols-outlined text-[20px] text-secondary-fixed">verified_user</span>
-                    <span className="font-title-sm text-title-sm">Includes Crystal Grand Hall & Executive VIP Mezzanine</span>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#5C0A1E]/90 via-transparent to-transparent flex items-end p-4">
+                  <div className="flex items-center gap-2 md:gap-3 text-white">
+                    <span className="material-symbols-outlined text-[18px] md:text-[20px] text-[#b0891d]">verified_user</span>
+                    <span className="font-title-sm text-xs md:text-sm">Includes Crystal Grand Hall & Executive VIP Mezzanine</span>
                   </div>
                 </div>
               </div>
-              <div className="bg-surface-container-low rounded-xl p-4 flex items-center justify-between">
-                <div>
-                  <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant block font-medium">Head Tariff</span>
+              <div className="bg-[#FAF8F5] border border-[#e8e4db] rounded-xl p-3 md:p-4 flex items-center justify-between overflow-x-auto hide-scrollbar gap-4">
+                <div className="shrink-0">
+                  <span className="font-label-sm text-[10px] md:text-xs uppercase tracking-wider text-on-surface-variant block font-medium">Head Tariff</span>
                   <div className="flex items-baseline gap-1 mt-0.5">
-                    <span className="font-label-md text-label-md text-primary font-bold">PKR</span>
-                    <span className="font-display text-headline-lg text-primary font-bold">{filteredData[0].price.toLocaleString()}</span>
-                    <span className="font-body-sm text-body-sm text-on-surface-variant">/ Guest</span>
+                    <span className="font-label-md text-[10px] md:text-xs text-[#5C0A1E] font-bold">PKR</span>
+                    <span className="font-serif text-lg md:text-2xl text-[#5C0A1E] font-bold">{featuredPackage.price.toLocaleString()}</span>
+                    <span className="font-body-sm text-[10px] md:text-xs text-on-surface-variant">/ Guest</span>
                   </div>
                 </div>
-                <div className="h-10 w-[1px] bg-surface-variant"></div>
-                <div>
-                  <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant block font-medium">Minimum Floor</span>
-                  <span className="font-title-md text-title-md text-on-surface font-bold mt-0.5 block">PKR 900,000</span>
+                <div className="h-8 md:h-10 w-[1px] bg-[#e8e4db] shrink-0"></div>
+                <div className="shrink-0">
+                  <span className="font-label-sm text-[10px] md:text-xs uppercase tracking-wider text-on-surface-variant block font-medium">Minimum Floor</span>
+                  <span className="font-title-md text-sm md:text-base text-on-surface font-bold mt-0.5 block">PKR 900,000</span>
                 </div>
-                <div className="h-10 w-[1px] bg-surface-variant"></div>
-                <div>
-                  <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant block font-medium">Guest Range</span>
-                  <span className="font-title-md text-title-md text-on-surface font-bold mt-0.5 block">{filteredData[0].minGuests} Pax</span>
+                <div className="h-8 md:h-10 w-[1px] bg-[#e8e4db] shrink-0"></div>
+                <div className="shrink-0">
+                  <span className="font-label-sm text-[10px] md:text-xs uppercase tracking-wider text-on-surface-variant block font-medium">Guest Range</span>
+                  <span className="font-title-md text-sm md:text-base text-on-surface font-bold mt-0.5 block">{featuredPackage.minGuests} Pax</span>
                 </div>
               </div>
             </div>
             
-            <div className="xl:w-7/12 flex flex-col justify-between bg-surface-container-low/40 rounded-xl p-6">
+            <div className="xl:w-7/12 flex flex-col justify-between bg-white border border-[#e8e4db] shadow-sm rounded-xl p-4 md:p-6">
               <div>
-                <div className="flex items-center justify-between pb-4 mb-4">
+                <div className="flex items-center justify-between pb-3 md:pb-4 mb-3 md:mb-4 border-b border-[#e8e4db]">
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-secondary text-[22px]">restaurant_menu</span>
-                    <h3 className="font-headline-sm text-headline-sm text-primary">Inclusions & Culinary Matrix</h3>
+                    <span className="material-symbols-outlined text-[#b0891d] text-[20px] md:text-[22px]">restaurant_menu</span>
+                    <h3 className="font-serif text-lg md:text-xl text-[#4a1420] font-bold">Inclusions & Culinary Matrix</h3>
                   </div>
-                  <span className="font-label-sm text-label-sm text-on-surface-variant bg-surface-container-lowest px-2.5 py-1 rounded shadow-xs">
-                    {filteredData[0].inclusionsJson ? JSON.parse(filteredData[0].inclusionsJson).length : 0} Items
+                  <span className="font-label-sm text-[10px] md:text-xs text-[#5C0A1E] bg-[#5C0A1E]/10 px-2.5 py-1 rounded-full font-semibold">
+                    {featuredPackage.inclusionsJson ? JSON.parse(featuredPackage.inclusionsJson).length : 0} Items
                   </span>
                 </div>
-                <div className="text-body-sm">
-                  {filteredData[0].inclusionsJson && JSON.parse(filteredData[0].inclusionsJson).map((inc: string, idx: number) => (
-                    <div key={idx} className="bg-surface-container-lowest rounded-lg p-3 shadow-xs mb-2 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[16px] text-secondary">check_circle</span>
-                      <span className="text-on-surface-variant">{inc}</span>
+                <div className="text-sm md:text-base grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
+                  {featuredPackage.inclusionsJson && JSON.parse(featuredPackage.inclusionsJson).map((inc: string, idx: number) => (
+                    <div key={idx} className="bg-[#FAF8F5] border border-[#e8e4db] rounded-lg p-2.5 md:p-3 shadow-sm flex items-start gap-2 group hover:border-[#5C0A1E]/30 transition-colors">
+                      <span className="material-symbols-outlined text-[16px] text-[#10b981] mt-0.5">check_circle</span>
+                      <span className="text-on-surface-variant leading-tight">{inc}</span>
                     </div>
                   ))}
                 </div>
@@ -503,7 +511,10 @@ export const PackagesMenu = () => {
             columns={columns}
             keyExtractor={(item) => item.id}
             loading={loading}
-            onRowClick={(row) => navigate(`/app/packages/${row.id}`)}
+            onRowClick={(row) => {
+              setFeaturedPackageId(row.id);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
             sortColumn={sortColumn}
             sortDirection={sortDirection}
             onSort={handleSort}

@@ -56,7 +56,7 @@ export const Dashboard = () => {
           icon="grid_view"
           description="Real-time pulse of operations, bookings, revenue and key actions."
           actions={
-            <div className="flex overflow-x-auto md:flex-wrap items-center gap-2 pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0" style={{ scrollbarWidth: 'none' }}>
+            <div className="flex overflow-x-auto md:flex-wrap items-center gap-2 pb-2 md:pb-0 w-full md:w-auto hide-scrollbar" style={{ scrollbarWidth: 'none' }}>
               <Button variant="primary" icon="add_circle" onClick={() => navigate('/app/bookings/new')} className="whitespace-nowrap shrink-0 !bg-[#5C0A1E]">New Booking</Button>
               <Button variant="outline" icon="person_add" onClick={() => navigate('/app/customers')} className="whitespace-nowrap shrink-0 !text-[#4a1420] !border-surface-variant">Add Customer</Button>
               <Button variant="outline" icon="payment" onClick={() => navigate('/app/payments/new')} className="whitespace-nowrap shrink-0 !text-[#4a1420] !border-surface-variant">Record Payment</Button>
