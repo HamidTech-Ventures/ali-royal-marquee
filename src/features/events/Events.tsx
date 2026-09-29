@@ -42,79 +42,81 @@ export const Events = () => {
   });
 
   return (
-    <div className="w-full px-8 py-8">
+    <div className="w-full px-4 md:px-8 py-6 bg-[#FAF8F5] min-h-screen">
       <PageHeader 
         title="Events Command Center"
         category="Sovereign Floor Operations"
         icon="celebration"
         description="Plan, prepare, orchestrate, and close luxury wedding banquets and high-profile galas across Ali Royal estate with zero tolerance for error."
         actions={
-          <Button variant="primary" icon="bolt">Quick Dispatch</Button>
+          <div className="flex w-full md:w-auto">
+            <Button variant="primary" icon="bolt" className="w-full md:w-auto !bg-[#5C0A1E]">Quick Dispatch</Button>
+          </div>
         }
       />
 
-      <div className="flex flex-col w-full space-y-8">
+      <div className="flex flex-col w-full space-y-6 md:space-y-8">
         {/* OPERATIONAL KPI CARDS */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-primary-container"></div>
-            <div className="flex items-center justify-between text-on-surface-variant mb-2">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider">Today's Banquets</span>
-              <span className="material-symbols-outlined text-[20px] text-primary">celebration</span>
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          <div className="bg-white border border-[#e8e4db] rounded-xl p-3.5 md:p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#5C0A1E]"></div>
+            <div className="flex items-center justify-between text-on-surface-variant mb-1 md:mb-2">
+              <span className="text-[9px] md:text-label-sm uppercase tracking-wider font-bold">Today's Banquets</span>
+              <span className="material-symbols-outlined text-[16px] md:text-[20px] text-[#5C0A1E]">celebration</span>
             </div>
-            <div className="font-display text-display text-primary leading-none mb-1.5">{todaysBanquets.length}</div>
-            <div className="font-body-sm text-body-sm text-on-surface-variant flex items-center justify-between">
+            <div className="font-serif text-2xl md:text-4xl font-bold text-[#4a1420] mb-0.5 md:mb-1">{todaysBanquets.length}</div>
+            <div className="text-[10px] md:text-body-sm text-on-surface-variant flex items-center justify-between font-medium">
               <span>{paxToday} Pax Today</span>
             </div>
           </div>
-          <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-secondary"></div>
-            <div className="flex items-center justify-between text-on-surface-variant mb-2">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider">In Preparation</span>
-              <span className="material-symbols-outlined text-[20px] text-secondary">handyman</span>
+          <div className="bg-white border border-[#e8e4db] rounded-xl p-3.5 md:p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#b0891d]"></div>
+            <div className="flex items-center justify-between text-on-surface-variant mb-1 md:mb-2">
+              <span className="text-[9px] md:text-label-sm uppercase tracking-wider font-bold">In Preparation</span>
+              <span className="material-symbols-outlined text-[16px] md:text-[20px] text-[#b0891d]">handyman</span>
             </div>
-            <div className="font-display text-display text-secondary leading-none mb-1.5">{inPrep.length}</div>
-            <div className="font-body-sm text-body-sm text-on-surface-variant">
+            <div className="font-serif text-2xl md:text-4xl font-bold text-[#4a1420] mb-0.5 md:mb-1">{inPrep.length}</div>
+            <div className="text-[10px] md:text-body-sm text-on-surface-variant font-medium">
               <span>Events getting ready</span>
             </div>
           </div>
-          <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-surface-tint"></div>
-            <div className="flex items-center justify-between text-on-surface-variant mb-2">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider">Live In Progress</span>
-              <span className="material-symbols-outlined text-[20px] text-surface-tint animate-pulse">radio_button_checked</span>
+          <div className="bg-white border border-[#e8e4db] rounded-xl p-3.5 md:p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#e02424]"></div>
+            <div className="flex items-center justify-between text-on-surface-variant mb-1 md:mb-2">
+              <span className="text-[9px] md:text-label-sm uppercase tracking-wider font-bold">Live In Progress</span>
+              <span className="material-symbols-outlined text-[16px] md:text-[20px] text-[#e02424] animate-pulse">radio_button_checked</span>
             </div>
-            <div className="font-display text-display text-on-surface leading-none mb-1.5">{liveNow.length}</div>
-            <div className="font-body-sm text-body-sm text-on-surface-variant truncate">
+            <div className="font-serif text-2xl md:text-4xl font-bold text-[#e02424] mb-0.5 md:mb-1">{liveNow.length}</div>
+            <div className="text-[10px] md:text-body-sm text-[#e02424] font-medium truncate">
               {liveNow.map(e => e.hall).join(', ') || 'None'}
             </div>
           </div>
-          <div className="bg-surface-container-lowest rounded-xl p-5 shadow-sm relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-outline-variant"></div>
-            <div className="flex items-center justify-between text-on-surface-variant mb-2">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider">This Week's Horizon</span>
-              <span className="material-symbols-outlined text-[20px] text-on-surface-variant">calendar_view_week</span>
+          <div className="bg-white border border-[#e8e4db] rounded-xl p-3.5 md:p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-outline-variant"></div>
+            <div className="flex items-center justify-between text-on-surface-variant mb-1 md:mb-2">
+              <span className="text-[9px] md:text-label-sm uppercase tracking-wider font-bold">This Week</span>
+              <span className="material-symbols-outlined text-[16px] md:text-[20px] text-on-surface-variant">calendar_view_week</span>
             </div>
-            <div className="font-display text-display text-on-surface leading-none mb-1.5">{thisWeek.length}</div>
-            <div className="font-body-sm text-body-sm text-on-surface-variant">
+            <div className="font-serif text-2xl md:text-4xl font-bold text-[#4a1420] mb-0.5 md:mb-1">{thisWeek.length}</div>
+            <div className="text-[10px] md:text-body-sm text-on-surface-variant font-medium">
               <span>Upcoming next 7 days</span>
             </div>
           </div>
         </section>
 
         {/* ATTENTION REQUIRED */}
-        <div className="rounded-xl p-5 bg-primary-container text-on-primary shadow-md relative overflow-hidden">
-          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        <div className="rounded-xl p-4 md:p-5 bg-[#5C0A1E]/10 border border-[#5C0A1E]/20 relative overflow-hidden">
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 md:gap-4">
             <div className="flex items-start gap-3.5">
-              <div className="w-9 h-9 rounded-full bg-secondary text-primary font-bold flex items-center justify-center shrink-0 shadow">
-                <span className="material-symbols-outlined text-[20px] text-surface-container-lowest">warning</span>
+              <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-[#5C0A1E] text-white font-bold flex items-center justify-center shrink-0 shadow">
+                <span className="material-symbols-outlined text-[18px] md:text-[20px]">warning</span>
               </div>
               <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-title-sm text-title-sm uppercase tracking-wider text-secondary-fixed">Critical Operations Guard</span>
-                  <span className="text-xs bg-error text-on-error px-2 py-0.5 rounded-full font-bold">4 Action Items</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#4a1420]">Critical Operations Guard</span>
+                  <span className="text-[10px] md:text-xs bg-[#e02424] text-white px-2 py-0.5 rounded-full font-bold">4 Action Items</span>
                 </div>
-                <p className="font-body-sm text-body-sm text-primary-fixed">Immediate supervisor attention required for Ahsan Malik Walima & reception gate security.</p>
+                <p className="text-xs md:text-sm text-[#4a1420]/80 font-medium">Immediate supervisor attention required for Ahsan Malik Walima & reception gate security.</p>
               </div>
             </div>
           </div>
@@ -129,40 +131,40 @@ export const Events = () => {
             return (
               <div 
                 key={event.id}
-                className="bg-surface-container-lowest rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow relative flex flex-col justify-between cursor-pointer group"
+                className="bg-white border border-[#e8e4db] rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow relative flex flex-col justify-between cursor-pointer group"
                 onClick={() => navigate(`/app/events/${event.id}`)}
               >
-                <div className="absolute top-0 left-0 right-0 h-1.5 bg-secondary-fixed opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-[#b0891d] opacity-0 group-hover:opacity-100 transition-opacity rounded-t-xl"></div>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="font-currency-num text-currency-num text-primary font-bold">{event.referenceNumber}</span>
-                      <span className="font-label-sm text-label-sm bg-primary/10 text-primary px-2 py-0.5 rounded uppercase font-bold">{event.hall}</span>
+                      <span className="font-serif text-[#4a1420] font-bold text-sm md:text-base">{event.referenceNumber}</span>
+                      <span className="text-[10px] bg-[#5C0A1E]/10 text-[#5C0A1E] px-2 py-0.5 rounded uppercase font-bold tracking-wider">{event.hall}</span>
                     </div>
                     {event.status === 'Ongoing' && (
-                      <span className="flex items-center gap-1.5 bg-surface-container px-2.5 py-1 rounded text-xs font-bold text-on-surface">
-                        <span className="w-2 h-2 rounded-full bg-error animate-ping"></span> LIVE
+                      <span className="flex items-center gap-1.5 bg-[#e02424]/10 px-2 py-0.5 rounded text-[10px] font-bold text-[#e02424]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#e02424] animate-ping"></span> LIVE
                       </span>
                     )}
                     {event.status === 'Upcoming' && (
-                      <Badge variant="warning">UPCOMING</Badge>
+                      <Badge variant="warning" className="text-[9px] md:text-[10px] px-2 py-0.5">UPCOMING</Badge>
                     )}
                     {event.status === 'Completed' && (
-                      <Badge variant="success">COMPLETED</Badge>
+                      <Badge variant="success" className="text-[9px] md:text-[10px] px-2 py-0.5">COMPLETED</Badge>
                     )}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-headline-sm text-headline-sm text-primary">{event.title}</h3>
+                      <h3 className="font-serif text-lg md:text-xl font-bold text-[#4a1420]">{event.title}</h3>
                     </div>
-                    <p className="font-body-sm text-body-sm text-secondary font-semibold mt-0.5">
+                    <p className="text-xs md:text-sm text-on-surface-variant font-medium mt-1">
                       {event.dateStr} • {event.startTime} – {event.endTime} · {event.guests} Pax
                     </p>
                   </div>
-                  <div className="p-3 bg-surface-container-low rounded-lg space-y-2">
+                  <div className="p-3 bg-[#FAF8F5] rounded-lg border border-[#e8e4db]">
                     <div className="flex justify-between items-center text-xs">
-                      <span className="font-title-sm text-title-sm text-on-surface-variant">Manager on Duty</span>
-                      <span className="font-bold text-primary">{event.managerId}</span>
+                      <span className="font-medium text-on-surface-variant">Manager on Duty</span>
+                      <span className="font-bold text-[#4a1420]">{event.managerId}</span>
                     </div>
                   </div>
                 </div>

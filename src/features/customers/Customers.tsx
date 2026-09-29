@@ -138,113 +138,128 @@ export const Customers = () => {
   ];
 
   return (
-    <div className="w-full px-8 py-8">
+    <div className="w-full px-4 md:px-8 py-6 bg-[#FAF8F5] min-h-screen">
       <PageHeader 
         title="Customer Management & CRM"
         category="Client Relationship Ledger"
         icon="groups"
         description="Review VIP patronage, historical ledger balances, banquet culinary riders, and high-stakes family event preferences."
         actions={
-          <>
-            <Button variant="outline" icon="download">Export Roster</Button>
-            <Button variant="primary" icon="person_add" onClick={() => setIsAddModalOpen(true)}>New Customer</Button>
-          </>
+          <div className="flex overflow-x-auto md:flex-wrap items-center gap-2 pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0" style={{ scrollbarWidth: 'none' }}>
+            <Button variant="outline" icon="download" className="shrink-0 !text-[#4a1420] !border-surface-variant">Export Roster</Button>
+            <Button variant="primary" icon="person_add" onClick={() => setIsAddModalOpen(true)} className="whitespace-nowrap shrink-0 !bg-[#5C0A1E]">New Customer</Button>
+          </div>
         }
       />
 
-      <div className="flex flex-col w-full space-y-6">
+      <div className="flex flex-col w-full space-y-6 md:space-y-8">
         {/* KPI Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Total Verified</span>
-              <span className="material-symbols-outlined text-[18px] text-secondary">groups</span>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#5C0A1E]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#5C0A1E]/10 flex items-center justify-center text-[#5C0A1E]">
+              <span className="material-symbols-outlined text-[20px]">groups</span>
             </div>
-            <div className="mt-3 font-headline-md text-headline-md text-primary font-bold">1,284</div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Total Verified</span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">1,284</div>
+            </div>
           </div>
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">New This Month</span>
-              <span className="material-symbols-outlined text-[18px] text-secondary">how_to_reg</span>
+          
+          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#10b981]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
+              <span className="material-symbols-outlined text-[20px]">how_to_reg</span>
             </div>
-            <div className="mt-3 font-headline-md text-headline-md text-on-surface font-bold">86</div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">New This Month</span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">86</div>
+            </div>
           </div>
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Repeat Clientele</span>
-              <span className="material-symbols-outlined text-[18px] text-secondary">workspace_premium</span>
+          
+          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#b0891d]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#b0891d]/10 flex items-center justify-center text-[#b0891d]">
+              <span className="material-symbols-outlined text-[20px]">workspace_premium</span>
             </div>
-            <div className="mt-3 font-headline-md text-headline-md text-on-surface font-bold">342</div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Repeat Clientele</span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">342</div>
+            </div>
           </div>
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">VIP / Elite</span>
-              <span className="material-symbols-outlined text-[18px] text-secondary">stars</span>
+          
+          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#4a1420]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#4a1420]/10 flex items-center justify-center text-[#4a1420]">
+              <span className="material-symbols-outlined text-[20px]">stars</span>
             </div>
-            <div className="mt-3 font-headline-md text-headline-md text-on-surface font-bold">84</div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">VIP / Elite</span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">84</div>
+            </div>
           </div>
-          <div className="bg-surface-container-lowest p-4 rounded shadow-sm flex flex-col justify-between relative overflow-hidden col-span-2 md:col-span-1">
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-surface-tint"></div>
-            <div className="flex items-center justify-between">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">Ledger Receivables</span>
-              <span className="material-symbols-outlined text-[18px] text-error">account_balance_wallet</span>
+          
+          <div className="col-span-2 md:col-span-1 bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#e02424]">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#e02424]/10 flex items-center justify-center text-[#e02424]">
+              <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
             </div>
-            <div className="mt-3 font-currency-num text-currency-num text-primary font-bold">PKR 2.48M</div>
+            <div className="flex flex-col">
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Ledger Receivables</span>
+              <div className="font-serif text-base md:text-headline-sm text-[#e02424] font-bold mt-1">PKR 2.48M</div>
+            </div>
           </div>
         </div>
 
         {/* CONTROLS */}
-        <div className="bg-surface-container-lowest p-3 rounded shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center overflow-x-auto no-scrollbar gap-1.5">
+        <div className="bg-white p-3 md:p-4 border border-[#e8e4db] rounded-xl shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-center overflow-x-auto hide-scrollbar gap-1.5 -mx-3 px-3 md:mx-0 md:px-0">
             <Button 
               variant={tierFilter === 'All' ? 'primary' : 'text'} 
-              className={tierFilter === 'All' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-on-surface-variant'} 
+              className={tierFilter === 'All' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
               onClick={() => setTierFilter('All')}
             >
               All Clients
             </Button>
             <Button 
               variant={tierFilter === 'VIP' ? 'primary' : 'text'} 
-              className={tierFilter === 'VIP' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-on-surface-variant'} 
+              className={tierFilter === 'VIP' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
               onClick={() => setTierFilter('VIP')}
             >
               VIP Elite
             </Button>
             <Button 
               variant={tierFilter === 'Corporate' ? 'primary' : 'text'} 
-              className={tierFilter === 'Corporate' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-on-surface-variant'} 
+              className={tierFilter === 'Corporate' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
               onClick={() => setTierFilter('Corporate')}
             >
               Corporate
             </Button>
           </div>
-          <div className="flex items-center gap-4">
-            <SearchInput 
-              placeholder="Search customers..." 
-              value={searchTerm} 
-              onChange={setSearchTerm} 
-            />
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <div className="w-full md:w-auto">
+              <SearchInput 
+                placeholder="Search customers..." 
+                value={searchTerm} 
+                onChange={setSearchTerm} 
+              />
+            </div>
           </div>
         </div>
 
         {/* DATA GRID */}
-        <DataGrid 
-          data={filteredData}
-          columns={columns}
-          keyExtractor={(item) => item.id}
-          onRowClick={(item) => navigate(`/app/customers/${item.id}`)}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-          currentPage={1}
-          totalPages={1}
-          totalItems={filteredData.length}
-          loading={loading}
-        />
+        <div className="bg-white rounded-xl shadow-sm border border-[#e8e4db] overflow-hidden">
+          <div className="overflow-x-auto w-full">
+            <DataGrid 
+              data={filteredData}
+              columns={columns}
+              keyExtractor={(item) => item.id}
+              onRowClick={(item) => navigate(`/app/customers/${item.id}`)}
+              sortColumn={sortColumn}
+              sortDirection={sortDirection}
+              onSort={handleSort}
+              currentPage={1}
+              totalPages={1}
+              totalItems={filteredData.length}
+              loading={loading}
+            />
+          </div>
+        </div>
       </div>
 
       <Drawer
