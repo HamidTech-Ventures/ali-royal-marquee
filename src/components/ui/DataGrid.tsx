@@ -123,7 +123,15 @@ export function DataGrid<T>({
         <div className="px-4 py-3 flex items-center justify-between border-t border-surface-container-highest bg-surface-container-lowest">
           <div className="font-body-sm text-body-sm text-on-surface-variant">
             {totalItems !== undefined ? (
-              <span>Showing <strong>{data.length}</strong> of <strong>{totalItems}</strong> records</span>
+              (() => {
+                // We default to 10 if not provided (or we can just calculate if it was full)
+                const limit = 10; 
+                const from = totalItems === 0 ? 0 : ((currentPage || 1) - 1) * limit + 1;
+                const to = Math.min((currentPage || 1) * limit, totalItems);
+                return (
+                  <span>Showing <strong>{from}-{to}</strong> of <strong>{totalItems}</strong> records</span>
+                );
+              })()
             ) : (
               <span>Page {currentPage} of {totalPages}</span>
             )}

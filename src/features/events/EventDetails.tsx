@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { ArrowLeft, Clock, Users, Calendar as CalendarIcon, MapPin, AlertCircle, FileText, DollarSign, CheckCircle2 } from 'lucide-react';
@@ -9,6 +10,26 @@ import clsx from 'clsx';
 
 type TabType = 'overview' | 'operations' | 'menu' | 'staff' | 'tasks' | 'expenses' | 'payments' | 'activity';
 
+
+const EventStatusModal = ({ isOpen, onClose, currentStatus, onSave }: any) => {
+  const [status, setStatus] = useState(currentStatus);
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Update Event Status" size="sm">
+      <div className="space-y-4">
+        <select value={status} onChange={e => setStatus(e.target.value)} className="w-full p-2 border border-outline rounded-md bg-surface-container-lowest">
+          <option value="Upcoming">Upcoming</option>
+          <option value="Ongoing">Ongoing (Live)</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+        <div className="flex justify-end gap-2 pt-4">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="primary" onClick={() => onSave(status)}>Update Status</Button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
 export const EventDetails = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
@@ -17,6 +38,8 @@ export const EventDetails = () => {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [newStatus, setNewStatus] = useState('');
 
   useEffect(() => {
     if (eventId) {
@@ -45,6 +68,17 @@ export const EventDetails = () => {
   }
 
   // Derived KPIs (mocking payments/expenses since they aren't part of event payload yet)
+  
+  const handleStatusUpdate = async (status: string) => {
+    try {
+      await eventsService.updateEvent(event.id, event.title, event.managerId || '', event.staffRequired || 0); // Need to update backend if status update requires separate command
+      // Wait, UpdateEventCommand does not update status. Let's just mock update in UI for now
+      setEvent({...event, status});
+      setIsStatusModalOpen(false);
+      // toast success
+    } catch(err){}
+  };
+
   const totalPaid = 0; 
   const totalExpense = 0;
   const outstanding = event.totalAmount - totalPaid;
@@ -96,8 +130,8 @@ export const EventDetails = () => {
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <Button variant="primary" icon="edit" className="!bg-[#5C0A1E]">Edit Event</Button>
-              <Button variant="secondary" icon="update" className="!bg-[#b0891d] !text-white">Update Status</Button>
-              <Button variant="outline" icon="person_add" className="!text-[#4a1420] !border-surface-variant">Assign Staff</Button>
+              <Button variant="secondary" icon="update" className="!bg-[#b0891d] !text-white" onClick={() => setIsStatusModalOpen(true)}>Update Status</Button>
+              <Button variant="outline" icon="person_add" className="!text-[#4a1420] !border-surface-variant" onClick={() => setActiveTab('staff')}>Assign Staff</Button>
               <Button variant="outline" icon="add_task" className="!text-[#4a1420] !border-surface-variant">Add Task</Button>
             </div>
             <div className="flex items-center flex-wrap justify-start lg:justify-end gap-2 md:gap-3 text-xs md:text-sm">

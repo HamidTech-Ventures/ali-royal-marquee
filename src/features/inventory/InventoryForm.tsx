@@ -12,12 +12,20 @@ export const InventoryForm = () => {
   const { success, error } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    category: string;
+    quantity: number;
+    minQuantity: number;
+    unit: string;
+    itemType: 'Fixed Asset' | 'Consumable';
+  }>({
     name: '',
     category: 'Furniture',
     quantity: 0,
     minQuantity: 10,
-    unit: 'pcs'
+    unit: 'pcs',
+    itemType: 'Fixed Asset'
   });
 
   const handleSubmit = async () => {
@@ -44,9 +52,27 @@ export const InventoryForm = () => {
 
       <div className="bg-white rounded-xl border border-[#e8e4db] shadow-sm p-4 md:p-8 max-w-4xl mx-auto mt-6 md:mt-8">
         <FormSection title="Item Details" description="Add a new physical asset or consumable.">
+          <Select 
+            label="Item Type (Crucial Split)"
+            value={formData.itemType}
+            className="col-span-1 md:col-span-2"
+            onChange={(e) => {
+              const newType = e.target.value as 'Fixed Asset' | 'Consumable';
+              setFormData({
+                ...formData, 
+                itemType: newType,
+                minQuantity: newType === 'Fixed Asset' ? 0 : 10,
+                category: newType === 'Fixed Asset' ? 'Furniture' : 'Kitchen Raw Material'
+              });
+            }}
+            options={[
+              { value: 'Fixed Asset', label: 'Fixed Asset (Decor/Furniture)' },
+              { value: 'Consumable', label: 'Kitchen Consumable (Food/Beverage)' },
+            ]}
+          />
           <Input 
             label="Item Name" 
-            placeholder="e.g. Banquet Chairs" 
+            placeholder="e.g. Banquet Chairs or Cooking Oil" 
             className="col-span-1 md:col-span-2" 
             value={formData.name}
             onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -55,11 +81,15 @@ export const InventoryForm = () => {
             label="Category"
             value={formData.category}
             onChange={(e) => setFormData({...formData, category: e.target.value})}
-            options={[
+            options={formData.itemType === 'Fixed Asset' ? [
               { value: 'Furniture', label: 'Furniture' },
               { value: 'Decor', label: 'Decor' },
-              { value: 'Catering', label: 'Catering Equipment' },
-              { value: 'Consumables', label: 'Consumables' },
+              { value: 'Catering Equipment', label: 'Catering Equipment' },
+              { value: 'AV/Electronics', label: 'AV/Electronics' },
+            ] : [
+              { value: 'Kitchen Raw Material', label: 'Kitchen Raw Material' },
+              { value: 'Beverages', label: 'Beverages' },
+              { value: 'Disposables', label: 'Disposables' },
             ]}
           />
           <Input 
@@ -68,12 +98,14 @@ export const InventoryForm = () => {
             value={formData.quantity}
             onChange={(e) => setFormData({...formData, quantity: Number(e.target.value)})}
           />
-          <Input 
-            label="Reorder Level (Min Quantity)" 
-            type="number" 
-            value={formData.minQuantity}
-            onChange={(e) => setFormData({...formData, minQuantity: Number(e.target.value)})}
-          />
+          {formData.itemType === 'Consumable' && (
+            <Input 
+              label="Reorder Level (Min Quantity)" 
+              type="number" 
+              value={formData.minQuantity}
+              onChange={(e) => setFormData({...formData, minQuantity: Number(e.target.value)})}
+            />
+          )}
           <Input 
             label="Unit" 
             placeholder="pcs, kg, etc." 

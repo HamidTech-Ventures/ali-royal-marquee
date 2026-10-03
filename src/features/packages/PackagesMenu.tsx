@@ -35,7 +35,8 @@ export const PackagesMenu = () => {
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
 
   // Form States
-  const [menuFormData, setMenuFormData] = useState({ name: '', category: '', description: '', cost: 0 });
+  const [editItemId, setEditItemId] = useState<string | null>(null);
+  const [menuFormData, setMenuFormData] = useState({ name: '', category: '', description: '' });
   const [addonFormData, setAddonFormData] = useState({ name: '', category: '', price: 0, description: '', unit: '' });
   const [pricingFormData, setPricingFormData] = useState({ name: '', ruleType: 'Surcharge', flatAmount: '', percentageAmount: '' });
 
@@ -142,11 +143,19 @@ export const PackagesMenu = () => {
     { key: 'name', header: 'Item Name', sortable: true, render: (item) => <span className="font-semibold">{item.name}</span> },
     { key: 'category', header: 'Category', sortable: true },
     { key: 'description', header: 'Description', sortable: false },
-    { key: 'cost', header: 'Cost', align: 'right', sortable: true, render: (item) => <span className="font-currency-num text-primary">PKR {item.cost.toLocaleString()}</span> },
     { key: 'actions', header: '', align: 'right', render: (item) => (
-      <button onClick={() => handleDeleteMenuItem(item.id)} className="text-error hover:bg-error/10 p-1.5 rounded-md">
-        <span className="material-symbols-outlined text-[18px]">delete</span>
-      </button>
+      <div className="flex justify-end gap-2">
+        <button onClick={() => {
+            setEditItemId(item.id);
+            setMenuFormData({ name: item.name, category: item.category, description: item.description || '' });
+            setEditItemId(null); setMenuFormData({ name: '', category: '', description: '' }); setIsMenuModalOpen(true);
+        }} className="text-on-surface-variant hover:text-primary p-1.5 rounded-md">
+          <span className="material-symbols-outlined text-[18px]">edit</span>
+        </button>
+        <button onClick={() => handleDeleteMenuItem(item.id)} className="text-error hover:bg-error/10 p-1.5 rounded-md">
+          <span className="material-symbols-outlined text-[18px]">delete</span>
+        </button>
+      </div>
     )}
   ];
 
@@ -156,9 +165,18 @@ export const PackagesMenu = () => {
     { key: 'price', header: 'Price', align: 'right', sortable: true, render: (item) => <span className="font-currency-num text-primary">PKR {item.price.toLocaleString()}</span> },
     { key: 'unit', header: 'Unit', sortable: false },
     { key: 'actions', header: '', align: 'right', render: (item) => (
-      <button onClick={() => handleDeleteAddon(item.id)} className="text-error hover:bg-error/10 p-1.5 rounded-md">
-        <span className="material-symbols-outlined text-[18px]">delete</span>
-      </button>
+      <div className="flex justify-end gap-2">
+        <button onClick={() => {
+            setEditItemId(item.id);
+            setAddonFormData({ name: item.name, category: item.category, price: item.price, description: item.description || '', unit: item.unit });
+            setEditItemId(null); setAddonFormData({ name: '', category: '', price: 0, description: '', unit: '' }); setIsAddonModalOpen(true);
+        }} className="text-on-surface-variant hover:text-primary p-1.5 rounded-md">
+          <span className="material-symbols-outlined text-[18px]">edit</span>
+        </button>
+        <button onClick={() => handleDeleteAddon(item.id)} className="text-error hover:bg-error/10 p-1.5 rounded-md">
+          <span className="material-symbols-outlined text-[18px]">delete</span>
+        </button>
+      </div>
     )}
   ];
 
@@ -171,9 +189,18 @@ export const PackagesMenu = () => {
       </span>
     )},
     { key: 'actions', header: '', align: 'right', render: (item) => (
-      <button onClick={() => handleDeletePricingRule(item.id)} className="text-error hover:bg-error/10 p-1.5 rounded-md">
-        <span className="material-symbols-outlined text-[18px]">delete</span>
-      </button>
+      <div className="flex justify-end gap-2">
+        <button onClick={() => {
+            setEditItemId(item.id);
+            setPricingFormData({ name: item.name, ruleType: item.ruleType, flatAmount: item.flatAmount?.toString() || '', percentageAmount: item.percentageAmount?.toString() || '' });
+            setEditItemId(null); setPricingFormData({ name: '', ruleType: 'Surcharge', flatAmount: '', percentageAmount: '' }); setIsPricingModalOpen(true);
+        }} className="text-on-surface-variant hover:text-primary p-1.5 rounded-md">
+          <span className="material-symbols-outlined text-[18px]">edit</span>
+        </button>
+        <button onClick={() => handleDeletePricingRule(item.id)} className="text-error hover:bg-error/10 p-1.5 rounded-md">
+          <span className="material-symbols-outlined text-[18px]">delete</span>
+        </button>
+      </div>
     )}
   ];
 
@@ -203,7 +230,7 @@ export const PackagesMenu = () => {
       const res = await packagesService.createMenuItem(menuFormData);
       setMenuItems(prev => [...prev, { ...menuFormData, id: res }]);
       setIsMenuModalOpen(false);
-      setMenuFormData({ name: '', category: '', description: '', cost: 0 });
+      setMenuFormData({ name: '', category: '', description: '',  });
     } catch (err) {
       console.error('Failed to create menu item', err);
     }
@@ -260,7 +287,7 @@ export const PackagesMenu = () => {
               <button 
                 className="flex-1 md:flex-auto flex items-center justify-center gap-2 bg-white hover:bg-[#e8e4db] text-[#4a1420] px-3 md:px-4 py-2 rounded-lg shadow-sm transition-all border border-[#e8e4db] text-xs md:text-sm font-medium" 
                 type="button"
-                onClick={() => setIsMenuModalOpen(true)}
+                onClick={() => { setEditItemId(null); setMenuFormData({ name: '', category: '', description: '' }); setIsMenuModalOpen(true); }}
               >
                 <span className="material-symbols-outlined text-[18px]">add_circle</span>
                 <span className="whitespace-nowrap">Menu Item</span>
@@ -530,7 +557,7 @@ export const PackagesMenu = () => {
           <div className="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
             <div className="p-4 border-b border-outline-variant/30 flex justify-between items-center">
               <h3 className="font-headline-sm text-primary">Menu Repository</h3>
-              <button onClick={() => setIsMenuModalOpen(true)} className="bg-primary text-on-primary px-3 py-1.5 rounded-lg font-label-sm shadow-sm flex items-center gap-1">
+              <button onClick={() => { setEditItemId(null); setMenuFormData({ name: '', category: '', description: '' }); setIsMenuModalOpen(true); }} className="bg-primary text-on-primary px-3 py-1.5 rounded-lg font-label-sm shadow-sm flex items-center gap-1">
                 <span className="material-symbols-outlined text-[18px]">add</span> Add Item
               </button>
             </div>
@@ -547,7 +574,7 @@ export const PackagesMenu = () => {
           <div className="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
             <div className="p-4 border-b border-outline-variant/30 flex justify-between items-center">
               <h3 className="font-headline-sm text-primary">Add-ons & Upgrades</h3>
-              <button onClick={() => setIsAddonModalOpen(true)} className="bg-primary text-on-primary px-3 py-1.5 rounded-lg font-label-sm shadow-sm flex items-center gap-1">
+              <button onClick={() => { setEditItemId(null); setAddonFormData({ name: '', category: '', price: 0, description: '', unit: '' }); setIsAddonModalOpen(true); }} className="bg-primary text-on-primary px-3 py-1.5 rounded-lg font-label-sm shadow-sm flex items-center gap-1">
                 <span className="material-symbols-outlined text-[18px]">add</span> Add Addon
               </button>
             </div>
@@ -564,7 +591,7 @@ export const PackagesMenu = () => {
           <div className="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
             <div className="p-4 border-b border-outline-variant/30 flex justify-between items-center">
               <h3 className="font-headline-sm text-primary">Pricing & Surcharge Engine</h3>
-              <button onClick={() => setIsPricingModalOpen(true)} className="bg-primary text-on-primary px-3 py-1.5 rounded-lg font-label-sm shadow-sm flex items-center gap-1">
+              <button onClick={() => { setEditItemId(null); setPricingFormData({ name: '', ruleType: 'Surcharge', flatAmount: '', percentageAmount: '' }); setIsPricingModalOpen(true); }} className="bg-primary text-on-primary px-3 py-1.5 rounded-lg font-label-sm shadow-sm flex items-center gap-1">
                 <span className="material-symbols-outlined text-[18px]">add</span> Add Rule
               </button>
             </div>

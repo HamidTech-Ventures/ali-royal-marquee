@@ -30,7 +30,7 @@ export const DashboardLayout = () => {
   return (
     <div className="bg-surface font-body-md text-body-md text-on-surface antialiased min-h-screen overflow-x-hidden w-full max-w-[100vw]">
       <div className="hidden md:block">
-        <Sidebar isExpanded={isSidebarExpanded} onHoverChange={setIsSidebarExpanded} />
+        <Sidebar isExpanded={isSidebarExpanded} onToggle={() => setIsSidebarExpanded(!isSidebarExpanded)} />
       </div>
       <div 
         className={clsx(

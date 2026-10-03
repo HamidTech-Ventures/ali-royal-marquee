@@ -10,9 +10,11 @@ import type { EnquiryDetail, FollowUpType } from '../../../types';
 interface FollowUpLogProps {
   enquiry: EnquiryDetail;
   onUpdate: () => void;
+  autoOpen?: boolean;
+  onAutoOpenComplete?: () => void;
 }
 
-export const FollowUpLog: React.FC<FollowUpLogProps> = ({ enquiry, onUpdate }) => {
+export const FollowUpLog: React.FC<FollowUpLogProps> = ({ enquiry, onUpdate, autoOpen, onAutoOpenComplete }) => {
   const { success, error } = useToast();
   const [isScheduling, setIsScheduling] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,6 +24,13 @@ export const FollowUpLog: React.FC<FollowUpLogProps> = ({ enquiry, onUpdate }) =
     dueTime: '',
     notes: ''
   });
+
+  React.useEffect(() => {
+    if (autoOpen && !isScheduling) {
+      setIsScheduling(true);
+      if (onAutoOpenComplete) onAutoOpenComplete();
+    }
+  }, [autoOpen, isScheduling, onAutoOpenComplete]);
 
   const handleSchedule = async () => {
     if (!formData.dueDate) {

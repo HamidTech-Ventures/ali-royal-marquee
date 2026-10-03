@@ -3,12 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Input } from '../../components/ui/forms/Input';
 import { Select } from '../../components/ui/forms/Select';
-import { FormSection, FormActions } from '../../components/ui/forms/FormLayout';
+import { FormSection } from '../../components/ui/forms/FormLayout';
+import { Button } from '../../components/ui/Button';
 import { useToast } from '../../context/ToastContext';
 import { enquiriesService } from '../../services/enquiriesService';
 import { useVenues } from '../../hooks/useVenues';
 import { useStaff } from '../../hooks/useStaff';
-import type { EnquirySource, EnquiryPriority } from '../../types';
+import type { EventShift } from '../../types';
 
 export const EnquiryForm = () => {
   const navigate = useNavigate();
@@ -21,23 +22,35 @@ export const EnquiryForm = () => {
   const { venues } = useVenues();
   const { staff } = useStaff();
 
-  const [formData, setFormData] = useState({
-    customerName: '',
-    customerPhone: '',
-    eventName: '',
-    eventType: 'Wedding',
-    dateStr: '',
-    alternativeDate: '',
-    preferredStartTime: '',
-    preferredEndTime: '',
-    guests: 0,
-    preferredVenueId: '',
-    budget: '',
-    assignedToId: '',
-    source: 'WalkIn' as EnquirySource,
-    priority: 'Warm' as EnquiryPriority,
-    notes: ''
+  const [formData, setFormData] = useState(() => {
+    if (!isEditMode) {
+      const saved = localStorage.getItem('enquiryDraft');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch(e) {}
+      }
+    }
+    return {
+      customerName: '',
+      customerPhone: '',
+      eventName: '',
+      eventType: 'Wedding',
+      dateStr: '',
+      alternativeDate: '',
+      shift: 'Evening' as EventShift,
+      bufferCapacity: 0,
+      partitionRequired: false,
+      guests: 0,
+      preferredVenueId: '',
+      budget: '',
+      assignedToId: '',
+      source: 'WalkIn',
+      notes: ''
+    };
   });
+
+
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
 
@@ -53,14 +66,14 @@ export const EnquiryForm = () => {
             eventType: data.eventType || 'Wedding',
             dateStr: data.preferredDate ? new Date(data.preferredDate).toISOString().split('T')[0] : '',
             alternativeDate: data.alternativeDate ? new Date(data.alternativeDate).toISOString().split('T')[0] : '',
-            preferredStartTime: data.preferredStartTime ? data.preferredStartTime.substring(0, 5) : '',
-            preferredEndTime: data.preferredEndTime ? data.preferredEndTime.substring(0, 5) : '',
+            shift: data.shift || 'Evening',
+            bufferCapacity: data.bufferCapacity || 0,
+            partitionRequired: data.partitionRequired || false,
             guests: data.guestCount || 0,
             preferredVenueId: data.preferredVenueId || '',
             budget: data.budget ? data.budget.toString() : '',
             assignedToId: data.assignedToId || '',
             source: data.source || 'WalkIn',
-            priority: data.priority || 'Warm',
             notes: data.notes || ''
           });
         } catch (err) {
@@ -88,19 +101,18 @@ export const EnquiryForm = () => {
     }
   };
 
+  const handleSaveDraft = () => {
+    if (!isEditMode) {
+      localStorage.setItem('enquiryDraft', JSON.stringify(formData));
+      success('Draft saved successfully');
+    }
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setValidationErrors({});
     
-    // Custom time validation
-    if (formData.preferredStartTime && formData.preferredEndTime) {
-      if (formData.preferredStartTime >= formData.preferredEndTime) {
-        setValidationErrors({ preferredEndTime: ['End time must be after start time.'] });
-        showError('Please correct the highlighted errors.');
-        setIsSubmitting(false);
-        return;
-      }
-    }
+
     
     try {
       const payload = {
@@ -111,14 +123,14 @@ export const EnquiryForm = () => {
         eventType: formData.eventType,
         preferredDate: formData.dateStr || undefined,
         alternativeDate: formData.alternativeDate || undefined,
-        preferredStartTime: formData.preferredStartTime ? `${formData.preferredStartTime}:00` : undefined,
-        preferredEndTime: formData.preferredEndTime ? `${formData.preferredEndTime}:00` : undefined,
+        shift: formData.shift,
+        bufferCapacity: Number(formData.bufferCapacity),
+        partitionRequired: formData.partitionRequired,
         guestCount: Number(formData.guests),
         preferredVenueId: formData.preferredVenueId || undefined,
         budget: formData.budget ? Number(formData.budget) : undefined,
         assignedToId: formData.assignedToId || undefined,
         source: formData.source,
-        priority: formData.priority,
         notes: formData.notes
       };
 
@@ -129,6 +141,7 @@ export const EnquiryForm = () => {
       } else {
         const response = await enquiriesService.createEnquiry(payload as any);
         success('Enquiry created successfully');
+        localStorage.removeItem('enquiryDraft');
         navigate(`/app/enquiries/${response.id}`);
       }
     } catch (err: any) {
@@ -266,27 +279,36 @@ export const EnquiryForm = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 col-span-1 md:col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 col-span-1 md:col-span-2">
+            <Select 
+              label="Event Shift" 
+              name="shift"
+              value={formData.shift}
+              onChange={handleChange}
+              options={[
+                { label: 'Afternoon', value: 'Afternoon' },
+                { label: 'Evening', value: 'Evening' }
+              ]}
+            />
             <div>
               <Input 
-                label="Start Time (Optional)" 
-                name="preferredStartTime" 
-                type="time"
-                value={formData.preferredStartTime} 
+                label="Buffer Capacity" 
+                name="bufferCapacity" 
+                type="number"
+                value={formData.bufferCapacity} 
                 onChange={handleChange}
               />
-              {validationErrors.preferredStartTime && <div className="text-error text-xs mt-1">{validationErrors.preferredStartTime[0]}</div>}
             </div>
-            <div>
-              <Input 
-                label="End Time (Optional)" 
-                name="preferredEndTime" 
-                type="time"
-                value={formData.preferredEndTime} 
-                onChange={handleChange}
-              />
-              {validationErrors.preferredEndTime && <div className="text-error text-xs mt-1">{validationErrors.preferredEndTime[0]}</div>}
-            </div>
+            <Select 
+              label="Partition Required" 
+              name="partitionRequired"
+              value={formData.partitionRequired.toString()}
+              onChange={(e) => setFormData(prev => ({ ...prev, partitionRequired: e.target.value === 'true' }))}
+              options={[
+                { label: 'No', value: 'false' },
+                { label: 'Yes', value: 'true' }
+              ]}
+            />
           </div>
         </FormSection>
 
@@ -330,17 +352,7 @@ export const EnquiryForm = () => {
               { label: 'Other', value: 'Other' }
             ]}
           />
-          <Select 
-            label="Lead Priority" 
-            name="priority"
-            value={formData.priority}
-            onChange={handleChange}
-            options={[
-              { label: 'Hot', value: 'Hot' },
-              { label: 'Warm', value: 'Warm' },
-              { label: 'Cold', value: 'Cold' }
-            ]}
-          />
+
           <div className="col-span-1 md:col-span-2">
             <label className="text-sm font-medium text-on-surface flex flex-col gap-1.5 w-full">
               Initial Notes
@@ -355,12 +367,34 @@ export const EnquiryForm = () => {
           </div>
         </FormSection>
 
-        <FormActions 
-          onCancel={() => navigate('/app/enquiries')} 
-          onSave={handleSubmit} 
-          isSaving={isSubmitting} 
-          saveLabel={isEditMode ? 'Update Enquiry' : 'Create Enquiry'} 
-        />
+        <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-6 mt-6 border-t border-outline-variant">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/app/enquiries')}
+            disabled={isSubmitting}
+            className="w-full sm:w-auto"
+          >
+            Cancel
+          </Button>
+          {!isEditMode && (
+            <Button 
+              variant="secondary" 
+              onClick={handleSaveDraft}
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
+            >
+              Save as Draft
+            </Button>
+          )}
+          <Button 
+            variant="primary" 
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="w-full sm:w-auto"
+          >
+            {isSubmitting ? 'Saving...' : (isEditMode ? 'Update Enquiry' : 'Create Enquiry')}
+          </Button>
+        </div>
         </div>
       </div>
     </div>

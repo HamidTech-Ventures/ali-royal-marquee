@@ -26,7 +26,14 @@ export const Bookings = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Filter state
-  const [statusFilter, setStatusFilter] = useState<'All' | 'Confirmed' | 'Tentative'>('All');
+  const [statusFilter, setStatusFilter] = useState<'All' | 'Confirmed' | 'Tentative' | 'Draft'>('All');
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    startDate: '',
+    endDate: '',
+    shift: 'All',
+    paymentStatus: 'All'
+  });
 
   // Debounce search
   useEffect(() => {
@@ -40,7 +47,9 @@ export const Bookings = () => {
     try {
       const response = await bookingsService.getBookings({
         searchTerm: debouncedSearch,
-        status: statusFilter === 'Tentative' ? 'Pending' : statusFilter
+        status: statusFilter === 'Tentative' ? 'Pending' : statusFilter,
+        startDate: filters.startDate || undefined,
+        endDate: filters.endDate || undefined
       });
       setBookings(response.items || []);
     } catch (err) {
@@ -57,7 +66,7 @@ export const Bookings = () => {
 
   useEffect(() => {
     fetchBookings();
-  }, [debouncedSearch, statusFilter]);
+  }, [debouncedSearch, statusFilter, filters.startDate, filters.endDate]);
 
   const handleSort = (colKey: string) => {
     if (sortColumn === colKey) {
@@ -71,6 +80,21 @@ export const Bookings = () => {
   const filteredData = useMemo(() => {
     let result = [...bookings];
     
+    // Apply additional client-side filters
+    if (filters.shift !== 'All') {
+      result = result.filter(b => b.shift === filters.shift);
+    }
+    if (filters.paymentStatus !== 'All') {
+      result = result.filter(b => {
+        const paid = b.paidAmount || 0;
+        const total = b.totalAmount || 0;
+        if (filters.paymentStatus === 'Fully Paid') return paid >= total;
+        if (filters.paymentStatus === 'Unpaid') return paid === 0;
+        if (filters.paymentStatus === 'Partially Paid') return paid > 0 && paid < total;
+        return true;
+      });
+    }
+
     // Sort
     result.sort((a, b) => {
       const valA = (a as any)[sortColumn];
@@ -86,27 +110,11 @@ export const Bookings = () => {
   const stats = useMemo(() => {
     const total = allBookings.length;
     const confirmed = allBookings.filter(b => b.status === 'Confirmed').length;
-    const tentative = allBookings.filter(b => b.status === 'Pending').length;
-    const balance = allBookings.reduce((sum, b) => sum + ((b.totalAmount || 0) - (b.paidAmount || 0)), 0);
-    
-    // Upcoming (next 14 days)
-    const now = new Date();
-    const in14Days = new Date();
-    in14Days.setDate(now.getDate() + 14);
-    
-    const upcoming = allBookings.filter(b => {
-      if (!b.dateStr) return false;
-      const bDate = new Date(b.dateStr);
-      return bDate >= now && bDate <= in14Days;
-    }).length;
+    const pending = allBookings.filter(b => b.status === 'Pending').length;
+    const completed = allBookings.filter(b => b.status === 'Completed').length;
+    const cancelled = allBookings.filter(b => b.status === 'Cancelled').length;
 
-    const formatCurrency = (val: number) => {
-      if (val >= 1000000) return (val / 1000000).toFixed(2) + 'M';
-      if (val >= 1000) return (val / 1000).toFixed(1) + 'K';
-      return val.toString();
-    };
-
-    return { total, confirmed, tentative, upcoming, balanceStr: formatCurrency(balance) };
+    return { total, confirmed, pending, completed, cancelled };
   }, [allBookings]);
 
   const columns: ColumnDef<Booking>[] = [
@@ -192,6 +200,37 @@ export const Bookings = () => {
         if (item.status === 'Pending') variant = 'warning';
         return <Badge variant={variant}>{item.status}</Badge>;
       }
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (item) => (
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <button onClick={() => navigate(`/app/bookings/${item.id}`)} className="p-1.5 text-on-surface-variant hover:text-primary rounded-lg hover:bg-surface-variant/50 transition-colors" title="View">
+            <span className="material-symbols-outlined text-[18px]">visibility</span>
+          </button>
+          <button onClick={() => navigate(`/app/bookings/${item.id}/edit`)} className="p-1.5 text-on-surface-variant hover:text-primary rounded-lg hover:bg-surface-variant/50 transition-colors" title="Edit">
+            <span className="material-symbols-outlined text-[18px]">edit</span>
+          </button>
+          <button 
+            onClick={async () => {
+              if (window.confirm('Are you sure you want to delete this booking?')) {
+                try {
+                  await bookingsService.deleteBooking(item.id);
+                  error('Booking deleted successfully'); // Using error toast as success fallback if needed, but ideally success()
+                  fetchBookings();
+                } catch (err) {
+                  error('Failed to delete booking');
+                }
+              }
+            }} 
+            className="p-1.5 text-on-surface-variant hover:text-error rounded-lg hover:bg-error/10 transition-colors" 
+            title="Delete"
+          >
+            <span className="material-symbols-outlined text-[18px]">delete</span>
+          </button>
+        </div>
+      )
     }
   ];
 
@@ -227,7 +266,7 @@ export const Bookings = () => {
           
           <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#10b981]">
             <div className="w-10 h-10 shrink-0 rounded-xl bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#10b981]"></span>
+              <span className="material-symbols-outlined text-[20px]">check_circle</span>
             </div>
             <div className="flex flex-col">
               <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Confirmed</span>
@@ -237,38 +276,45 @@ export const Bookings = () => {
           
           <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#b0891d]">
             <div className="w-10 h-10 shrink-0 rounded-xl bg-[#b0891d]/10 flex items-center justify-center text-[#b0891d]">
-              <span className="material-symbols-outlined text-[20px]">schedule</span>
+              <span className="material-symbols-outlined text-[20px]">hourglass_empty</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Tentative</span>
-              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">{stats.tentative}</div>
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Pending</span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">{stats.pending}</div>
             </div>
           </div>
           
-          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#4a1420]">
-            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#4a1420]/10 flex items-center justify-center text-[#4a1420]">
-              <span className="material-symbols-outlined text-[20px]">celebration</span>
+          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-blue-500">
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+              <span className="material-symbols-outlined text-[20px]">task_alt</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Upcoming (14d)</span>
-              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">{stats.upcoming}</div>
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Completed</span>
+              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">{stats.completed}</div>
             </div>
           </div>
           
           <div className="col-span-2 md:col-span-1 bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#e02424]">
             <div className="w-10 h-10 shrink-0 rounded-xl bg-[#e02424]/10 flex items-center justify-center text-[#e02424]">
-              <span className="material-symbols-outlined text-[20px]">receipt_long</span>
+              <span className="material-symbols-outlined text-[20px]">cancel</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Balance</span>
-              <div className="font-serif text-base md:text-headline-sm text-[#e02424] font-bold mt-1">PKR {stats.balanceStr}</div>
+              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Cancelled</span>
+              <div className="font-serif text-base md:text-headline-sm text-[#e02424] font-bold mt-1">{stats.cancelled}</div>
             </div>
           </div>
         </div>
 
         {/* CONTROLS */}
-        <div className="bg-white p-3 md:p-4 border border-[#e8e4db] rounded-xl shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center overflow-x-auto hide-scrollbar gap-1.5 w-full">
+        <div className="bg-white p-3 md:p-4 border border-[#e8e4db] rounded-xl shadow-sm flex flex-col md:flex-row md:items-center justify-start gap-4">
+          <div className="flex-1 w-full md:max-w-[320px]">
+            <SearchInput 
+                placeholder="Search bookings..." 
+                value={searchTerm} 
+                onChange={setSearchTerm} 
+              />
+          </div>
+          <div className="flex items-center overflow-x-auto hide-scrollbar gap-1.5 w-full md:w-auto">
             <Button 
               variant={statusFilter === 'All' ? 'primary' : 'text'} 
               className={statusFilter === 'All' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
@@ -290,16 +336,13 @@ export const Bookings = () => {
             >
               Tentative
             </Button>
-          </div>
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            <div className="w-full md:w-auto">
-              <SearchInput 
-                placeholder="Search bookings..." 
-                value={searchTerm} 
-                onChange={setSearchTerm} 
-              />
-            </div>
-            <Button variant="outline" icon="filter_list" className="shrink-0 !text-[#4a1420] !border-surface-variant">More Filters</Button>
+            <Button 
+              variant={statusFilter === 'Draft' ? 'primary' : 'text'} 
+              className={statusFilter === 'Draft' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
+              onClick={() => setStatusFilter('Draft')}
+            >
+              Draft
+            </Button>
           </div>
         </div>
 
@@ -390,6 +433,74 @@ export const Bookings = () => {
             </div>
           </div>
         )}
+      </Drawer>
+
+      <Drawer
+        isOpen={isFilterDrawerOpen}
+        onClose={() => setIsFilterDrawerOpen(false)}
+        title="Advanced Filters"
+      >
+        <div className="p-4 flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-on-surface">Date Range</label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-on-surface-variant">Start Date</span>
+                <input 
+                  type="date" 
+                  className="w-full h-10 px-3 bg-surface border border-outline rounded-lg text-sm"
+                  value={filters.startDate}
+                  onChange={(e) => setFilters(f => ({ ...f, startDate: e.target.value }))}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-on-surface-variant">End Date</span>
+                <input 
+                  type="date" 
+                  className="w-full h-10 px-3 bg-surface border border-outline rounded-lg text-sm"
+                  value={filters.endDate}
+                  onChange={(e) => setFilters(f => ({ ...f, endDate: e.target.value }))}
+                />
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-on-surface">Shift</label>
+            <select 
+              className="w-full h-10 px-3 bg-surface border border-outline rounded-lg text-sm"
+              value={filters.shift}
+              onChange={(e) => setFilters(f => ({ ...f, shift: e.target.value }))}
+            >
+              <option value="All">All Shifts</option>
+              <option value="Day">Day</option>
+              <option value="Night">Night</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-on-surface">Payment Status</label>
+            <select 
+              className="w-full h-10 px-3 bg-surface border border-outline rounded-lg text-sm"
+              value={filters.paymentStatus}
+              onChange={(e) => setFilters(f => ({ ...f, paymentStatus: e.target.value }))}
+            >
+              <option value="All">All</option>
+              <option value="Fully Paid">Fully Paid</option>
+              <option value="Partially Paid">Partially Paid</option>
+              <option value="Unpaid">Unpaid</option>
+            </select>
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-outline flex justify-end gap-3">
+            <Button variant="text" onClick={() => setFilters({ startDate: '', endDate: '', shift: 'All', paymentStatus: 'All' })}>
+              Clear
+            </Button>
+            <Button variant="primary" onClick={() => setIsFilterDrawerOpen(false)}>
+              Apply Filters
+            </Button>
+          </div>
+        </div>
       </Drawer>
     </div>
   );

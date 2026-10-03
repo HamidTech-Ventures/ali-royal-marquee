@@ -25,9 +25,9 @@ export const mockEnquiries: any[] = [
 ];
 
 export const mockBookings: any[] = [
-  { id: 'BK-1042', customerId: 'CUST-001', eventId: 'EV-2042', hall: 'Grand Ballroom', dateStr: '2026-09-08', shift: 'Night', guests: 450, totalAmount: 1850000, paidAmount: 1700000, status: 'Confirmed', paymentStatus: 'Partial', createdAt: '2026-07-15' },
+  { id: 'BK-1042', customerId: 'CUST-001', eventId: 'EV-2042', hall: 'Grand Ballroom', dateStr: '2026-09-08', shift: 'Night (Cleanup)', guests: 450, totalAmount: 1850000, paidAmount: 1700000, status: 'Confirmed', paymentStatus: 'Partial', createdAt: '2026-07-15' },
   { id: 'BK-1043', customerId: 'CUST-003', eventId: 'EV-2043', hall: 'Royal Marquee', dateStr: '2026-09-12', shift: 'Day', guests: 600, totalAmount: 2100000, paidAmount: 2100000, status: 'Confirmed', paymentStatus: 'Paid', createdAt: '2026-08-01' },
-  { id: 'BK-1044', customerId: 'CUST-005', eventId: 'EV-2044', hall: 'Grand Ballroom', dateStr: '2026-12-05', shift: 'Night', guests: 800, totalAmount: 3100000, paidAmount: 500000, status: 'Confirmed', paymentStatus: 'Partial', createdAt: '2026-08-25' },
+  { id: 'BK-1044', customerId: 'CUST-005', eventId: 'EV-2044', hall: 'Grand Ballroom', dateStr: '2026-12-05', shift: 'Night (Cleanup)', guests: 800, totalAmount: 3100000, paidAmount: 500000, status: 'Confirmed', paymentStatus: 'Partial', createdAt: '2026-08-25' },
 ];
 
 export const mockEvents: Event[] = [
@@ -57,11 +57,11 @@ export const mockInventory: InventoryItem[] = [
 ];
 
 export const mockStaff: Staff[] = [
-  { id: 'EMP-1001', name: 'Zahid Khan', role: 'Manager', phone: '+92 300 1234567', shift: 'Morning', status: 'Active' },
-  { id: 'EMP-1002', name: 'Farooq Ahmed', role: 'Chef', phone: '+92 300 1234568', shift: 'Morning', status: 'Active' },
-  { id: 'EMP-1003', name: 'Ali Raza', role: 'Supervisor', phone: '+92 300 1234569', shift: 'Evening', status: 'Active' },
-  { id: 'EMP-1004', name: 'Kamran Shah', role: 'Security', phone: '+92 300 1234570', shift: 'Night', status: 'On Leave' },
-  { id: 'EMP-1005', name: 'Tariq Mehmood', role: 'Waiter', phone: '+92 300 1234571', shift: 'Evening', status: 'Active' }
+  { id: 'EMP-1001', name: 'Zahid Khan', role: 'Manager', phone: '+92 300 1234567', shift: 'Afternoon (Lunch)', status: 'Active' },
+  { id: 'EMP-1002', name: 'Farooq Ahmed', role: 'Chef', phone: '+92 300 1234568', shift: 'Afternoon (Lunch)', status: 'Active' },
+  { id: 'EMP-1003', name: 'Ali Raza', role: 'Supervisor', phone: '+92 300 1234569', shift: 'Evening (Dinner)', status: 'Active' },
+  { id: 'EMP-1004', name: 'Kamran Shah', role: 'Security', phone: '+92 300 1234570', shift: 'Night (Cleanup)', status: 'On Leave' },
+  { id: 'EMP-1005', name: 'Tariq Mehmood', role: 'Waiter', phone: '+92 300 1234571', shift: 'Evening (Dinner)', status: 'Active' }
 ];
 
 export const mockExpenses: Expense[] = [

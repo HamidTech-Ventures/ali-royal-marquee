@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import os
+
+code = """import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useToast } from '../../context/ToastContext';
 import { bookingsService } from '../../services/bookingsService';
-import { eventsService } from '../../services/eventsService';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
@@ -138,10 +139,9 @@ export const BookingDetails = () => {
     }
   };
 
-  const handleConvertToEvent = async () => {
+  const handleConvertToEvent = () => {
     // Navigate to Event creation page, passing booking data via state
-    const res = await eventsService.createFromBooking(booking.id);
-    navigate(`/app/events/${res.eventId}`, { state: { bookingId: booking.id, customerName: booking.customerName } });
+    navigate('/app/events/new', { state: { bookingId: booking.id, customerName: booking.customerName } });
   };
 
   return (
@@ -197,17 +197,17 @@ export const BookingDetails = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <div className="bg-white border border-[#e8e4db] rounded-xl p-4 md:p-5 shadow-sm">
             <div className="text-[9px] md:text-xs text-on-surface-variant uppercase tracking-wider font-semibold mb-1">Total Amount</div>
-            <div className="font-serif text-lg md:text-3xl font-bold text-[#4a1420]">PKR {booking.totalAmount.toLocaleString()}</div>
+            <div className="font-serif text-lg md:text-3xl font-bold text-[#4a1420]">PKR {(booking.totalAmount / 1000).toFixed(0)}k</div>
           </div>
           <div className="bg-white border border-[#e8e4db] rounded-xl p-4 md:p-5 shadow-sm relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#10b981]"></div>
             <div className="text-[9px] md:text-xs text-on-surface-variant uppercase tracking-wider font-semibold mb-1">Total Paid</div>
-            <div className="font-serif text-lg md:text-3xl font-bold text-[#10b981]">PKR {totalPaid.toLocaleString()}</div>
+            <div className="font-serif text-lg md:text-3xl font-bold text-[#10b981]">PKR {(totalPaid / 1000).toFixed(0)}k</div>
           </div>
           <div className="bg-white border border-[#e8e4db] rounded-xl p-4 md:p-5 shadow-sm relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#e02424]"></div>
             <div className="text-[9px] md:text-xs text-on-surface-variant uppercase tracking-wider font-semibold mb-1">Balance Due</div>
-            <div className="font-serif text-lg md:text-3xl font-bold text-[#e02424]">PKR {(balance > 0 ? balance : 0).toLocaleString()}</div>
+            <div className="font-serif text-lg md:text-3xl font-bold text-[#e02424]">PKR {(balance > 0 ? balance : 0 / 1000).toFixed(0)}k</div>
           </div>
           <div className="bg-white border border-[#e8e4db] rounded-xl p-4 md:p-5 shadow-sm">
             <div className="text-[9px] md:text-xs text-on-surface-variant uppercase tracking-wider font-semibold mb-1">Booking Date</div>
@@ -439,3 +439,9 @@ export const BookingDetails = () => {
   </div>
   );
 };
+"""
+
+with open('c:/My working/HamidTech_Ventures/Clients/marquee-management-system/frontend/src/features/bookings/BookingDetails.tsx', 'w', encoding='utf-8') as f:
+    f.write(code)
+
+print("Done")

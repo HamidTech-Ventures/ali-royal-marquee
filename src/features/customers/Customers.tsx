@@ -134,6 +134,23 @@ export const Customers = () => {
           PKR {item.totalSpent.toLocaleString()}
         </div>
       )
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (item) => (
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <button onClick={() => navigate(`/app/customers/${item.id}`)} className="p-1.5 text-on-surface-variant hover:text-primary rounded-lg hover:bg-surface-variant/50 transition-colors" title="View">
+            <span className="material-symbols-outlined text-[18px]">visibility</span>
+          </button>
+          <button onClick={() => navigate(`/app/customers/${item.id}/edit`)} className="p-1.5 text-on-surface-variant hover:text-primary rounded-lg hover:bg-surface-variant/50 transition-colors" title="Edit">
+            <span className="material-symbols-outlined text-[18px]">edit</span>
+          </button>
+          <button onClick={() => {}} className="p-1.5 text-on-surface-variant hover:text-error rounded-lg hover:bg-error/10 transition-colors" title="Delete">
+            <span className="material-symbols-outlined text-[18px]">delete</span>
+          </button>
+        </div>
+      )
     }
   ];
 

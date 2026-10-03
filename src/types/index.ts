@@ -7,9 +7,9 @@ export type Customer = {
   totalSpent: number;
 };
 
-export type EnquiryStatus = 'New' | 'Contacted' | 'Qualified' | 'Scheduled' | 'Quoted' | 'Negotiating' | 'Converted' | 'Lost';
+export type EnquiryStatus = 'Inquiry' | 'SiteVisit' | 'TokenReceived' | 'AdvancePaid' | 'Cancelled';
 export type EnquirySource = 'WalkIn' | 'Phone' | 'Email' | 'SocialMedia' | 'Referral' | 'Website' | 'Other';
-export type EnquiryPriority = 'Low' | 'Medium' | 'High' | 'Urgent';
+export type EventShift = 'Afternoon' | 'Evening';
 export type FollowUpType = 'Call' | 'Email' | 'Meeting' | 'Message' | 'Other';
 export type FollowUpStatus = 'Pending' | 'Completed' | 'Cancelled';
 export type QuotationStatus = 'Draft' | 'Sent' | 'Accepted' | 'Rejected' | 'Expired';
@@ -23,14 +23,14 @@ export interface CreateEnquiryRequest {
   eventType?: string;
   preferredDate: string; // YYYY-MM-DD
   alternativeDate?: string; // YYYY-MM-DD
-  preferredStartTime?: string; // HH:mm:ss
-  preferredEndTime?: string; // HH:mm:ss
+  shift: EventShift;
+  bufferCapacity: number;
+  partitionRequired: boolean;
   guestCount: number;
   preferredVenueId?: string;
   budget?: number;
   notes?: string;
   source: EnquirySource;
-  priority: EnquiryPriority;
   assignedToId?: string;
 }
 
@@ -39,13 +39,13 @@ export interface UpdateEnquiryRequest {
   eventType?: string;
   preferredDate: string; // YYYY-MM-DD
   alternativeDate?: string; // YYYY-MM-DD
-  preferredStartTime?: string; // HH:mm:ss
-  preferredEndTime?: string; // HH:mm:ss
+  shift: EventShift;
+  bufferCapacity: number;
+  partitionRequired: boolean;
   guestCount: number;
   preferredVenueId?: string;
   budget?: number;
   source: EnquirySource;
-  priority: EnquiryPriority;
   assignedToId?: string;
   notes?: string;
   estimatedValue?: number;
@@ -62,7 +62,9 @@ export type Enquiry = {
     preferredDate: string;
     guestCount: number;
     source: EnquirySource;
-    priority: EnquiryPriority;
+    shift: EventShift;
+    bufferCapacity: number;
+    partitionRequired: boolean;
     status: EnquiryStatus;
     assignedToName?: string;
     estimatedValue?: number;
@@ -71,8 +73,6 @@ export type Enquiry = {
 
 export type EnquiryDetail = Enquiry & {
     alternativeDate?: string;
-    preferredStartTime?: string;
-    preferredEndTime?: string;
     preferredVenueId?: string;
     preferredVenueName?: string;
     budget?: number;
@@ -102,39 +102,43 @@ export interface EnquiryStatsDto {
   totalEnquiries: number;
   newThisWeek: number;
   followUpsDue: number;
-  hotLeads: number;
   conversionRate: number;
   estimatedPipelineValue: number;
 }
 
 export interface EnquiryLifecycleDto {
-  new: number;
-  contacted: number;
-  qualified: number;
-  visitScheduled: number;
-  quotationSent: number;
-  negotiation: number;
-  converted: number;
-  lost: number;
+  inquiry: number;
+  siteVisit: number;
+  tokenReceived: number;
+  advancePaid: number;
+  cancelled: number;
 }
+
+export type QuotationItemType = 'PerHead' | 'Fixed';
 
 export type QuotationLineItem = {
     id: string;
+    itemType: QuotationItemType;
+    category: string;
     description: string;
     quantity: number;
+    unit: string;
     unitPrice: number;
-    total: number;
+    lineTotal: number;
+    sortOrder: number;
 };
 
 export type EnquiryQuotation = {
     id: string;
     quotationReference: string;
     version: number;
-    subTotal: number;
+    subtotal: number;
     discountAmount: number;
     serviceChargeAmount: number;
-    taxAmount: number;
+    praTaxAmount: number;
     grandTotal: number;
+    tokenMoney: number;
+    advancePayment: number;
     validUntil?: string;
     status: QuotationStatus;
     notes?: string;
@@ -228,7 +232,12 @@ export type InventoryItem = {
   quantity: number;
   minQuantity: number;
   unit: string;
+  itemType: 'Fixed Asset' | 'Consumable';
   status: 'In Stock' | 'Low Stock' | 'Out of Stock';
+  unitPrice?: number;
+  location?: string;
+  movements?: InventoryMovement[];
+  reservations?: InventoryReservation[];
 };
 
 export type StaffRole = 'Manager' | 'Supervisor' | 'Waiter' | 'Chef' | 'Security';
@@ -237,9 +246,12 @@ export type Staff = {
   name: string;
   role: StaffRole;
   phone: string;
-  shift: 'Morning' | 'Evening' | 'Night';
+  shift: 'Afternoon (Lunch)' | 'Evening (Dinner)' | 'Night (Cleanup)';
   status: 'Active' | 'On Leave' | 'Inactive';
   salary?: number;
+  cnic: string;
+  compensationType: 'Fixed Monthly' | 'Per-Event/Daily Wage';
+  createdAt?: string;
 };
 
 export type Notification = {
@@ -259,4 +271,23 @@ export type Package = {
   price: number;
   status: 'Active' | 'Draft' | 'Archived';
   minGuests?: number;
+};
+
+export type InventoryMovement = {
+  id: string;
+  type: 'IN' | 'OUT' | 'RELOCATE';
+  quantity: number;
+  notes?: string;
+  reference?: string;
+  createdAt: string;
+};
+
+export type InventoryReservation = {
+  id: string;
+  eventId: string;
+  quantity: number;
+  startDate: string;
+  endDate: string;
+  status: string;
+  createdAt: string;
 };

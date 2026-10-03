@@ -27,6 +27,11 @@ export const bookingsService = {
     return response.data;
   },
 
+  deleteBooking: async (id: string) => {
+    const response = await api.delete(`/bookings/${id}`);
+    return response.data;
+  },
+
   addPayment: async (id: string, data: Partial<Payment>) => {
     const response = await api.post(`/bookings/${id}/payments`, { bookingId: id, ...data });
     return response.data; // { paymentId: string }

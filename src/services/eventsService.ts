@@ -1,6 +1,11 @@
 import api from './api';
 
 export const eventsService = {
+  createFromBooking: async (bookingId: string) => {
+    const response = await api.post(`/events/from-booking/${bookingId}`);
+    return response.data;
+  },
+
   getEvents: async () => {
     const response = await api.get('/events');
     return response.data; // List of EventDto
@@ -28,6 +33,11 @@ export const eventsService = {
 
   addStaff: async (id: string, name: string, role: string, staffMemberId?: string) => {
     const response = await api.post(`/events/${id}/staff`, { eventId: id, name, role, staffMemberId });
+    return response.data;
+  },
+
+  removeStaff: async (id: string, staffMemberId: string) => {
+    const response = await api.delete(`/events/${id}/staff/${staffMemberId}`);
     return response.data;
   },
 

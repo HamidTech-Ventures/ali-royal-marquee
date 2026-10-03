@@ -1,4 +1,6 @@
-import { useState, useMemo, useEffect } from 'react';
+import os
+
+code = """import { useState, useMemo, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { SearchInput } from '../../components/ui/SearchInput';
@@ -443,3 +445,9 @@ export const Payments = () => {
 };
 
 export default Payments;
+"""
+
+with open('c:/My working/HamidTech_Ventures/Clients/marquee-management-system/frontend/src/features/payments/Payments.tsx', 'w', encoding='utf-8') as f:
+    f.write(code)
+
+print("Done")

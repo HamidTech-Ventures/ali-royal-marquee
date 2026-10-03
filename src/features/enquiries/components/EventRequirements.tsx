@@ -21,8 +21,9 @@ export const EventRequirements: React.FC<Props> = ({ enquiry, onUpdate }) => {
   const [formData, setFormData] = useState({
     preferredDate: enquiry.preferredDate ? new Date(enquiry.preferredDate).toISOString().split('T')[0] : '',
     alternativeDate: enquiry.alternativeDate ? new Date(enquiry.alternativeDate).toISOString().split('T')[0] : '',
-    preferredStartTime: enquiry.preferredStartTime || '',
-    preferredEndTime: enquiry.preferredEndTime || '',
+    shift: enquiry.shift || 'Evening',
+    bufferCapacity: enquiry.bufferCapacity || 0,
+    partitionRequired: enquiry.partitionRequired || false,
     preferredVenueId: enquiry.preferredVenueId || '',
     budget: enquiry.budget || ''
   });
@@ -35,26 +36,20 @@ export const EventRequirements: React.FC<Props> = ({ enquiry, onUpdate }) => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      if (formData.preferredStartTime && formData.preferredEndTime) {
-        if (formData.preferredStartTime >= formData.preferredEndTime) {
-          error('End time must be after start time.');
-          setIsSaving(false);
-          return;
-        }
-      }
+
 
       const payload = {
         eventName: enquiry.eventName,
         eventType: enquiry.eventType,
         preferredDate: formData.preferredDate || undefined,
         alternativeDate: formData.alternativeDate || undefined,
-        preferredStartTime: formData.preferredStartTime ? (formData.preferredStartTime.length === 5 ? `${formData.preferredStartTime}:00` : formData.preferredStartTime) : undefined,
-        preferredEndTime: formData.preferredEndTime ? (formData.preferredEndTime.length === 5 ? `${formData.preferredEndTime}:00` : formData.preferredEndTime) : undefined,
+        shift: formData.shift,
+        bufferCapacity: Number(formData.bufferCapacity),
+        partitionRequired: formData.partitionRequired,
         guestCount: enquiry.guestCount,
         preferredVenueId: formData.preferredVenueId || undefined,
         budget: formData.budget ? Number(formData.budget) : undefined,
         source: enquiry.source,
-        priority: enquiry.priority,
         assignedToId: enquiry.assignedToId,
         notes: enquiry.notes,
         estimatedValue: enquiry.estimatedValue
@@ -111,19 +106,32 @@ export const EventRequirements: React.FC<Props> = ({ enquiry, onUpdate }) => {
               value={formData.alternativeDate} 
               onChange={handleChange}
             />
-            <Input 
-              label="Start Time" 
-              name="preferredStartTime" 
-              type="time"
-              value={formData.preferredStartTime} 
+            <Select 
+              label="Event Shift" 
+              name="shift"
+              value={formData.shift}
               onChange={handleChange}
+              options={[
+                { label: 'Afternoon', value: 'Afternoon' },
+                { label: 'Evening', value: 'Evening' }
+              ]}
             />
             <Input 
-              label="End Time" 
-              name="preferredEndTime" 
-              type="time"
-              value={formData.preferredEndTime} 
+              label="Buffer Capacity" 
+              name="bufferCapacity" 
+              type="number"
+              value={formData.bufferCapacity} 
               onChange={handleChange}
+            />
+            <Select 
+              label="Partition Required" 
+              name="partitionRequired"
+              value={formData.partitionRequired.toString()}
+              onChange={(e) => setFormData(prev => ({ ...prev, partitionRequired: e.target.value === 'true' }))}
+              options={[
+                { label: 'No', value: 'false' },
+                { label: 'Yes', value: 'true' }
+              ]}
             />
           </div>
           <div className="flex justify-end gap-3 mt-6">
@@ -160,12 +168,16 @@ export const EventRequirements: React.FC<Props> = ({ enquiry, onUpdate }) => {
             <div className="font-medium">{enquiry.alternativeDate ? new Date(enquiry.alternativeDate).toLocaleDateString() : 'None'}</div>
           </div>
           <div>
-            <span className="text-on-surface-variant block text-sm mb-1">Preferred Start Time</span>
-            <div className="font-medium">{enquiry.preferredStartTime || 'Not specified'}</div>
+            <span className="text-on-surface-variant block text-sm mb-1">Event Shift</span>
+            <div className="font-medium">{enquiry.shift}</div>
           </div>
           <div>
-            <span className="text-on-surface-variant block text-sm mb-1">Preferred End Time</span>
-            <div className="font-medium">{enquiry.preferredEndTime || 'Not specified'}</div>
+            <span className="text-on-surface-variant block text-sm mb-1">Buffer Capacity</span>
+            <div className="font-medium">{enquiry.bufferCapacity} Guests</div>
+          </div>
+          <div>
+            <span className="text-on-surface-variant block text-sm mb-1">Partition Required</span>
+            <div className="font-medium">{enquiry.partitionRequired ? 'Yes' : 'No'}</div>
           </div>
         </div>
       </div>

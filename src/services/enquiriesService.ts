@@ -5,8 +5,6 @@ import type {
   EnquiryStatus, 
   EnquiryActivityType, 
   FollowUpType,
-  EnquiryPriority,
-  EnquirySource,
   CreateEnquiryRequest,
   UpdateEnquiryRequest,
   EnquiryStatsDto,
@@ -16,8 +14,7 @@ import type {
 export interface GetEnquiriesParams {
   searchTerm?: string;
   status?: EnquiryStatus;
-  priority?: EnquiryPriority;
-  source?: EnquirySource;
+
   eventType?: string;
   venueId?: string;
   assignedToId?: string;
@@ -50,6 +47,11 @@ export const enquiriesService = {
 
   updateEnquiry: async (id: string, data: UpdateEnquiryRequest) => {
     const response = await api.put(`/enquiries/${id}`, data);
+    return response.data;
+  },
+
+  deleteEnquiry: async (id: string) => {
+    const response = await api.delete(`/enquiries/${id}`);
     return response.data;
   },
 

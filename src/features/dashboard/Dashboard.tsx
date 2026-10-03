@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Button } from '../../components/ui/Button';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell, ComposedChart, Line, CartesianGrid, Tooltip as RechartsTooltip } from 'recharts';
 import { financesService } from '../../services/financesService';
 import { bookingsService } from '../../services/bookingsService';
 
@@ -45,6 +45,13 @@ export const Dashboard = () => {
     .filter(b => b.status === 'Confirmed')
     .sort((a, b) => new Date(a.dateStr).getTime() - new Date(b.dateStr).getTime())
     .slice(0, 2); // Show top 2 upcoming
+
+  const forecastData = [
+    { name: 'Current', Actual: 3800000, Projected: 3800000 },
+    { name: 'Month +1', Actual: 0, Projected: 4200000 },
+    { name: 'Month +2', Actual: 0, Projected: 4500000 },
+    { name: 'Month +3', Actual: 0, Projected: 4100000 },
+  ];
 
   return (
     <div className="w-full px-4 md:px-8 py-6 bg-[#FAF8F5] min-h-screen">
@@ -284,6 +291,45 @@ export const Dashboard = () => {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 5. Forecast Section */}
+        <section className="bg-white rounded-xl shadow-sm border border-[#e8e4db] overflow-hidden p-6 md:p-8">
+          <div className="flex flex-col mb-6">
+            <h2 className="text-xl md:text-2xl font-serif text-[#4a1420] font-bold">Predictive Forecasts</h2>
+            <p className="text-sm text-on-surface-variant">AI-driven projections for revenue, demand, and resource requirements.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-[#FAF8F5] border border-[#e8e4db] rounded-xl p-5 shadow-sm">
+              <div className="text-xs text-on-surface-variant uppercase tracking-wider mb-1">Q4 Projected Revenue</div>
+              <div className="text-2xl font-currency-num font-bold text-on-surface">PKR 12.8M</div>
+            </div>
+            <div className="bg-[#FAF8F5] border border-[#e8e4db] rounded-xl p-5 shadow-sm">
+              <div className="text-xs text-on-surface-variant uppercase tracking-wider mb-1">Expected Demand Surge</div>
+              <div className="text-2xl font-bold text-[#5C0A1E]">Mid-Nov</div>
+            </div>
+            <div className="bg-[#FAF8F5] border border-error/50 bg-error/5 rounded-xl p-5 shadow-sm">
+              <div className="text-xs text-error uppercase tracking-wider mb-1 font-semibold">Predicted Shortfall</div>
+              <div className="text-lg font-bold text-error">Staffing Gap in Dec</div>
+            </div>
+          </div>
+
+          <div className="bg-[#FAF8F5] rounded-xl border border-[#e8e4db] p-4 md:p-6 shadow-sm">
+            <h3 className="font-semibold text-lg text-[#4a1420] mb-6">Revenue Forecast Trend</h3>
+            <div className="h-[300px] md:h-[400px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={forecastData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#71717a', fontSize: 12}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#71717a', fontSize: 12}} tickFormatter={(value) => `${value/1000000}M`} />
+                  <CartesianGrid vertical={false} stroke="#e4e4e7" strokeDasharray="3 3" />
+                  <RechartsTooltip cursor={{fill: 'rgba(0,0,0,0.05)'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                  <Legend verticalAlign="top" height={36} wrapperStyle={{fontSize: '12px'}} />
+                  <Bar dataKey="Actual" fill="#a78b5a" name="Actual Booked" radius={[4, 4, 0, 0]} />
+                  <Line type="monotone" dataKey="Projected" stroke="#5C0A1E" strokeWidth={3} strokeDasharray="5 5" name="Projected trend" />
+                </ComposedChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </section>

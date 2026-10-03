@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import os
+
+code = """import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Button } from '../../components/ui/Button';
@@ -42,6 +44,14 @@ export const BookingForm = () => {
   }, []);
 
   const [formData, setFormData] = useState(() => {
+    if (!isEditMode) {
+      const saved = localStorage.getItem('bookingDraft');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch(e) {}
+      }
+    }
     return {
       customerId: location.state?.customer?.id || location.state?.fromEnquiry?.customerId || '',
       customerName: location.state?.customer?.name || location.state?.fromEnquiry?.customerName || '',
@@ -109,12 +119,12 @@ export const BookingForm = () => {
 
   const handleSaveDraft = () => {
     if (!isEditMode) {
-      handleSubmit(undefined, true);
+      localStorage.setItem('bookingDraft', JSON.stringify(formData));
+      success('Draft saved successfully');
     }
   };
 
-  const handleSubmit = async (e?: React.FormEvent, isDraft = false) => {
-    if (e) e.preventDefault();
+  const handleSubmit = async () => {
     if (!formData.customerName || !formData.customerPhone) {
       error("Customer Name and Phone are required.");
       return;
@@ -159,8 +169,7 @@ export const BookingForm = () => {
         totalAmount: Number(formData.totalAmount),
         packageId: formData.packageId || undefined,
         eventTitle: formData.eventName || 'Unknown Event',
-        eventType: formData.eventType,
-        isDraft
+        eventType: formData.eventType
       } as any;
 
       let finalBookingId = bookingId;
@@ -189,9 +198,10 @@ export const BookingForm = () => {
              console.error("Failed to update enquiry status", statusErr);
            }
          }
+         localStorage.removeItem('bookingDraft');
       }
 
-      success(isEditMode ? 'Booking updated successfully' : (isDraft ? 'Draft saved successfully' : 'Booking created successfully'));
+      success(isEditMode ? 'Booking updated successfully' : 'Booking created successfully');
       navigate(`/app/bookings/${finalBookingId}`);
     } catch (err: any) {
       console.error(err);
@@ -218,6 +228,11 @@ export const BookingForm = () => {
           category="Operations"
           icon="event_available"
           onBack={() => navigate(-1)}
+          actions={
+            !isEditMode && (
+              <Button variant="outline" icon="save" onClick={handleSaveDraft}>Save Draft</Button>
+            )
+          }
         />
 
         {/* Stepper */}
@@ -362,7 +377,7 @@ export const BookingForm = () => {
                   options={[
                     { label: '-- Select a Venue --', value: '' },
                     ...venues.map(v => ({ 
-                      label: `${v.name} (Cap: ${v.capacity || 'N/A'})${v.basePrice != null ? ` - PKR ${v.basePrice.toLocaleString()}` : ''}`, 
+                      label: `${v.name} (Cap: ${v.capacity}) - PKR ${v.basePrice.toLocaleString()}`, 
                       value: v.id 
                     }))
                   ]}
@@ -373,9 +388,7 @@ export const BookingForm = () => {
                   <Check className="w-5 h-5 text-green-600 mt-0.5" />
                   <div>
                     <h4 className="font-semibold text-green-900">{selectedVenue.name} Selected</h4>
-                    {selectedVenue.basePrice != null && (
-                      <p className="text-sm text-green-700">Base Price: PKR {selectedVenue.basePrice.toLocaleString()}</p>
-                    )}
+                    <p className="text-sm text-green-700">Base Price: PKR {selectedVenue.basePrice.toLocaleString()}</p>
                   </div>
                 </div>
               )}
@@ -489,25 +502,24 @@ export const BookingForm = () => {
         >
           Back
         </Button>
-        <div className="flex gap-4">
-          {!isEditMode && (
-            <Button variant="outline" icon="save" onClick={handleSaveDraft} disabled={isSubmitting}>
-              Save Draft
-            </Button>
-          )}
-          {currentStep < steps.length ? (
-            <Button variant="primary" onClick={handleNext}>
-              Next Step <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          ) : (
-            <Button variant="primary" onClick={handleSubmit} disabled={isSubmitting} className="bg-[#5C0A1E] text-white">
-              {isSubmitting ? 'Confirming...' : (isEditMode ? 'Update Booking' : 'Confirm Booking')}
-            </Button>
-          )}
-        </div>
+        {currentStep < steps.length ? (
+          <Button variant="primary" onClick={handleNext}>
+            Next Step <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
+        ) : (
+          <Button variant="primary" onClick={handleSubmit} disabled={isSubmitting} className="bg-[#5C0A1E] text-white">
+            {isSubmitting ? 'Confirming...' : (isEditMode ? 'Update Booking' : 'Confirm Booking')}
+          </Button>
+        )}
       </div>
 
       </div>
     </div>
   );
 };
+"""
+
+with open('c:/My working/HamidTech_Ventures/Clients/marquee-management-system/frontend/src/features/bookings/BookingForm.tsx', 'w', encoding='utf-8') as f:
+    f.write(code)
+
+print("Done")

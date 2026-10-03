@@ -6,7 +6,6 @@ import { Button } from '../../components/ui/Button';
 import { DataGrid } from '../../components/ui/DataGrid';
 import type { ColumnDef } from '../../components/ui/DataGrid';
 import { Badge } from '../../components/ui/Badge';
-import { Drawer } from '../../components/ui/Drawer';
 import type { Staff as StaffType } from '../../types';
 import { staffService } from '../../services/staffService';
 import { useToast } from '../../context/ToastContext';
@@ -19,7 +18,6 @@ export const Staff = () => {
   const showBack = (location.state as any)?.fromBusiness;
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStaff, setSelectedStaff] = useState<StaffType | null>(null);
   
   const fetchStaff = async () => {
     try {
@@ -262,25 +260,25 @@ export const Staff = () => {
               All Shifts
             </Button>
             <Button 
-              variant={shiftFilter === 'Morning' ? 'primary' : 'text'} 
-              className={shiftFilter === 'Morning' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
-              onClick={() => setShiftFilter('Morning')}
+              variant={shiftFilter === 'Afternoon (Lunch)' ? 'primary' : 'text'} 
+              className={shiftFilter === 'Afternoon (Lunch)' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
+              onClick={() => setShiftFilter('Afternoon (Lunch)')}
             >
-              Morning
+              Afternoon (Lunch)
             </Button>
             <Button 
-              variant={shiftFilter === 'Evening' ? 'primary' : 'text'} 
-              className={shiftFilter === 'Evening' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
-              onClick={() => setShiftFilter('Evening')}
+              variant={shiftFilter === 'Evening (Dinner)' ? 'primary' : 'text'} 
+              className={shiftFilter === 'Evening (Dinner)' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
+              onClick={() => setShiftFilter('Evening (Dinner)')}
             >
-              Evening
+              Evening (Dinner)
             </Button>
             <Button 
-              variant={shiftFilter === 'Night' ? 'primary' : 'text'} 
-              className={shiftFilter === 'Night' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
-              onClick={() => setShiftFilter('Night')}
+              variant={shiftFilter === 'Night (Cleanup)' ? 'primary' : 'text'} 
+              className={shiftFilter === 'Night (Cleanup)' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
+              onClick={() => setShiftFilter('Night (Cleanup)')}
             >
-              Night
+              Night (Cleanup)
             </Button>
           </div>
           <div className="flex items-center gap-4 w-full md:w-auto">
@@ -299,7 +297,7 @@ export const Staff = () => {
           data={filteredData}
           columns={columns}
           keyExtractor={(item) => item.id}
-          onRowClick={(item) => setSelectedStaff(item)}
+          onRowClick={(item) => navigate(`/app/staff/${item.id}`)}
           sortColumn={sortColumn}
           sortDirection={sortDirection}
           onSort={handleSort}
@@ -310,51 +308,6 @@ export const Staff = () => {
           </div>
         </div>
       </div>
-
-      <Drawer
-        isOpen={!!selectedStaff}
-        onClose={() => setSelectedStaff(null)}
-        title={selectedStaff?.name || ''}
-        subtitle={selectedStaff ? `Employee ID: ${selectedStaff.id} | Role: ${selectedStaff.role}` : ''}
-        width="md"
-        footer={
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setSelectedStaff(null)}>Close</Button>
-            <Button variant="primary" onClick={() => {
-              setSelectedStaff(null);
-              navigate(`/app/staff/${selectedStaff?.id}`);
-            }}>Manage Profile</Button>
-          </div>
-        }
-      >
-        {selectedStaff && (
-          <div className="space-y-6">
-            <div className="bg-surface-container-low p-4 rounded-lg">
-              <h3 className="font-title-md mb-3 flex items-center justify-between">
-                <span>Employee Overview</span>
-                <Badge variant={selectedStaff.status === 'Active' ? 'success' : selectedStaff.status === 'On Leave' ? 'warning' : 'error'}>{selectedStaff.status}</Badge>
-              </h3>
-              <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-body-sm">
-                <div>
-                  <span className="text-on-surface-variant block mb-0.5">Primary Contact</span>
-                  <span className="font-semibold text-on-surface">{selectedStaff.phone}</span>
-                </div>
-                <div>
-                  <span className="text-on-surface-variant block mb-0.5">Assigned Shift</span>
-                  <span className="font-semibold text-on-surface bg-surface-container-high px-2 py-0.5 rounded">{selectedStaff.shift}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-surface-container-low p-4 rounded-lg border border-surface-container-highest text-center">
-              <span className="material-symbols-outlined text-[32px] text-on-surface-variant mb-2 block">event_note</span>
-              <h3 className="font-title-md mb-2 text-on-surface">Weekly Attendance</h3>
-              <p className="text-body-sm text-on-surface-variant mb-4">Attendance records are up to date for this week.</p>
-              <Button variant="outline">View Timesheet</Button>
-            </div>
-          </div>
-        )}
-      </Drawer>
     </div>
   );
 };

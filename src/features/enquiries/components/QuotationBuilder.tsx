@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { EnquiryDetail } from '../../../types';
+import type { EnquiryDetail, QuotationItemType } from '../../../types';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { enquiriesService } from '../../../services/enquiriesService';
@@ -11,9 +11,11 @@ import { Plus, Trash2, FileText, RefreshCw, Download } from 'lucide-react';
 interface Props {
   enquiry: EnquiryDetail;
   onUpdate: () => void;
+  autoOpen?: boolean;
+  onAutoOpenComplete?: () => void;
 }
 
-export const QuotationBuilder: React.FC<Props> = ({ enquiry, onUpdate }) => {
+export const QuotationBuilder: React.FC<Props> = ({ enquiry, onUpdate, autoOpen, onAutoOpenComplete }) => {
   const [isCreating, setIsCreating] = useState(false);
   const [isRevision, setIsRevision] = useState(false);
   const [revisionId, setRevisionId] = useState<string | null>(null);
@@ -23,20 +25,31 @@ export const QuotationBuilder: React.FC<Props> = ({ enquiry, onUpdate }) => {
     packagesService.getPackages().then(setPackages).catch(console.error);
   }, []);
 
-  const [lineItems, setLineItems] = useState<{ id: string; description: string; quantity: number; unitPrice: number; packageId?: string }[]>([]);
+  React.useEffect(() => {
+    if (autoOpen && !isCreating) {
+      handleStartCreate();
+      if (onAutoOpenComplete) onAutoOpenComplete();
+    }
+  }, [autoOpen, isCreating, onAutoOpenComplete]);
+
+  const [lineItems, setLineItems] = useState<{ id: string; itemType: QuotationItemType; category: string; description: string; quantity: number; unit: string; unitPrice: number; packageId?: string }[]>([]);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [serviceChargeAmount, setServiceChargeAmount] = useState(0);
-  const [taxAmount, setTaxAmount] = useState(0);
+  const [praTaxAmount, setPraTaxAmount] = useState(0);
+  const [tokenMoney, setTokenMoney] = useState(0);
+  const [advancePayment, setAdvancePayment] = useState(0);
   const [notes, setNotes] = useState('');
   
   const [isSaving, setIsSaving] = useState(false);
   const { success, error } = useToast();
 
   const handleStartCreate = () => {
-    setLineItems([{ id: Date.now().toString(), description: '', quantity: 1, unitPrice: 0 }]);
+    setLineItems([{ id: Date.now().toString(), itemType: 'PerHead', category: 'Food', description: '', quantity: enquiry.guestCount || 1, unit: 'pax', unitPrice: 0 }]);
     setDiscountAmount(0);
     setServiceChargeAmount(0);
-    setTaxAmount(0);
+    setPraTaxAmount(0);
+    setTokenMoney(0);
+    setAdvancePayment(0);
     setNotes('');
     setIsRevision(false);
     setRevisionId(null);
@@ -44,18 +57,22 @@ export const QuotationBuilder: React.FC<Props> = ({ enquiry, onUpdate }) => {
   };
 
   const handleStartRevision = (q: any) => {
-    // Clone line items (omit DB id to create new)
     const clonedItems = (q.lineItems || []).map((li: any, idx: number) => ({
       id: Date.now().toString() + idx,
+      itemType: li.itemType || 'Fixed',
+      category: li.category || '',
       description: li.description,
       quantity: li.quantity,
+      unit: li.unit || '',
       unitPrice: li.unitPrice,
       packageId: li.packageId
     }));
-    setLineItems(clonedItems.length > 0 ? clonedItems : [{ id: Date.now().toString(), description: '', quantity: 1, unitPrice: 0 }]);
+    setLineItems(clonedItems.length > 0 ? clonedItems : [{ id: Date.now().toString(), itemType: 'PerHead', category: 'Food', description: '', quantity: enquiry.guestCount || 1, unit: 'pax', unitPrice: 0 }]);
     setDiscountAmount(q.discountAmount || 0);
     setServiceChargeAmount(q.serviceChargeAmount || 0);
-    setTaxAmount(q.taxAmount || 0);
+    setPraTaxAmount(q.praTaxAmount || 0);
+    setTokenMoney(q.tokenMoney || 0);
+    setAdvancePayment(q.advancePayment || 0);
     setNotes(q.notes || '');
     setIsRevision(true);
     setRevisionId(q.id);
@@ -63,7 +80,7 @@ export const QuotationBuilder: React.FC<Props> = ({ enquiry, onUpdate }) => {
   };
 
   const handleAddLineItem = () => {
-    setLineItems(prev => [...prev, { id: Date.now().toString(), description: '', quantity: 1, unitPrice: 0 }]);
+    setLineItems(prev => [...prev, { id: Date.now().toString(), itemType: 'Fixed', category: 'Decor', description: '', quantity: 1, unit: 'event', unitPrice: 0 }]);
   };
 
   const handleRemoveLineItem = (id: string) => {
@@ -95,12 +112,18 @@ export const QuotationBuilder: React.FC<Props> = ({ enquiry, onUpdate }) => {
       const payload = {
         discountAmount: Number(discountAmount) || 0,
         serviceChargeAmount: Number(serviceChargeAmount) || 0,
-        taxAmount: Number(taxAmount) || 0,
+        praTaxAmount: Number(praTaxAmount) || 0,
+        tokenMoney: Number(tokenMoney) || 0,
+        advancePayment: Number(advancePayment) || 0,
         notes,
-        lineItems: lineItems.map(li => ({
+        lineItems: lineItems.map((li, idx) => ({
+          itemType: li.itemType,
+          category: li.category,
           description: li.description,
           quantity: Number(li.quantity),
+          unit: li.unit,
           unitPrice: Number(li.unitPrice),
+          sortOrder: idx,
           packageId: li.packageId || undefined
         }))
       };
@@ -141,7 +164,7 @@ export const QuotationBuilder: React.FC<Props> = ({ enquiry, onUpdate }) => {
 
   // Calculations for UI preview
   const subTotal = lineItems.reduce((acc, curr) => acc + (Number(curr.quantity) * Number(curr.unitPrice)), 0);
-  const grandTotal = subTotal + Number(serviceChargeAmount) + Number(taxAmount) - Number(discountAmount);
+  const grandTotal = subTotal + Number(serviceChargeAmount) + Number(praTaxAmount) - Number(discountAmount);
 
   return (
     <div className="space-y-6">
@@ -176,8 +199,9 @@ export const QuotationBuilder: React.FC<Props> = ({ enquiry, onUpdate }) => {
                 <table className="w-full text-left text-sm">
                   <thead className="bg-surface-container-lowest border-b border-outline-variant">
                     <tr>
-                      <th className="px-4 py-3 font-medium text-on-surface-variant w-[50%]">Description</th>
-                      <th className="px-4 py-3 font-medium text-on-surface-variant w-[15%]">Qty</th>
+                      <th className="px-4 py-3 font-medium text-on-surface-variant w-[20%]">Type & Category</th>
+                      <th className="px-4 py-3 font-medium text-on-surface-variant w-[30%]">Description</th>
+                      <th className="px-4 py-3 font-medium text-on-surface-variant w-[15%]">Qty & Unit</th>
                       <th className="px-4 py-3 font-medium text-on-surface-variant w-[15%]">Unit Price (PKR)</th>
                       <th className="px-4 py-3 font-medium text-on-surface-variant w-[15%] text-right">Total</th>
                       <th className="px-4 py-3 font-medium text-on-surface-variant w-[5%]"></th>
@@ -186,7 +210,24 @@ export const QuotationBuilder: React.FC<Props> = ({ enquiry, onUpdate }) => {
                   <tbody>
                     {lineItems.map((item) => (
                       <tr key={item.id} className="border-b border-outline-variant/50 last:border-0 bg-surface">
-                        <td className="px-4 py-3 space-y-2">
+                        <td className="px-4 py-3 space-y-2 align-top">
+                          <select
+                            className="w-full bg-transparent border-0 border-b border-transparent focus:border-primary focus:ring-0 px-0 py-1 text-sm font-medium"
+                            value={item.itemType}
+                            onChange={(e) => handleLineItemChange(item.id, 'itemType', e.target.value)}
+                          >
+                            <option value="PerHead">Per Head</option>
+                            <option value="Fixed">Fixed</option>
+                          </select>
+                          <input 
+                            type="text" 
+                            className="w-full bg-transparent border-0 border-b border-transparent focus:border-primary focus:ring-0 px-0 py-1 text-sm text-on-surface-variant" 
+                            placeholder="Category (e.g. Food)" 
+                            value={item.category}
+                            onChange={(e) => handleLineItemChange(item.id, 'category', e.target.value)}
+                          />
+                        </td>
+                        <td className="px-4 py-3 space-y-2 align-top">
                           <select 
                             className="w-full bg-transparent border-0 border-b border-transparent focus:border-primary focus:ring-0 px-0 py-1 text-sm text-on-surface-variant"
                             value={item.packageId || ''}
@@ -200,7 +241,7 @@ export const QuotationBuilder: React.FC<Props> = ({ enquiry, onUpdate }) => {
                               }
                             }}
                           >
-                            <option value="">-- Select Package (Optional) --</option>
+                            <option value="">-- Package (Optional) --</option>
                             {packages.map(p => (
                               <option key={p.id} value={p.id}>{p.name} (PKR {p.price.toLocaleString()})</option>
                             ))}
@@ -213,13 +254,20 @@ export const QuotationBuilder: React.FC<Props> = ({ enquiry, onUpdate }) => {
                             onChange={(e) => handleLineItemChange(item.id, 'description', e.target.value)}
                           />
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 space-y-2 align-top">
                           <input 
                             type="number" 
                             min="1"
                             className="w-full bg-transparent border-0 border-b border-transparent focus:border-primary focus:ring-0 px-0 py-1" 
                             value={item.quantity}
                             onChange={(e) => handleLineItemChange(item.id, 'quantity', e.target.value)}
+                          />
+                          <input 
+                            type="text" 
+                            className="w-full bg-transparent border-0 border-b border-transparent focus:border-primary focus:ring-0 px-0 py-1 text-sm text-on-surface-variant" 
+                            placeholder="Unit (pax, event)" 
+                            value={item.unit}
+                            onChange={(e) => handleLineItemChange(item.id, 'unit', e.target.value)}
                           />
                         </td>
                         <td className="px-4 py-3">
@@ -231,10 +279,10 @@ export const QuotationBuilder: React.FC<Props> = ({ enquiry, onUpdate }) => {
                             onChange={(e) => handleLineItemChange(item.id, 'unitPrice', e.target.value)}
                           />
                         </td>
-                        <td className="px-4 py-3 text-right font-medium">
+                        <td className="px-4 py-3 text-right font-medium align-top">
                           {((Number(item.quantity) || 0) * (Number(item.unitPrice) || 0)).toLocaleString()}
                         </td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="px-4 py-3 text-right align-top">
                           <button 
                             onClick={() => handleRemoveLineItem(item.id)}
                             className="text-on-surface-variant hover:text-error transition-colors"
@@ -295,15 +343,15 @@ export const QuotationBuilder: React.FC<Props> = ({ enquiry, onUpdate }) => {
                 </div>
 
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-on-surface-variant">Tax (+)</span>
+                  <span className="text-on-surface-variant">PRA Tax (+)</span>
                   <div className="flex items-center gap-2">
                     <span className="text-on-surface-variant text-xs">PKR</span>
                     <input 
                       type="number" 
                       min="0"
                       className="w-24 text-right bg-surface border border-outline-variant rounded px-2 py-1 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-                      value={taxAmount}
-                      onChange={e => setTaxAmount(Number(e.target.value) || 0)}
+                      value={praTaxAmount}
+                      onChange={e => setPraTaxAmount(Number(e.target.value) || 0)}
                     />
                   </div>
                 </div>
@@ -325,6 +373,39 @@ export const QuotationBuilder: React.FC<Props> = ({ enquiry, onUpdate }) => {
                 <div className="pt-4 mt-2 border-t border-outline-variant/50 flex justify-between items-center">
                   <span className="font-bold text-on-surface">Grand Total</span>
                   <span className="font-bold text-xl text-primary font-currency-num">PKR {Math.max(0, grandTotal).toLocaleString()}</span>
+                </div>
+
+                <div className="pt-4 space-y-3">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-on-surface-variant">Token Money</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-on-surface-variant text-xs">PKR</span>
+                      <input 
+                        type="number" 
+                        min="0"
+                        className="w-24 text-right bg-surface border border-outline-variant rounded px-2 py-1 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                        value={tokenMoney}
+                        onChange={e => setTokenMoney(Number(e.target.value) || 0)}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-on-surface-variant">Advance Payment</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-on-surface-variant text-xs">PKR</span>
+                      <input 
+                        type="number" 
+                        min="0"
+                        className="w-24 text-right bg-surface border border-outline-variant rounded px-2 py-1 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                        value={advancePayment}
+                        onChange={e => setAdvancePayment(Number(e.target.value) || 0)}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center text-sm font-medium pt-2">
+                    <span className="text-on-surface">Remaining Balance</span>
+                    <span className="font-currency-num text-on-surface">PKR {Math.max(0, grandTotal - Number(tokenMoney) - Number(advancePayment)).toLocaleString()}</span>
+                  </div>
                 </div>
               </div>
             </div>

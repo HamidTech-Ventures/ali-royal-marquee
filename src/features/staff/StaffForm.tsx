@@ -20,7 +20,9 @@ export const StaffForm = () => {
     name: '',
     role: '' as StaffRole | '',
     phone: '',
-    shift: 'Morning' as 'Morning' | 'Evening' | 'Night',
+    shift: 'Afternoon (Lunch)' as 'Afternoon (Lunch)' | 'Evening (Dinner)' | 'Night (Cleanup)',
+    cnic: '',
+    compensationType: 'Fixed Monthly' as 'Fixed Monthly' | 'Per-Event/Daily Wage',
     status: 'Active' as 'Active' | 'On Leave' | 'Inactive',
     salary: '',
   });
@@ -37,6 +39,8 @@ export const StaffForm = () => {
             shift: found.shift,
             status: found.status,
             salary: found.salary ? found.salary.toString() : '',
+            cnic: found.cnic || '',
+            compensationType: found.compensationType || 'Fixed Monthly',
           });
         }
       }).catch(err => console.error('Failed to load staff details', err));
@@ -44,7 +48,7 @@ export const StaffForm = () => {
   }, [isEditing, staffId]);
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.role || !formData.phone || !formData.shift || !formData.status) {
+    if (!formData.name || !formData.role || !formData.phone || !formData.shift || !formData.status || !formData.cnic) {
       error('Please fill all required fields');
       return;
     }
@@ -102,6 +106,13 @@ export const StaffForm = () => {
             onChange={handleChange}
             placeholder="+92 3XX XXXXXXX" 
           />
+          <Input 
+            label="CNIC Number *" 
+            name="cnic"
+            value={formData.cnic}
+            onChange={handleChange}
+            placeholder="XXXXX-XXXXXXX-X" 
+          />
         </FormSection>
 
         <FormSection title="Employment Details" description="Role, department, and employment status.">
@@ -125,9 +136,9 @@ export const StaffForm = () => {
             value={formData.shift}
             onChange={handleChange}
             options={[
-              { value: 'Morning', label: 'Morning' },
-              { value: 'Evening', label: 'Evening' },
-              { value: 'Night', label: 'Night' },
+              { value: 'Afternoon (Lunch)', label: 'Afternoon (Lunch)' },
+              { value: 'Evening (Dinner)', label: 'Evening (Dinner)' },
+              { value: 'Night (Cleanup)', label: 'Night (Cleanup)' },
             ]}
           />
           <Select 
@@ -141,8 +152,18 @@ export const StaffForm = () => {
               { value: 'Inactive', label: 'Inactive' },
             ]}
           />
+                    <Select 
+            label="Compensation Type *"
+            name="compensationType"
+            value={formData.compensationType}
+            onChange={handleChange}
+            options={[
+              { value: 'Fixed Monthly', label: 'Fixed Monthly' },
+              { value: 'Per-Event/Daily Wage', label: 'Per-Event/Daily Wage' },
+            ]}
+          />
           <Input 
-            label="Salary (PKR)" 
+            label={formData.compensationType === 'Fixed Monthly' ? 'Monthly Salary (PKR)' : 'Per-Event Wage (PKR)'} 
             name="salary"
             value={formData.salary}
             onChange={handleChange}

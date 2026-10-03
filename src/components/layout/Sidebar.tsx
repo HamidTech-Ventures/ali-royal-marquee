@@ -12,7 +12,7 @@ const navItems = [
   {
     category: 'Operations',
     items: [
-      { name: 'Enquiries', path: '/app/enquiries', icon: 'contact_mail', badge: '4' },
+      { name: 'Enquiries', path: '/app/enquiries', icon: 'contact_mail' },
       { name: 'Bookings', path: '/app/bookings', icon: 'event_available' },
       { name: 'Calendar', path: '/app/calendar', icon: 'calendar_month' },
       { name: 'Events', path: '/app/events', icon: 'celebration' },
@@ -23,36 +23,23 @@ const navItems = [
     category: 'Business',
     items: [
       { name: 'Finances', path: '/app/payments', icon: 'account_balance' },
+
       { name: 'Packages', path: '/app/packages', icon: 'restaurant_menu' },
       { name: 'Inventory', path: '/app/inventory', icon: 'inventory_2' },
       { name: 'Vendors', path: '/app/vendors', icon: 'storefront' },
       { name: 'Staff', path: '/app/staff', icon: 'badge' },
     ],
   },
-  {
-    category: 'Insights',
-    items: [
-      { name: 'Overview', path: '/app/insights/overview', icon: 'insights' },
-      { name: 'Revenue', path: '/app/insights/revenue', icon: 'trending_up' },
-      { name: 'Bookings', path: '/app/insights/bookings', icon: 'event_note' },
-      { name: 'Customers', path: '/app/insights/customers', icon: 'group' },
-      { name: 'Operations', path: '/app/insights/operations', icon: 'local_shipping' },
-      { name: 'Financial', path: '/app/insights/financial', icon: 'account_balance_wallet' },
-      { name: 'Forecast', path: '/app/insights/forecast', icon: 'online_prediction' },
-    ],
-  },
 ];
 
 interface SidebarProps {
   isExpanded: boolean;
-  onHoverChange: (expanded: boolean) => void;
+  onToggle: () => void;
 }
 
-export const Sidebar = ({ isExpanded, onHoverChange }: SidebarProps) => {
+export const Sidebar = ({ isExpanded, onToggle }: SidebarProps) => {
   return (
     <aside 
-      onMouseEnter={() => onHoverChange(true)}
-      onMouseLeave={() => onHoverChange(false)}
       className={clsx(
         "fixed left-0 top-0 h-screen bg-primary-container text-on-primary z-50 flex flex-col justify-between overflow-y-auto overflow-x-hidden shadow-xl transition-all duration-300 ease-in-out scrollbar-none",
         isExpanded ? "w-64" : "w-20"
@@ -61,11 +48,13 @@ export const Sidebar = ({ isExpanded, onHoverChange }: SidebarProps) => {
       <div className="flex flex-col">
         <div className="px-5 pt-6 pb-5 flex flex-col items-center">
           <div className="flex items-center gap-3 w-full" style={{ paddingLeft: isExpanded ? '0' : '4px' }}>
-            <img
-              alt="Ali Royal Marquee Logo"
-              className="h-8 w-8 object-contain shrink-0"
-              src="https://lh3.googleusercontent.com/aida/AEtjO1WzN9tmuje6ruMFaTqKZlNEJ_n8Sf6CREyW0LGPmbsPFO64n7OJQYk_RAOEUg_rENgII3ESbRmmUwSqnVOxhjc4bxjVEoCKKB3OHaF5fvlNNi_MW2lOaZH3pvQadPijHVXI_116D2_gotyuSZBAr2oAMtBhr3xRK-gx61orjsJZvteLGB7eVdhWOK76sa9rFNO6MQx9h2FCbeo6wBWU9p7FRqmnt7SelFFXxo6AFJTxmAxgCniWnELS93P2"
-            />
+            <button 
+              onClick={onToggle}
+              className="text-on-primary hover:text-[#ffdea5] transition-colors flex items-center justify-center rounded-full p-1 -ml-1 shrink-0"
+              title="Toggle Sidebar"
+            >
+              <span className="material-symbols-outlined text-2xl">{isExpanded ? 'menu_open' : 'menu'}</span>
+            </button>
             <div 
               className={clsx(
                 "flex flex-col transition-opacity duration-300 overflow-hidden whitespace-nowrap",
@@ -125,11 +114,7 @@ export const Sidebar = ({ isExpanded, onHoverChange }: SidebarProps) => {
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-secondary-fixed rounded-r"></div>
                       )}
 
-                      {isExpanded && item.badge && (
-                        <span className="bg-secondary text-on-secondary font-label-sm text-label-sm px-2 py-0.5 rounded-full font-bold">
-                          {item.badge}
-                        </span>
-                      )}
+
                       
                       {/* Tooltip for collapsed state */}
                       {!isExpanded && (

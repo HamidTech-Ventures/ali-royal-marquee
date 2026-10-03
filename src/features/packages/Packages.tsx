@@ -29,6 +29,23 @@ export const Packages = () => {
     try {
       setLoading(true);
       const data = await packagesService.getPackages();
+      
+      const draftStr = localStorage.getItem('packageDraft');
+      if (draftStr) {
+        try {
+          const draft = JSON.parse(draftStr);
+          const draftObj: Package = {
+            id: 'draft',
+            name: draft.name || 'Unsaved Draft',
+            type: draft.type || 'Premium',
+            price: draft.price || 0,
+            status: 'Draft' as any,
+            minGuests: draft.minGuests || 0
+          };
+          setPackages([draftObj, ...data]);
+          return;
+        } catch(e) {}
+      }
       setPackages(data);
     } catch (error) {
       console.error('Failed to fetch packages:', error);
@@ -139,8 +156,8 @@ export const Packages = () => {
       align: 'right',
       render: (item) => (
         <div className="flex items-center justify-end gap-1">
-          <Button variant="text" className="!p-2 text-on-surface-variant hover:text-primary" onClick={(e) => { e.stopPropagation(); navigate(`/app/packages/${item.id}`); }} title="Manage">
-            <span className="material-symbols-outlined text-[18px]">visibility</span>
+          <Button variant="text" className="!p-2 text-on-surface-variant hover:text-primary" onClick={(e) => { e.stopPropagation(); navigate(item.id === 'draft' ? '/app/packages/new' : `/app/packages/${item.id}`); }} title={item.id === 'draft' ? "Resume Draft" : "Manage"}>
+            <span className="material-symbols-outlined text-[18px]">{item.id === 'draft' ? "edit" : "visibility"}</span>
           </Button>
           <Button variant="text" className="!p-2 text-on-surface-variant hover:text-primary" onClick={(e) => { e.stopPropagation(); navigate(`/app/packages/${item.id}/edit`); }} title="Edit">
             <span className="material-symbols-outlined text-[18px]">edit</span>
@@ -227,40 +244,42 @@ export const Packages = () => {
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-surface-container-low p-3 rounded-lg border border-surface-variant/50">
-            <div className="flex items-center gap-2">
-              <Button 
-                variant={statusFilter === 'All' ? 'primary' : 'text'} 
-                className={statusFilter === 'All' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-on-surface-variant'} 
-                onClick={() => setStatusFilter('All')}
-              >
-                All Packages
-              </Button>
-              <Button 
-                variant={statusFilter === 'Active' ? 'primary' : 'text'} 
-                className={statusFilter === 'Active' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-on-surface-variant'} 
-                onClick={() => setStatusFilter('Active')}
-              >
-                Active
-              </Button>
-              <Button 
-                variant={statusFilter === 'Inactive' ? 'primary' : 'text'} 
-                className={statusFilter === 'Inactive' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-on-surface-variant'} 
-                onClick={() => setStatusFilter('Inactive')}
-              >
-                Inactive
-              </Button>
-            </div>
-            <div className="flex items-center gap-4 w-full sm:w-auto">
-              <SearchInput 
-                placeholder="Search package name, type..." 
-                value={searchTerm} 
-                onChange={setSearchTerm} 
-              />
-            </div>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-surface-container-low p-3 rounded-lg border border-surface-variant/50">
+          <div className="flex items-center gap-2">
+            <Button 
+              variant={statusFilter === 'All' ? 'primary' : 'text'} 
+              className={statusFilter === 'All' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-on-surface-variant'} 
+              onClick={() => setStatusFilter('All')}
+            >
+              All Packages
+            </Button>
+            <Button 
+              variant={statusFilter === 'Active' ? 'primary' : 'text'} 
+              className={statusFilter === 'Active' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-on-surface-variant'} 
+              onClick={() => setStatusFilter('Active')}
+            >
+              Active
+            </Button>
+            <Button 
+              variant={statusFilter === 'Inactive' ? 'primary' : 'text'} 
+              className={statusFilter === 'Inactive' ? 'py-1.5 px-3' : 'py-1.5 px-3 text-on-surface-variant'} 
+              onClick={() => setStatusFilter('Inactive')}
+            >
+              Inactive
+            </Button>
           </div>
+        </div>
+        <div className="flex items-center gap-4 w-full">
+          <SearchInput 
+            placeholder="Search package name, type..." 
+            value={searchTerm} 
+            onChange={setSearchTerm} 
+          />
+        </div>
 
+        <div className="bg-white rounded-xl shadow-sm border border-[#e8e4db] overflow-hidden">
           {loading ? (
             <div className="flex justify-center p-8 text-on-surface-variant">Loading packages...</div>
           ) : (
@@ -268,7 +287,7 @@ export const Packages = () => {
               data={filteredData}
               columns={columns}
               keyExtractor={(item) => item.id}
-              onRowClick={(item) => navigate(`/app/packages/${item.id}`)}
+              onRowClick={(item) => navigate(item.id === 'draft' ? '/app/packages/new' : `/app/packages/${item.id}`)}
               sortColumn={sortColumn}
               sortDirection={sortDirection}
               onSort={handleSort}

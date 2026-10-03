@@ -12,19 +12,21 @@ import { useToast } from '../../context/ToastContext';
 import { Modal } from '../../components/ui/Modal';
 import { Select } from '../../components/ui/forms/Select';
 
-type TabType = 'overview' | 'schedule' | 'events' | 'attendance' | 'leave' | 'payroll' | 'performance';
+
 
 export const StaffDetails = () => {
   const { staffId } = useParams<{ staffId: string }>();
   const navigate = useNavigate();
   const { success } = useToast();
 
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [activeTab, setActiveTab] = useState<string>('overview');
   const [employee, setEmployee] = useState<StaffType | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [events, setEvents] = useState<any[]>([]);
+  const [staffEvents, setStaffEvents] = useState<any[]>([]);
+  const [nextEvent, setNextEvent] = useState<any>(null);
   const [selectedEventId, setSelectedEventId] = useState('');
   const [assigning, setAssigning] = useState(false);
 
@@ -33,6 +35,18 @@ export const StaffDetails = () => {
       staffService.getStaff().then(data => {
         const found = data.find(s => s.id === staffId);
         setEmployee(found || null);
+        // Also fetch events this staff is assigned to
+        eventsService.getEvents().then(allEvents => {
+          const assigned = allEvents.filter(e => e.staff && e.staff.some((s: any) => s.staffId === staffId));
+          setStaffEvents(assigned);
+          
+          // Find next upcoming
+          const upcoming = assigned.filter(e => new Date(e.dateStr) >= new Date()).sort((a,b) => new Date(a.dateStr).getTime() - new Date(b.dateStr).getTime());
+          if (upcoming.length > 0) {
+            setNextEvent(upcoming[0]);
+          }
+        }).catch(err => console.error(err));
+        
         setLoading(false);
       }).catch(err => {
         console.error('Error fetching staff member:', err);
@@ -58,12 +72,30 @@ export const StaffDetails = () => {
   const handleAssignSubmit = async () => {
     if (!selectedEventId || !employee) return;
     
+    // Find selected event
+    const selEvt = events.find(e => e.id === selectedEventId);
+    if (selEvt) {
+      // Check for overlap
+      const overlap = staffEvents.some(se => se.dateStr === selEvt.dateStr && se.startTime === selEvt.startTime);
+      if (overlap) {
+        alert("Cannot assign! Employee is already assigned to another event at the exact same shift and time.");
+        return;
+      }
+    }
+    
     setAssigning(true);
     try {
       await eventsService.addStaff(selectedEventId, employee.name, employee.role, employee.id);
       success(`${employee.name} has been assigned to the event successfully.`);
       setAssignModalOpen(false);
       setSelectedEventId('');
+      
+      // Refetch
+      const allEvents = await eventsService.getEvents();
+      const assigned = allEvents.filter(e => e.staff && e.staff.some((s: any) => s.staffId === employee.id));
+      setStaffEvents(assigned);
+      const upcoming = assigned.filter(e => new Date(e.dateStr) >= new Date()).sort((a,b) => new Date(a.dateStr).getTime() - new Date(b.dateStr).getTime());
+      if (upcoming.length > 0) setNextEvent(upcoming[0]);
     } catch (err) {
       console.error('Failed to assign staff:', err);
       // Mock success for demo if endpoint fails
@@ -72,6 +104,52 @@ export const StaffDetails = () => {
       setSelectedEventId('');
     } finally {
       setAssigning(false);
+    }
+  };
+
+
+  const handleRemoveEvent = async (eventId: string) => {
+    if (!employee || !window.confirm('Are you sure you want to remove this employee from this event?')) return;
+    try {
+      await eventsService.removeStaff(eventId, employee.id);
+      success('Employee removed from the event.');
+      // Refetch
+      const allEvents = await eventsService.getEvents();
+      const assigned = allEvents.filter(e => e.staff && e.staff.some((s: any) => s.staffId === employee.id));
+      setStaffEvents(assigned);
+      const upcoming = assigned.filter(e => new Date(e.dateStr) >= new Date()).sort((a,b) => new Date(a.dateStr).getTime() - new Date(b.dateStr).getTime());
+      setNextEvent(upcoming.length > 0 ? upcoming[0] : null);
+    } catch (err) {
+      console.error('Failed to remove staff:', err);
+      alert('Failed to remove from event.');
+    }
+  };
+
+  const handleChangeEventClick = async (currentEventId: string) => {
+    // For "Change", we'll just open the Assign modal, but when they submit it, we might want to delete the old one or just let them manage it manually.
+    // For simplicity, we can ask them to delete the current one and add a new one, or we can automate it.
+    // Given the simple requirement, opening the assign modal and automatically removing the old one IF they succeed would be "Changing".
+    // Alternatively, just alert them to delete then assign. We'll automate: delete then open assign modal.
+    if (!employee || !window.confirm('To change this event assignment, we will first remove this one. Proceed?')) return;
+    
+    try {
+      await eventsService.removeStaff(currentEventId, employee.id);
+      success('Old assignment removed. Please select the new event.');
+      
+      // Refetch so UI updates
+      const allEvents = await eventsService.getEvents();
+      const assigned = allEvents.filter(e => e.staff && e.staff.some((s: any) => s.staffId === employee.id));
+      setStaffEvents(assigned);
+      const upcoming = assigned.filter(e => new Date(e.dateStr) >= new Date()).sort((a,b) => new Date(a.dateStr).getTime() - new Date(b.dateStr).getTime());
+      setNextEvent(upcoming.length > 0 ? upcoming[0] : null);
+      
+      // Open modal to assign a new one
+      const eventsData = await eventsService.getEvents();
+      setEvents(eventsData.filter((e: any) => e.status === 'Upcoming' || e.status === 'Draft'));
+      setAssignModalOpen(true);
+    } catch (err) {
+      console.error('Failed to change assignment:', err);
+      alert('Failed to remove old assignment.');
     }
   };
 
@@ -117,14 +195,10 @@ export const StaffDetails = () => {
     }
   };
 
-  const tabs: { id: TabType; label: string }[] = [
+  const tabs: { id: string; label: string }[] = [
     { id: 'overview', label: 'Employee Overview' },
-    { id: 'schedule', label: 'Schedule' },
     { id: 'events', label: 'Event Assignments' },
-    { id: 'attendance', label: 'Attendance' },
-    { id: 'payroll', label: 'Payroll & Salary' },
-    { id: 'leave', label: 'Leave' },
-    { id: 'performance', label: 'Performance' },
+    { id: 'payroll', label: 'Payroll & Compensation' },
   ];
 
   return (
@@ -202,17 +276,23 @@ export const StaffDetails = () => {
                     <div className="col-span-2 font-medium">{employee.role}</div>
                   </div>
                   <div className="grid grid-cols-3 gap-4 border-b border-outline-variant/20 pb-3">
-                    <div className="col-span-1 text-on-surface-variant text-sm">Join Date</div>
-                    <div className="col-span-2 font-medium">15 Jan 2025</div>
+                    <div className="col-span-1 text-on-surface-variant text-sm">Joined Date</div>
+                    <div className="col-span-2 font-medium">{employee.createdAt ? new Date(employee.createdAt).toLocaleDateString('en-GB') : 'N/A'}</div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 border-b border-outline-variant/20 pb-3">
+                    <div className="col-span-1 text-on-surface-variant text-sm">CNIC Number</div>
+                    <div className="col-span-2 font-medium">{employee.cnic || 'N/A'}</div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-outline-variant/20 pb-3">
+                    <div className="col-span-1 text-on-surface-variant text-sm">Compensation</div>
+                    <div className="col-span-2 font-medium">{employee.compensationType || 'Fixed Monthly'}</div>
                   </div>
                   <div className="grid grid-cols-3 gap-4 border-b border-outline-variant/20 pb-3">
                     <div className="col-span-1 text-on-surface-variant text-sm">Contact Number</div>
                     <div className="col-span-2 font-medium">{employee.phone}</div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="col-span-1 text-on-surface-variant text-sm">Emergency Contact</div>
-                    <div className="col-span-2 font-medium">+92 300 0000000 (Brother)</div>
-                  </div>
+
                 </div>
               </section>
             </div>
@@ -221,31 +301,91 @@ export const StaffDetails = () => {
               <section>
                 <h3 className="font-title-lg mb-4">Next Shift</h3>
                 <div className="bg-surface rounded-xl border border-outline-variant/40 p-5 space-y-4">
-                  <div className="grid grid-cols-3 gap-4 border-b border-outline-variant/20 pb-3">
-                    <div className="col-span-1 text-on-surface-variant text-sm">Date</div>
-                    <div className="col-span-2 font-medium">14 September 2026</div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 border-b border-outline-variant/20 pb-3">
-                    <div className="col-span-1 text-on-surface-variant text-sm">Timing</div>
-                    <div className="col-span-2 font-medium">18:00 - 23:30 (Night Shift)</div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 border-b border-outline-variant/20 pb-3">
-                    <div className="col-span-1 text-on-surface-variant text-sm">Assignment</div>
-                    <div className="col-span-2 font-medium text-primary">EV-2045 (Walima)</div>
-                  </div>
+                  {nextEvent ? (
+                    <>
+                      <div className="grid grid-cols-3 gap-4 border-b border-outline-variant/20 pb-3">
+                        <div className="col-span-1 text-on-surface-variant text-sm">Date</div>
+                        <div className="col-span-2 font-medium">{new Date(nextEvent.dateStr).toLocaleDateString('en-GB')}</div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 border-b border-outline-variant/20 pb-3">
+                        <div className="col-span-1 text-on-surface-variant text-sm">Timing</div>
+                        <div className="col-span-2 font-medium">{nextEvent.startTime + ' - ' + nextEvent.endTime}</div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 border-b border-outline-variant/20 pb-3">
+                        <div className="col-span-1 text-on-surface-variant text-sm">Assignment</div>
+                        <div className="col-span-2 font-medium text-primary">{nextEvent.title}</div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-on-surface-variant py-4 text-center">No upcoming shifts assigned.</div>
+                  )}
                 </div>
               </section>
             </div>
           </div>
         )}
 
-        {/* Placeholders for others */}
-        {['schedule', 'events', 'attendance', 'leave', 'payroll', 'performance'].includes(activeTab) && (
-          <div className="flex flex-col items-center justify-center py-20 text-on-surface-variant">
-            <h3 className="text-xl font-medium text-on-surface mb-2">{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Workspace</h3>
-            <p>Ready for integration.</p>
+
+        {activeTab === 'events' && (
+          <div className="space-y-6">
+            <h3 className="font-title-lg">Event Assignments</h3>
+            <p className="text-on-surface-variant">History of events assigned to this staff member.</p>
+            <div className="bg-white rounded-xl shadow-sm border border-[#e8e4db] overflow-hidden">
+              {staffEvents.length > 0 ? (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-surface-variant/30 text-on-surface-variant text-sm">
+                      <th className="p-4 font-medium">Event Title</th>
+                      <th className="p-4 font-medium">Date & Shift</th>
+                      <th className="p-4 font-medium">Status</th>
+                      <th className="p-4 font-medium text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {staffEvents.map(evt => (
+                      <tr key={evt.id} className="border-t border-outline-variant/30">
+                        <td className="p-4 font-medium text-on-surface">{evt.title}</td>
+                        <td className="p-4 text-on-surface-variant">
+                          {new Date(evt.dateStr).toLocaleDateString('en-GB')} <br/>
+                          <span className="text-xs opacity-80">{evt.startTime} - {evt.endTime}</span>
+                        </td>
+                        <td className="p-4"><Badge variant={evt.status === 'Finalised' ? 'success' : evt.status === 'Upcoming' ? 'primary' : 'neutral'}>{evt.status}</Badge></td>
+                        <td className="p-4 text-right">
+                          <Button variant="text" size="sm" className="text-primary mr-2" onClick={() => handleChangeEventClick(evt.id)}>Change</Button>
+                          <Button variant="text" size="sm" className="text-error" onClick={() => handleRemoveEvent(evt.id)}>Delete</Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="p-6 text-center text-on-surface-variant">
+                  No events found for this employee yet.
+                </div>
+              )}
+            </div>
           </div>
         )}
+
+        {activeTab === 'payroll' && (
+          <div className="space-y-6">
+            <h3 className="font-title-lg">Payroll & Compensation</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-surface rounded-xl border border-outline-variant/40 p-5 space-y-4">
+                <h4 className="font-semibold text-primary border-b border-outline-variant/20 pb-2">Salary Details</h4>
+                <div className="flex justify-between items-center">
+                  <span className="text-on-surface-variant text-sm">Compensation Type:</span>
+                  <span className="font-medium bg-secondary-container text-on-secondary-container px-2 py-1 rounded text-xs">{employee.compensationType || 'Fixed Monthly'}</span>
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-on-surface-variant text-sm">{employee.compensationType === 'Per-Event/Daily Wage' ? 'Wage Per Event:' : 'Monthly Salary:'}</span>
+                  <span className="font-medium">PKR {employee.salary?.toLocaleString() || 0}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
 
       <Modal

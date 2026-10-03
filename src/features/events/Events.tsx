@@ -9,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 export const Events = () => {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
   const navigate = useNavigate();
 
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
@@ -105,29 +107,64 @@ export const Events = () => {
         </section>
 
         {/* ATTENTION REQUIRED */}
-        <div className="rounded-xl p-4 md:p-5 bg-[#5C0A1E]/10 border border-[#5C0A1E]/20 relative overflow-hidden">
-          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 md:gap-4">
-            <div className="flex items-start gap-3.5">
-              <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-[#5C0A1E] text-white font-bold flex items-center justify-center shrink-0 shadow">
-                <span className="material-symbols-outlined text-[18px] md:text-[20px]">warning</span>
-              </div>
-              <div className="space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#4a1420]">Critical Operations Guard</span>
-                  <span className="text-[10px] md:text-xs bg-[#e02424] text-white px-2 py-0.5 rounded-full font-bold">4 Action Items</span>
+        {inPrep.length > 0 && (
+          <div className="rounded-xl p-4 md:p-5 bg-[#5C0A1E]/10 border border-[#5C0A1E]/20 relative overflow-hidden">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 md:gap-4">
+              <div className="flex items-start gap-3.5">
+                <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-[#5C0A1E] text-white font-bold flex items-center justify-center shrink-0 shadow">
+                  <span className="material-symbols-outlined text-[18px] md:text-[20px]">warning</span>
                 </div>
-                <p className="text-xs md:text-sm text-[#4a1420]/80 font-medium">Immediate supervisor attention required for Ahsan Malik Walima & reception gate security.</p>
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-[#4a1420]">Critical Operations Guard</span>
+                    <span className="text-[10px] md:text-xs bg-[#e02424] text-white px-2 py-0.5 rounded-full font-bold">{inPrep.length} Events Pending Readiness</span>
+                  </div>
+                  <p className="text-xs md:text-sm text-[#4a1420]/80 font-medium">
+                    Immediate supervisor attention required for {inPrep.map(e => e.title).join(', ')}. Ensure all tasks are completed before event start.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
+        
+        <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-[#e8e4db]">
+          <div className="flex gap-2 w-full md:w-auto overflow-x-auto scrollbar-none pb-2 md:pb-0">
+            {['All', 'Upcoming', 'Ongoing', 'Completed', 'Cancelled'].map(filter => (
+              <Button 
+                key={filter}
+                variant={statusFilter === filter ? 'primary' : 'outline'} 
+                className={statusFilter === filter ? '!bg-[#4a1420] !text-[#ffdea5] shrink-0' : 'shrink-0 text-on-surface-variant'}
+                onClick={() => setStatusFilter(filter)}
+              >
+                {filter}
+              </Button>
+            ))}
+          </div>
+          <div className="relative w-full md:w-96 shrink-0">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+            <input 
+              type="text" 
+              placeholder="Search by title, reference, or customer..." 
+              className="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition-all"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+        
         {/* EVENTS GRID */}
         {loading ? (
           <div className="flex justify-center p-8"><span className="animate-spin material-symbols-outlined text-4xl text-primary">autorenew</span></div>
         ) : (
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {events.map(event => {
+          {events.filter(e => 
+            (statusFilter === 'All' || e.status === statusFilter) &&
+            (e.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+             e.referenceNumber?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+             e.customerName?.toLowerCase().includes(searchQuery.toLowerCase()))
+          ).map(event => {
             return (
               <div 
                 key={event.id}

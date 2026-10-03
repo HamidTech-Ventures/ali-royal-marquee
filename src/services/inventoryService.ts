@@ -2,6 +2,25 @@ import api from './api';
 import type { InventoryItem } from '../types';
 
 export const inventoryService = {
+
+  getInventoryItemById: async (id: string): Promise<InventoryItem> => {
+    const response = await api.get(`/inventory/${id}`);
+    return response.data;
+  },
+
+  addInventoryReservation: async (data: any): Promise<string> => {
+    const response = await api.post('/inventory/reservations', data);
+    return response.data;
+  },
+
+  addInventoryMovement: async (data: any): Promise<string> => {
+    const response = await api.post('/inventory/movements', data);
+    return response.data;
+  },
+
+  updateInventoryItemDetails: async (id: string, data: any): Promise<void> => {
+    await api.put(`/inventory/${id}/details`, data);
+  },
   getInventoryItems: async (): Promise<InventoryItem[]> => {
     const response = await api.get('/inventory');
     return response.data;

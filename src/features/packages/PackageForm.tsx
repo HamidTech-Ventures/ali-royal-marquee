@@ -7,6 +7,7 @@ import { Input } from '../../components/ui/forms/Input';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/forms/Select';
 import { packagesService } from '../../services/packagesService';
+import type { MenuItem } from '../../services/packagesService';
 
 export const PackageForm = () => {
   const navigate = useNavigate();
@@ -14,48 +15,90 @@ export const PackageForm = () => {
   const isEditMode = !!packageId;
   const { success, error } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(isEditMode);
+  const [isLoading, setIsLoading] = useState(isEditMode || true); // true to load menu items
 
   // Form State
   const [name, setName] = useState('');
   const [type, setType] = useState('Premium');
   const [price, setPrice] = useState(0);
   const [minGuests, setMinGuests] = useState(100);
-  const [profitMarginTarget, setProfitMarginTarget] = useState(30);
   const [internalNotes, setInternalNotes] = useState('');
   
-  // Inclusions state
-  const [inclusionsText, setInclusionsText] = useState('');
+  // Selected Menu Items (IDs)
+  const [selectedMenuItemIds, setSelectedMenuItemIds] = useState<string[]>([]);
+
+  // Menu Repository Items
+  const [availableMenuItems, setAvailableMenuItems] = useState<MenuItem[]>([]);
 
   useEffect(() => {
-    if (isEditMode && packageId) {
-      packagesService.getPackage(packageId)
-        .then(pkg => {
+    // Load from draft if new package
+    if (!isEditMode) {
+      const draftStr = localStorage.getItem('packageDraft');
+      if (draftStr) {
+        try {
+          const draft = JSON.parse(draftStr);
+          setName(draft.name || '');
+          setType(draft.type || 'Premium');
+          setPrice(draft.price || 0);
+          setMinGuests(draft.minGuests || 100);
+          setInternalNotes(draft.internalNotes || '');
+          setSelectedMenuItemIds(draft.selectedMenuItemIds || []);
+        } catch(e) {}
+      }
+    }
+  }, [isEditMode]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const menuItems = await packagesService.getMenuItems();
+        setAvailableMenuItems(menuItems);
+
+        if (isEditMode && packageId) {
+          const pkg = await packagesService.getPackage(packageId);
           setName(pkg.name);
           setType(pkg.type);
           setPrice(pkg.price);
           setMinGuests(pkg.minGuests);
-          setProfitMarginTarget(pkg.profitMarginTarget || 30);
           setInternalNotes(pkg.internalNotes || '');
           
           if (pkg.inclusionsJson) {
             try {
               const parsed = JSON.parse(pkg.inclusionsJson);
               if (Array.isArray(parsed)) {
-                setInclusionsText(parsed.join('\n'));
+                // To support older text-based arrays or new ID arrays
+                setSelectedMenuItemIds(parsed);
               }
             } catch(e) {
               console.error(e);
             }
           }
-        })
-        .catch(err => {
-          console.error(err);
-          error('Failed to load package details');
-        })
-        .finally(() => setIsLoading(false));
-    }
+        }
+      } catch (err) {
+        console.error(err);
+        error('Failed to load package details');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
   }, [packageId, isEditMode, error]);
+
+  const handleSaveDraft = () => {
+    if (!isEditMode) {
+      localStorage.setItem('packageDraft', JSON.stringify({
+        name, type, price, minGuests, internalNotes, selectedMenuItemIds
+      }));
+      success('Draft saved successfully');
+    }
+  };
+
+  const handleToggleMenuItem = (id: string) => {
+    setSelectedMenuItemIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
 
   const handleSubmit = async () => {
     if (!name || price <= 0) {
@@ -65,17 +108,14 @@ export const PackageForm = () => {
 
     setIsSubmitting(true);
     try {
-      const inclusions = inclusionsText.split('\n').map(i => i.trim()).filter(i => i.length > 0);
-
       const payload = {
         name,
         type,
         price,
         status: 'Active',
         minGuests,
-        profitMarginTarget,
         internalNotes,
-        inclusionsJson: JSON.stringify(inclusions)
+        inclusionsJson: JSON.stringify(selectedMenuItemIds)
       };
 
       if (isEditMode && packageId) {
@@ -141,23 +181,28 @@ export const PackageForm = () => {
             value={minGuests.toString()}
             onChange={(e) => setMinGuests(Number(e.target.value))}
           />
-          <Input 
-            label="Target Profit Margin (%)" 
-            type="number"
-            value={profitMarginTarget.toString()}
-            onChange={(e) => setProfitMarginTarget(Number(e.target.value))}
-          />
         </FormSection>
 
-        <FormSection title="Inclusions" description="List what is included in this package (one item per line).">
-          <div className="col-span-1 md:col-span-2">
-            <label className="block text-sm font-medium text-on-surface mb-2">Package Items</label>
-            <textarea
-              className="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/50 transition-shadow resize-none h-40"
-              placeholder="e.g.&#10;Premium Hall Setup&#10;Chicken Biryani&#10;Standard Floral Decor"
-              value={inclusionsText}
-              onChange={(e) => setInclusionsText(e.target.value)}
-            />
+        <FormSection title="Menu Inclusions" description="Select the dishes from the Menu Repository included in this package.">
+          <div className="col-span-1 md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {availableMenuItems.length === 0 ? (
+              <p className="text-on-surface-variant text-sm col-span-2">No menu items found. Please add them in the Menu Repository first.</p>
+            ) : (
+              availableMenuItems.map(item => (
+                <label key={item.id} className="flex items-start gap-3 p-3 border border-outline-variant rounded-lg cursor-pointer hover:bg-surface-variant/20 transition-colors">
+                  <input 
+                    type="checkbox"
+                    className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    checked={selectedMenuItemIds.includes(item.id)}
+                    onChange={() => handleToggleMenuItem(item.id)}
+                  />
+                  <div className="flex flex-col">
+                    <span className="font-medium text-sm text-on-surface">{item.name}</span>
+                    <span className="text-xs text-on-surface-variant">{item.category}</span>
+                  </div>
+                </label>
+              ))
+            )}
           </div>
         </FormSection>
 
@@ -175,6 +220,7 @@ export const PackageForm = () => {
 
         <div className="flex justify-end gap-3 mt-8">
           <Button variant="outline" onClick={() => navigate('/app/packages')} disabled={isSubmitting}>Cancel</Button>
+          {!isEditMode && <Button variant="outline" onClick={handleSaveDraft} disabled={isSubmitting}>Save as Draft</Button>}
           <Button variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : (isEditMode ? 'Update Package' : 'Save Package')}
           </Button>

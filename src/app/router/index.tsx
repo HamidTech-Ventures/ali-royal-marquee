@@ -22,7 +22,7 @@ import { PackageDetails } from '../../features/packages/PackageDetails';
 import { Payments } from '../../features/payments/Payments';
 import { PaymentDetails } from '../../features/payments/PaymentDetails';
 import { PaymentForm } from '../../features/payments/PaymentForm';
-import { Expenses } from '../../features/expenses/Expenses';
+
 import { Inventory } from '../../features/inventory/Inventory';
 import { InventoryDetails } from '../../features/inventory/InventoryDetails';
 import { InventoryForm } from '../../features/inventory/InventoryForm';
@@ -32,19 +32,7 @@ import { VendorForm } from '../../features/vendors/VendorForm';
 import { Staff } from '../../features/staff/Staff';
 import { StaffDetails } from '../../features/staff/StaffDetails';
 import { StaffForm } from '../../features/staff/StaffForm';
-import { BusinessOverview } from '../../features/business/BusinessOverview';
-import { BusinessFinances } from '../../features/business/BusinessFinances';
-import { BusinessPackages } from '../../features/business/BusinessPackages';
-import { BusinessInventory } from '../../features/business/BusinessInventory';
-import { BusinessVendors } from '../../features/business/BusinessVendors';
-import { BusinessStaff } from '../../features/business/BusinessStaff';
-import { InsightsOverview } from '../../features/insights/InsightsOverview';
-import { InsightsRevenue } from '../../features/insights/InsightsRevenue';
-import { InsightsBookings } from '../../features/insights/InsightsBookings';
-import { InsightsCustomers } from '../../features/insights/InsightsCustomers';
-import { InsightsOperations } from '../../features/insights/InsightsOperations';
-import { InsightsFinancial } from '../../features/insights/InsightsFinancial';
-import { InsightsForecast } from '../../features/insights/InsightsForecast';
+
 import { Reports } from '../../features/reports/Reports';
 import { Analytics } from '../../features/analytics/Analytics';
 import { Settings } from '../../features/settings/Settings';
@@ -87,6 +75,7 @@ export const router = createBrowserRouter([
       { path: 'bookings', element: <Bookings /> },
       { path: 'bookings/new', element: <BookingForm /> },
       { path: 'bookings/:bookingId', element: <BookingDetails /> },
+      { path: 'bookings/:bookingId/edit', element: <BookingForm /> },
       { path: 'calendar', element: <Calendar /> },
       { path: 'events', element: <Events /> },
       { path: 'events/:eventId', element: <EventDetails /> },
@@ -97,9 +86,10 @@ export const router = createBrowserRouter([
       { path: 'packages/:packageId', element: <PackageDetails /> },
       { path: 'packages/:packageId/edit', element: <PackageForm /> },
       { path: 'payments', element: <Payments /> },
+      { path: 'expenses', element: <Navigate to="/app/payments" replace /> },
       { path: 'payments/new', element: <PaymentForm /> },
       { path: 'payments/:paymentId', element: <PaymentDetails /> },
-      { path: 'expenses', element: <Expenses /> },
+
       { path: 'inventory', element: <Inventory /> },
       { path: 'inventory/new', element: <InventoryForm /> },
       { path: 'inventory/:itemId', element: <InventoryDetails /> },
@@ -107,23 +97,12 @@ export const router = createBrowserRouter([
       { path: 'vendors', element: <Vendors /> },
       { path: 'vendors/new', element: <VendorForm /> },
       { path: 'vendors/:vendorId', element: <VendorDetails /> },
+      { path: 'vendors/:vendorId/edit', element: <VendorForm /> },
       { path: 'staff', element: <Staff /> },
       { path: 'staff/new', element: <StaffForm /> },
       { path: 'staff/:staffId', element: <StaffDetails /> },
       { path: 'staff/:staffId/edit', element: <StaffForm /> },
-      { path: 'business/overview', element: <BusinessOverview /> },
-      { path: 'business/finances', element: <BusinessFinances /> },
-      { path: 'business/packages', element: <BusinessPackages /> },
-      { path: 'business/inventory', element: <BusinessInventory /> },
-      { path: 'business/vendors', element: <BusinessVendors /> },
-      { path: 'business/staff', element: <BusinessStaff /> },
-      { path: 'insights/overview', element: <InsightsOverview /> },
-      { path: 'insights/revenue', element: <InsightsRevenue /> },
-      { path: 'insights/bookings', element: <InsightsBookings /> },
-      { path: 'insights/customers', element: <InsightsCustomers /> },
-      { path: 'insights/operations', element: <InsightsOperations /> },
-      { path: 'insights/financial', element: <InsightsFinancial /> },
-      { path: 'insights/forecast', element: <InsightsForecast /> },
+
       { path: 'reports', element: <Reports /> },
       { path: 'analytics', element: <Analytics /> },
       { path: 'settings/*', element: <Settings /> },

@@ -6,7 +6,6 @@ import { Button } from '../../components/ui/Button';
 import { DataGrid } from '../../components/ui/DataGrid';
 import type { ColumnDef } from '../../components/ui/DataGrid';
 import { Badge } from '../../components/ui/Badge';
-import { Drawer } from '../../components/ui/Drawer';
 import { inventoryService } from '../../services/inventoryService';
 import type { InventoryItem } from '../../types';
 import { useToast } from '../../context/ToastContext';
@@ -20,7 +19,6 @@ export const Inventory = () => {
   const { success, error: showError } = useToast();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   
   // Sort state
   const [sortColumn, setSortColumn] = useState('name');
@@ -28,6 +26,7 @@ export const Inventory = () => {
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState<'All' | 'Low Stock' | 'Out of Stock'>('All');
+  const [activeTab, setActiveTab] = useState<'Fixed Asset' | 'Consumable'>('Fixed Asset');
 
   const fetchInventory = async () => {
     try {
@@ -70,6 +69,13 @@ export const Inventory = () => {
   const filteredData = useMemo(() => {
     let result = inventory;
     
+    // Filter by item type
+        result = result.filter(i => {
+      if (activeTab === 'Fixed Asset') return i.itemType?.includes('Fixed') || i.itemType === 'FixedAsset';
+      if (activeTab === 'Consumable') return i.itemType?.includes('Consumable');
+      return true;
+    });
+
     if (statusFilter !== 'All') {
       result = result.filter(i => i.status === statusFilter);
     }
@@ -113,7 +119,7 @@ export const Inventory = () => {
     },
     {
       key: 'quantity',
-      header: 'In Stock',
+      header: 'In Stock / Qty',
       sortable: true,
       align: 'right',
       render: (item) => (
@@ -123,19 +129,19 @@ export const Inventory = () => {
         </div>
       )
     },
-    {
+    ...(activeTab === 'Consumable' ? [{
       key: 'status',
       header: 'Status',
       sortable: true,
       align: 'right',
-      render: (item) => {
+      render: (item: any) => {
         let variant: any = 'neutral';
         if (item.status === 'In Stock') variant = 'success';
         if (item.status === 'Low Stock') variant = 'warning';
         if (item.status === 'Out of Stock') variant = 'error';
         return <Badge variant={variant}>{item.status}</Badge>;
       }
-    },
+    }] as any : []),
     {
       key: 'actions',
       header: 'Actions',
@@ -219,9 +225,24 @@ export const Inventory = () => {
           </div>
         </div>
 
-        {/* CONTROLS */}
+                {/* CONTROLS */}
         <div className="bg-white p-3 md:p-4 border border-[#e8e4db] rounded-xl shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center overflow-x-auto hide-scrollbar gap-1.5 w-full">
+            <Button
+              variant={activeTab === 'Fixed Asset' ? 'primary' : 'text'}
+              className={activeTab === 'Fixed Asset' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'}
+              onClick={() => setActiveTab('Fixed Asset')}
+            >
+              Fixed Assets
+            </Button>
+            <Button
+              variant={activeTab === 'Consumable' ? 'primary' : 'text'}
+              className={activeTab === 'Consumable' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'}
+              onClick={() => setActiveTab('Consumable')}
+            >
+              Kitchen Consumables
+            </Button>
+            <div className="w-px h-6 bg-[#e8e4db] mx-1"></div>
             <Button 
               variant={statusFilter === 'All' ? 'primary' : 'text'} 
               className={statusFilter === 'All' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
@@ -260,7 +281,7 @@ export const Inventory = () => {
               data={filteredData}
               columns={columns}
               keyExtractor={(item) => item.id}
-              onRowClick={(item) => setSelectedItem(item)}
+              onRowClick={(item) => navigate(`/app/inventory/${item.id}`)}
               loading={loading}
               sortColumn={sortColumn}
               sortDirection={sortDirection}
@@ -272,55 +293,6 @@ export const Inventory = () => {
           </div>
         </div>
       </div>
-
-      <Drawer
-        isOpen={!!selectedItem}
-        onClose={() => setSelectedItem(null)}
-        title={selectedItem?.name || ''}
-        subtitle={selectedItem ? `Category: ${selectedItem.category}` : ''}
-        width="md"
-        footer={
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setSelectedItem(null)}>Close</Button>
-            <Button variant="primary" onClick={() => {
-              navigate(`/app/inventory/${selectedItem?.id}`);
-              setSelectedItem(null);
-            }}>Manage Item</Button>
-          </div>
-        }
-      >
-        {selectedItem && (
-          <div className="space-y-6">
-            <div className="bg-surface-container-low p-4 rounded-lg">
-              <h3 className="font-title-md mb-3 flex items-center justify-between">
-                <span>Stock Information</span>
-                <Badge variant={selectedItem.status === 'In Stock' ? 'success' : selectedItem.status === 'Low Stock' ? 'warning' : 'error'}>{selectedItem.status}</Badge>
-              </h3>
-              <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-body-sm">
-                <div>
-                  <span className="text-on-surface-variant block mb-0.5">Current Quantity</span>
-                  <span className="font-semibold text-[18px]">{selectedItem.quantity} {selectedItem.unit}</span>
-                </div>
-                <div>
-                  <span className="text-on-surface-variant block mb-0.5">Minimum Level</span>
-                  <span className="font-semibold text-[18px] text-on-surface-variant">{selectedItem.minQuantity} {selectedItem.unit}</span>
-                </div>
-              </div>
-            </div>
-            
-            {selectedItem.status !== 'In Stock' && (
-              <div className="bg-error-container/20 p-4 rounded-lg border border-error-container text-body-sm">
-                <span className="material-symbols-outlined text-[20px] text-error mb-2 block">warning</span>
-                <strong className="text-on-surface font-semibold block mb-1">Stock Action Required</strong>
-                <p className="text-on-surface-variant">
-                  This item is currently below its minimum required threshold. An urgent purchase order needs to be raised.
-                </p>
-                <Button variant="outline" className="mt-4 border-error text-error hover:bg-error-container/50">Create Purchase Order</Button>
-              </div>
-            )}
-          </div>
-        )}
-      </Drawer>
     </div>
   );
 };

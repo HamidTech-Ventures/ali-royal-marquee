@@ -28,9 +28,10 @@ export const VendorDetails = () => {
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [savingExpense, setSavingExpense] = useState(false);
   const [expenseForm, setExpenseForm] = useState({
-    category: 'Vendor Payment',
+    category: 'Catering',
     description: '',
-    amount: '',
+    totalBill: '',
+    paidAmount: '',
   });
 
   const fetchExpenses = (v: Vendor) => {
@@ -75,27 +76,52 @@ export const VendorDetails = () => {
 
   const handleRecordExpense = async () => {
     if (!vendor) return;
-    if (!expenseForm.description || !expenseForm.amount) {
-      showError('Please fill in all required fields');
+    if (!expenseForm.description) {
+      showError('Please provide a description.');
       return;
     }
     setSavingExpense(true);
     try {
-      await financesService.recordExpense({
-        category: expenseForm.category,
-        description: expenseForm.description,
-        amount: parseFloat(expenseForm.amount),
-        expenseDate: new Date().toISOString(),
-        vendorId: vendor.id,
-        eventId: null,
-      });
-      success('Expense recorded successfully');
+      const billAmount = parseFloat(expenseForm.totalBill) || 0;
+      const paidAmount = parseFloat(expenseForm.paidAmount) || 0;
+      
+      if (billAmount === 0 && paidAmount === 0) {
+        showError('Please enter either a bill amount or a paid amount.');
+        setSavingExpense(false);
+        return;
+      }
+
+      // 1. Record the Purchase (Total Bill)
+      if (billAmount > 0) {
+        await financesService.recordExpense({
+          category: expenseForm.category,
+          description: expenseForm.description,
+          amount: billAmount,
+          expenseDate: new Date().toISOString(),
+          vendorId: vendor.id,
+          eventId: null,
+        });
+      }
+
+      // 2. If there's a payment, record the Payment
+      if (paidAmount > 0) {
+        await financesService.recordExpense({
+          category: 'Vendor Payment',
+          description: billAmount > 0 ? `Payment for: ${expenseForm.description}` : expenseForm.description,
+          amount: paidAmount,
+          expenseDate: new Date().toISOString(),
+          vendorId: vendor.id,
+          eventId: null,
+        });
+      }
+
+      success('Transaction recorded successfully');
       setExpenseModalOpen(false);
-      setExpenseForm({ category: 'Vendor Payment', description: '', amount: '' });
+      setExpenseForm({ category: 'Catering', description: '', totalBill: '', paidAmount: '' });
       fetchExpenses(vendor);
     } catch (err) {
-      console.error('Failed to record expense:', err);
-      showError('Failed to record expense. Please try again.');
+      console.error('Failed to record transaction:', err);
+      showError('Failed to record transaction. Please try again.');
     } finally {
       setSavingExpense(false);
     }
@@ -104,12 +130,16 @@ export const VendorDetails = () => {
   if (loading) return <div className="p-8 text-center text-on-surface-variant">Loading vendor details...</div>;
   if (!vendor) return <div className="p-8 text-center text-on-surface-variant">Vendor not found.</div>;
 
-  const totalPurchases = vendorExpenses.reduce((sum, e) => sum + e.amount, 0);
-  const outstanding = vendorExpenses.filter(e => e.paymentStatus !== 'Paid').reduce((sum, e) => sum + e.amount, 0);
+  const purchases = vendorExpenses.filter(e => e.category !== 'Vendor Payment');
+  const payments = vendorExpenses.filter(e => e.category === 'Vendor Payment');
+
+  const totalBilled = purchases.reduce((sum, e) => sum + e.amount, 0);
+  const totalPaid = payments.reduce((sum, e) => sum + e.amount, 0);
+  const outstanding = totalBilled - totalPaid;
 
   const tabs: { id: TabType; label: string }[] = [
     { id: 'overview', label: 'Supplier Overview' },
-    { id: 'purchases', label: `Purchase History (${vendorExpenses.length})` },
+    { id: 'purchases', label: `Khata / Ledger (${vendorExpenses.length})` },
   ];
 
   return (
@@ -160,17 +190,18 @@ export const VendorDetails = () => {
       <div className="px-8 py-5 bg-surface-container-lowest border-b border-outline-variant/20">
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-surface border border-outline-variant/40 rounded-xl p-5 shadow-sm">
-            <div className="text-xs text-on-surface-variant uppercase tracking-wider font-semibold mb-1">Total Purchases</div>
-            <div className="text-2xl font-bold text-on-surface">PKR {totalPurchases.toLocaleString()}</div>
+            <div className="text-xs text-on-surface-variant uppercase tracking-wider font-semibold mb-1">Total Billed</div>
+            <div className="text-2xl font-bold text-on-surface">PKR {totalBilled.toLocaleString()}</div>
+          </div>
+          <div className="bg-surface border border-outline-variant/40 rounded-xl p-5 shadow-sm relative overflow-hidden">
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-success"></div>
+            <div className="text-xs text-on-surface-variant uppercase tracking-wider font-semibold mb-1">Total Paid</div>
+            <div className="text-2xl font-bold text-success">PKR {totalPaid.toLocaleString()}</div>
           </div>
           <div className="bg-surface border border-outline-variant/40 rounded-xl p-5 shadow-sm relative overflow-hidden">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
-            <div className="text-xs text-on-surface-variant uppercase tracking-wider font-semibold mb-1">Outstanding</div>
+            <div className="text-xs text-on-surface-variant uppercase tracking-wider font-semibold mb-1">Outstanding Balance</div>
             <div className="text-2xl font-bold text-error">PKR {outstanding.toLocaleString()}</div>
-          </div>
-          <div className="bg-surface border border-outline-variant/40 rounded-xl p-5 shadow-sm">
-            <div className="text-xs text-on-surface-variant uppercase tracking-wider font-semibold mb-1">Transactions</div>
-            <div className="text-2xl font-bold text-on-surface">{vendorExpenses.length}</div>
           </div>
         </div>
       </div>
@@ -242,7 +273,7 @@ export const VendorDetails = () => {
                     <span className="material-symbols-outlined text-[20px]">history</span>
                   </div>
                   <div>
-                    <div className="font-semibold text-on-surface">View Purchase History</div>
+                    <div className="font-semibold text-on-surface">View Khata (Ledger)</div>
                     <div className="text-sm text-on-surface-variant">{vendorExpenses.length} transactions recorded</div>
                   </div>
                 </button>
@@ -266,33 +297,32 @@ export const VendorDetails = () => {
         {activeTab === 'purchases' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h3 className="font-title-lg">Purchase History</h3>
-              <Button variant="primary" icon="add" onClick={() => setExpenseModalOpen(true)}>Record New Expense</Button>
+              <h3 className="font-title-lg">Khata (Ledger)</h3>
+              <Button variant="primary" icon="add" onClick={() => setExpenseModalOpen(true)}>Record Transaction</Button>
             </div>
             <div className="bg-surface border border-outline-variant/40 rounded-xl overflow-hidden">
               <table className="w-full text-left border-collapse">
                 <thead className="bg-surface-variant/30 text-on-surface-variant text-sm">
                   <tr>
                     <th className="p-4 font-medium">Date</th>
-                    <th className="p-4 font-medium">Category</th>
                     <th className="p-4 font-medium">Description</th>
-                    <th className="p-4 font-medium">Payment</th>
-                    <th className="p-4 font-medium text-right">Amount (PKR)</th>
+                    <th className="p-4 font-medium text-right">Billed (Debit)</th>
+                    <th className="p-4 font-medium text-right">Paid (Credit)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant/20">
                   {vendorExpenses.map(expense => (
                     <tr key={expense.id} className="hover:bg-surface-variant/20">
                       <td className="p-4 text-on-surface">{expense.dateStr}</td>
-                      <td className="p-4 text-on-surface">{expense.category}</td>
-                      <td className="p-4 text-on-surface-variant">{expense.description}</td>
-                      <td className="p-4">
-                        <Badge variant={expense.paymentStatus === 'Paid' ? 'success' : 'warning'}>
-                          {expense.paymentStatus || 'Unpaid'}
-                        </Badge>
+                      <td className="p-4 text-on-surface-variant">
+                        <div className="font-medium text-on-surface">{expense.category}</div>
+                        {expense.description && <div className="text-sm opacity-80">{expense.description}</div>}
                       </td>
-                      <td className="p-4 text-right font-semibold text-on-surface">
-                        {expense.amount.toLocaleString()}
+                      <td className="p-4 text-right text-on-surface">
+                        {expense.category !== 'Vendor Payment' ? expense.amount.toLocaleString() : '-'}
+                      </td>
+                      <td className="p-4 text-right text-success font-medium">
+                        {expense.category === 'Vendor Payment' ? expense.amount.toLocaleString() : '-'}
                       </td>
                     </tr>
                   ))}
@@ -311,7 +341,8 @@ export const VendorDetails = () => {
               <div className="flex items-center justify-between bg-surface-container-low rounded-xl p-4 border border-outline-variant/30">
                 <span className="text-sm text-on-surface-variant">{vendorExpenses.length} total transaction(s)</span>
                 <div className="flex gap-6 text-sm">
-                  <span className="text-on-surface-variant">Total: <span className="font-bold text-on-surface">PKR {totalPurchases.toLocaleString()}</span></span>
+                  <span className="text-on-surface-variant">Total Billed: <span className="font-bold text-on-surface">PKR {totalBilled.toLocaleString()}</span></span>
+                  <span className="text-on-surface-variant">Total Paid: <span className="font-bold text-success">PKR {totalPaid.toLocaleString()}</span></span>
                   <span className="text-on-surface-variant">Outstanding: <span className="font-bold text-error">PKR {outstanding.toLocaleString()}</span></span>
                 </div>
               </div>
@@ -324,13 +355,13 @@ export const VendorDetails = () => {
       <Modal
         isOpen={expenseModalOpen}
         onClose={() => setExpenseModalOpen(false)}
-        title="Record Expense"
+        title="Record Khata Transaction"
         description={`Log a payment or purchase for ${vendor.name}`}
         footer={
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setExpenseModalOpen(false)}>Cancel</Button>
             <Button variant="primary" onClick={handleRecordExpense} disabled={savingExpense} icon="save">
-              {savingExpense ? 'Saving...' : 'Save Expense'}
+              {savingExpense ? 'Saving...' : 'Save Transaction'}
             </Button>
           </div>
         }
@@ -342,7 +373,6 @@ export const VendorDetails = () => {
             value={expenseForm.category}
             onChange={e => setExpenseForm(prev => ({ ...prev, category: e.target.value }))}
             options={[
-              { value: 'Vendor Payment', label: 'Vendor Payment' },
               { value: 'Catering', label: 'Catering' },
               { value: 'Decoration', label: 'Decoration' },
               { value: 'AV/Lighting', label: 'AV/Lighting' },
@@ -358,14 +388,27 @@ export const VendorDetails = () => {
             onChange={e => setExpenseForm(prev => ({ ...prev, description: e.target.value }))}
             placeholder={`e.g. Monthly payment to ${vendor.name}`}
           />
-          <Input
-            label="Amount (PKR) *"
-            name="amount"
-            type="number"
-            value={expenseForm.amount}
-            onChange={e => setExpenseForm(prev => ({ ...prev, amount: e.target.value }))}
-            placeholder="e.g. 50000"
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Total Billed (PKR)"
+              name="totalBill"
+              type="number"
+              value={expenseForm.totalBill}
+              onChange={e => setExpenseForm(prev => ({ ...prev, totalBill: e.target.value }))}
+              placeholder="e.g. 50000"
+            />
+            <Input
+              label="Paid Now (PKR)"
+              name="paidAmount"
+              type="number"
+              value={expenseForm.paidAmount}
+              onChange={e => setExpenseForm(prev => ({ ...prev, paidAmount: e.target.value }))}
+              placeholder="e.g. 20000"
+            />
+          </div>
+          <p className="text-xs text-on-surface-variant opacity-80 -mt-2">
+            Leave "Total Billed" as 0 if you are only recording a past payment.
+          </p>
           <div className="bg-surface-container-low rounded-lg p-3 text-sm text-on-surface-variant">
             <span className="material-symbols-outlined text-[14px] align-middle mr-1">info</span>
             This expense will be recorded against <strong className="text-on-surface">{vendor.name}</strong> and reflected in the Finances module.

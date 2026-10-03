@@ -16,11 +16,13 @@ export const SearchInput = ({ placeholder = 'Search...', value, onChange, deboun
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      onChange(localValue);
+      if (localValue !== value) {
+        onChange(localValue);
+      }
     }, debounceMs);
 
     return () => clearTimeout(handler);
-  }, [localValue, debounceMs, onChange]);
+  }, [localValue, debounceMs, value, onChange]);
 
   const handleClear = () => {
     setLocalValue('');

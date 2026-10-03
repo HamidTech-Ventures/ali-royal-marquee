@@ -17,7 +17,6 @@ export interface MenuItem {
   name: string;
   category: string;
   description?: string;
-  cost: number;
 }
 
 export interface Addon {
@@ -70,6 +69,9 @@ export const packagesService = {
     const response = await api.post<string>('/packages/menu-items', data);
     return response.data;
   },
+  updateMenuItem: async (id: string, data: MenuItem): Promise<void> => {
+    await api.put(`/packages/menu-items/${id}`, data);
+  },
   deleteMenuItem: async (id: string): Promise<void> => {
     await api.delete(`/packages/menu-items/${id}`);
   },
@@ -83,6 +85,9 @@ export const packagesService = {
     const response = await api.post<string>('/packages/addons', data);
     return response.data;
   },
+  updateAddon: async (id: string, data: Addon): Promise<void> => {
+    await api.put(`/packages/addons/${id}`, data);
+  },
   deleteAddon: async (id: string): Promise<void> => {
     await api.delete(`/packages/addons/${id}`);
   },
@@ -95,6 +100,9 @@ export const packagesService = {
   createPricingRule: async (data: Omit<PricingRule, 'id'>): Promise<string> => {
     const response = await api.post<string>('/packages/pricing-rules', data);
     return response.data;
+  },
+  updatePricingRule: async (id: string, data: PricingRule): Promise<void> => {
+    await api.put(`/packages/pricing-rules/${id}`, data);
   },
   deletePricingRule: async (id: string): Promise<void> => {
     await api.delete(`/packages/pricing-rules/${id}`);
