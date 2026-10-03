@@ -71,7 +71,7 @@ export const Inventory = () => {
     
     // Filter by item type
         result = result.filter(i => {
-      if (activeTab === 'Fixed Asset') return i.itemType?.includes('Fixed') || i.itemType === 'FixedAsset';
+      if (activeTab === 'Fixed Asset') return i.itemType?.includes('Fixed') || i.itemType?.includes('Fixed');
       if (activeTab === 'Consumable') return i.itemType?.includes('Consumable');
       return true;
     });

@@ -417,7 +417,7 @@ export const BookingDetails = () => {
         <Input label="Reference / Check No (Optional)" value={paymentForm.reference} onChange={e => setPaymentForm({...paymentForm, reference: e.target.value})} />
         <div className="flex justify-end gap-3 pt-4 border-t border-outline-variant/20 mt-4">
           <Button variant="text" onClick={() => setPaymentModalOpen(false)}>Cancel</Button>
-          <Button variant="primary" onClick={handleRecordPayment} isLoading={isSubmitting}>Confirm Payment</Button>
+          <Button variant="primary" onClick={handleRecordPayment} disabled={isSubmitting}>Confirm Payment</Button>
         </div>
       </div>
     </Modal>
@@ -431,7 +431,7 @@ export const BookingDetails = () => {
         ]} />
         <div className="flex justify-end gap-3 pt-4 border-t border-outline-variant/20 mt-4">
           <Button variant="text" onClick={() => setRescheduleModalOpen(false)}>Cancel</Button>
-          <Button variant="primary" onClick={handleReschedule} isLoading={isSubmitting}>Confirm Reschedule</Button>
+          <Button variant="primary" onClick={handleReschedule} disabled={isSubmitting}>Confirm Reschedule</Button>
         </div>
       </div>
     </Modal>

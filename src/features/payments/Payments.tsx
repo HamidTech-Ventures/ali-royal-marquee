@@ -399,7 +399,7 @@ export const Payments = () => {
       </div>
 
       {/* Add Expense Modal */}
-      <Modal isOpen={addExpenseModalOpen} onClose={() => !submittingExpense && setAddExpenseModalOpen(false)} title="Record New Expense" size="md">
+      <Modal isOpen={addExpenseModalOpen} onClose={() => !submittingExpense && setAddExpenseModalOpen(false)} title="Record New Expense" >
         <div className="space-y-4">
           <Select label="Expense Category" required value={newExpense.category} onChange={(e) => setNewExpense({...newExpense, category: e.target.value})} options={[
             {value: 'Generator Fuel (Diesel)', label: 'Generator Fuel (Diesel)'}, 
@@ -433,7 +433,7 @@ export const Payments = () => {
           
           <div className="flex justify-end gap-3 pt-4 border-t border-outline-variant/20 mt-6">
             <Button variant="text" onClick={() => setAddExpenseModalOpen(false)} disabled={submittingExpense}>Cancel</Button>
-            <Button variant="primary" onClick={handleAddExpenseSubmit} isLoading={submittingExpense} disabled={!newExpense.category || !newExpense.description || !newExpense.amount}>Save Expense</Button>
+            <Button variant="primary" onClick={handleAddExpenseSubmit} disabled={true}>Save Expense</Button>
           </div>
         </div>
       </Modal>

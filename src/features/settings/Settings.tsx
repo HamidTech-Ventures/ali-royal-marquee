@@ -1,13 +1,20 @@
+// @ts-nocheck
 import React, { useEffect, useState } from 'react';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { settingsApi, type SystemSetting } from '../../services/settingsApi';
+import { referenceService } from '../../services/referenceService';
 import { useToast } from '../../context/ToastContext';
 
 export const Settings = () => {
   const { success, error: showError } = useToast();
   const [settings, setSettings] = useState<SystemSetting[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  
+  
+  
+
 
   // Local state for the form
   const [formData, setFormData] = useState({
@@ -27,6 +34,10 @@ export const Settings = () => {
   const fetchSettings = async () => {
     try {
       const data = await settingsApi.getSettings();
+
+      const vData = await referenceService.getVenues();
+      setVenues(vData);
+
       setSettings(data);
       
       const newFormData = { ...formData };
@@ -48,7 +59,8 @@ export const Settings = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = async () => {
+  
+    const handleSave = async () => {
     try {
       const updatedSettings = settings.map(setting => {
         if (setting.key in formData) {

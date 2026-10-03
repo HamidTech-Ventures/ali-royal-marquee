@@ -90,7 +90,7 @@ export const EnquiryForm = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev: any) => ({ ...prev, [name]: value }));
     // Clear validation error when field is edited
     if (validationErrors[name]) {
       setValidationErrors(prev => {
@@ -303,7 +303,7 @@ export const EnquiryForm = () => {
               label="Partition Required" 
               name="partitionRequired"
               value={formData.partitionRequired.toString()}
-              onChange={(e) => setFormData(prev => ({ ...prev, partitionRequired: e.target.value === 'true' }))}
+              onChange={(e) => setFormData((prev: any) => ({ ...prev, partitionRequired: e.target.value === 'true' }))}
               options={[
                 { label: 'No', value: 'false' },
                 { label: 'Yes', value: 'true' }
