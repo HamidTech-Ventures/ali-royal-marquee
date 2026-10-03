@@ -26,13 +26,19 @@ export const Inventory = () => {
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState<'All' | 'Low Stock' | 'Out of Stock'>('All');
-  const [activeTab, setActiveTab] = useState<'Fixed Asset' | 'Consumable'>('Fixed Asset');
+  const [activeTab, setActiveTab] = useState<'All' | 'Fixed Asset' | 'Consumable'>('All');
 
   const fetchInventory = async () => {
     try {
       setLoading(true);
       const data = await inventoryService.getInventoryItems();
-      setInventory(data);
+      const enhancedData = data.map((item: any) => {
+        let status = 'In Stock';
+        if (item.quantity === 0) status = 'Out of Stock';
+        else if (item.quantity <= item.minQuantity) status = 'Low Stock';
+        return { ...item, status };
+      });
+      setInventory(enhancedData);
     } catch (error) {
       console.error('Failed to fetch inventory:', error);
     } finally {
@@ -70,9 +76,11 @@ export const Inventory = () => {
     let result = inventory;
     
     // Filter by item type
-        result = result.filter(i => {
-      if (activeTab === 'Fixed Asset') return i.itemType?.includes('Fixed') || i.itemType?.includes('Fixed');
-      if (activeTab === 'Consumable') return i.itemType?.includes('Consumable');
+    result = result.filter((i: any) => {
+      if (activeTab === 'All') return true;
+      const typeStr = (i.itemType || i.type || '').toString().toLowerCase();
+      if (activeTab === 'Fixed Asset') return !typeStr.includes('consumable');
+      if (activeTab === 'Consumable') return typeStr.includes('consumable');
       return true;
     });
 
@@ -98,7 +106,7 @@ export const Inventory = () => {
     });
 
     return result;
-  }, [inventory, searchTerm, statusFilter, sortColumn, sortDirection]);
+  }, [inventory, searchTerm, statusFilter, activeTab, sortColumn, sortDirection]);
 
   const columns: ColumnDef<InventoryItem>[] = [
     {
@@ -129,7 +137,7 @@ export const Inventory = () => {
         </div>
       )
     },
-    ...(activeTab === 'Consumable' ? [{
+    {
       key: 'status',
       header: 'Status',
       sortable: true,
@@ -141,7 +149,7 @@ export const Inventory = () => {
         if (item.status === 'Out of Stock') variant = 'error';
         return <Badge variant={variant}>{item.status}</Badge>;
       }
-    }] as any : []),
+    },
     {
       key: 'actions',
       header: 'Actions',
@@ -226,46 +234,64 @@ export const Inventory = () => {
         </div>
 
                 {/* CONTROLS */}
-        <div className="bg-white p-3 md:p-4 border border-[#e8e4db] rounded-xl shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center overflow-x-auto hide-scrollbar gap-1.5 w-full">
-            <Button
-              variant={activeTab === 'Fixed Asset' ? 'primary' : 'text'}
-              className={activeTab === 'Fixed Asset' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'}
-              onClick={() => setActiveTab('Fixed Asset')}
-            >
-              Fixed Assets
-            </Button>
-            <Button
-              variant={activeTab === 'Consumable' ? 'primary' : 'text'}
-              className={activeTab === 'Consumable' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'}
-              onClick={() => setActiveTab('Consumable')}
-            >
-              Kitchen Consumables
-            </Button>
-            <div className="w-px h-6 bg-[#e8e4db] mx-1"></div>
-            <Button 
-              variant={statusFilter === 'All' ? 'primary' : 'text'} 
-              className={statusFilter === 'All' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
-              onClick={() => setStatusFilter('All')}
-            >
-              All Items
-            </Button>
-            <Button 
-              variant={statusFilter === 'Low Stock' ? 'primary' : 'text'} 
-              className={statusFilter === 'Low Stock' ? 'py-1.5 px-3 !bg-[#5C0A1E]' : 'py-1.5 px-3 text-on-surface-variant'} 
-              onClick={() => setStatusFilter('Low Stock')}
-            >
-              Low Stock
-            </Button>
-            <Button 
-              variant={statusFilter === 'Out of Stock' ? 'primary' : 'text'} 
-              className={statusFilter === 'Out of Stock' ? 'py-1.5 px-3 !bg-red-600' : 'py-1.5 px-3 text-red-600 hover:text-red-600'} 
-              onClick={() => setStatusFilter('Out of Stock')}
-            >
-              Out of Stock
-            </Button>
+        <div className="bg-white p-3 md:p-4 border border-[#e8e4db] rounded-xl shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4 w-full">
+            
+            {/* TYPE FILTER - PILL DESIGN */}
+            <div className="flex items-center bg-[#f8f6f3] p-1 rounded-lg border border-[#e8e4db] shadow-inner overflow-x-auto hide-scrollbar max-w-full">
+              <button
+                className={`flex items-center gap-2 px-3 md:px-4 py-1.5 rounded-md text-xs md:text-sm font-semibold transition-all duration-200 whitespace-nowrap ${activeTab === 'All' ? 'bg-white text-[#5C0A1E] shadow-sm ring-1 ring-black/5' : 'text-on-surface-variant hover:text-[#5C0A1E] hover:bg-white/50'}`}
+                onClick={() => setActiveTab('All')}
+              >
+                <span className="material-symbols-outlined text-[16px] md:text-[18px]">category</span>
+                All Types
+              </button>
+              <button
+                className={`flex items-center gap-2 px-3 md:px-4 py-1.5 rounded-md text-xs md:text-sm font-semibold transition-all duration-200 whitespace-nowrap ${activeTab === 'Fixed Asset' ? 'bg-white text-[#5C0A1E] shadow-sm ring-1 ring-black/5' : 'text-on-surface-variant hover:text-[#5C0A1E] hover:bg-white/50'}`}
+                onClick={() => setActiveTab('Fixed Asset')}
+              >
+                <span className="material-symbols-outlined text-[16px] md:text-[18px]">chair</span>
+                Fixed Assets
+              </button>
+              <button
+                className={`flex items-center gap-2 px-3 md:px-4 py-1.5 rounded-md text-xs md:text-sm font-semibold transition-all duration-200 whitespace-nowrap ${activeTab === 'Consumable' ? 'bg-white text-[#5C0A1E] shadow-sm ring-1 ring-black/5' : 'text-on-surface-variant hover:text-[#5C0A1E] hover:bg-white/50'}`}
+                onClick={() => setActiveTab('Consumable')}
+              >
+                <span className="material-symbols-outlined text-[16px] md:text-[18px]">restaurant_menu</span>
+                Consumables
+              </button>
+            </div>
+
+            <div className="hidden md:block w-px h-8 bg-[#e8e4db]"></div>
+
+            {/* STATUS FILTER - PILL DESIGN */}
+            <div className="flex items-center bg-[#f8f6f3] p-1 rounded-lg border border-[#e8e4db] shadow-inner overflow-x-auto hide-scrollbar max-w-full">
+              <button
+                className={`flex items-center gap-2 px-3 md:px-4 py-1.5 rounded-md text-xs md:text-sm font-semibold transition-all duration-200 whitespace-nowrap ${statusFilter === 'All' ? 'bg-white text-[#5C0A1E] shadow-sm ring-1 ring-black/5' : 'text-on-surface-variant hover:text-[#5C0A1E] hover:bg-white/50'}`}
+                onClick={() => setStatusFilter('All')}
+              >
+                <span className="material-symbols-outlined text-[16px] md:text-[18px]">inventory_2</span>
+                All Status
+              </button>
+              <button
+                className={`flex items-center gap-2 px-3 md:px-4 py-1.5 rounded-md text-xs md:text-sm font-semibold transition-all duration-200 whitespace-nowrap ${statusFilter === 'Low Stock' ? 'bg-[#fdf3c7] text-[#b0891d] shadow-sm ring-1 ring-[#b0891d]/20' : 'text-on-surface-variant hover:text-[#b0891d] hover:bg-[#fdf3c7]/50'}`}
+                onClick={() => setStatusFilter('Low Stock')}
+              >
+                <span className="material-symbols-outlined text-[16px] md:text-[18px]">warning</span>
+                Low Stock
+              </button>
+              <button
+                className={`flex items-center gap-2 px-3 md:px-4 py-1.5 rounded-md text-xs md:text-sm font-semibold transition-all duration-200 whitespace-nowrap ${statusFilter === 'Out of Stock' ? 'bg-red-50 text-red-600 shadow-sm ring-1 ring-red-600/20' : 'text-on-surface-variant hover:text-red-600 hover:bg-red-50'}`}
+                onClick={() => setStatusFilter('Out of Stock')}
+              >
+                <span className="material-symbols-outlined text-[16px] md:text-[18px]">error</span>
+                Out of Stock
+              </button>
+            </div>
+            
           </div>
-          <div className="flex items-center gap-4 w-full md:w-auto">
+          
+          <div className="flex items-center gap-4 w-full xl:w-72 shrink-0">
             <SearchInput 
               placeholder="Search items or SKUs..." 
               value={searchTerm} 
