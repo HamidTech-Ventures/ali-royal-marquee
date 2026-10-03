@@ -68,6 +68,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     initAuth();
   }, []);
 
+  useEffect(() => {
+    const handleAuthLogout = () => {
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+    };
+
+    window.addEventListener('auth:logout', handleAuthLogout);
+    return () => window.removeEventListener('auth:logout', handleAuthLogout);
+  }, []);
+
   const login = async (accessToken: string, user: User) => {
     const { setAccessToken } = await import('../services/api');
     setAccessToken(accessToken);

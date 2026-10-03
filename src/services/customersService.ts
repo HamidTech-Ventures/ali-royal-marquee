@@ -2,7 +2,7 @@ import api from './api';
 
 export const customersService = {
   getCustomers: async () => {
-    const response = await api.get('/customers');
+    const response = await api.get(`/customers?t=${new Date().getTime()}`);
     return response.data;
   },
 
@@ -19,5 +19,9 @@ export const customersService = {
   updateCustomer: async (id: string, data: { id: string, name: string; phone: string; email?: string; tier: string }) => {
     const response = await api.put(`/customers/${id}`, data);
     return response.data;
+  },
+
+  deleteCustomer: async (id: string) => {
+    await api.delete(`/customers/${id}`);
   }
 };

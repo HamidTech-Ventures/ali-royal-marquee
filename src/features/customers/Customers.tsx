@@ -14,7 +14,7 @@ import { useToast } from '../../context/ToastContext';
 
 export const Customers = () => {
   const navigate = useNavigate();
-  const { error } = useToast();
+  const { error, success } = useToast();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -22,6 +22,7 @@ export const Customers = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [customerToEdit, setCustomerToEdit] = useState<Customer | null>(null);
   
   // Sort state
   const [sortColumn, setSortColumn] = useState('name');
@@ -29,6 +30,15 @@ export const Customers = () => {
 
   // Filter state
   const [tierFilter, setTierFilter] = useState<'All' | 'VIP' | 'Standard' | 'Corporate'>('All');
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    // Reset to page 1 when filters change
+    setCurrentPage(1);
+  }, [searchTerm, tierFilter, sortColumn, sortDirection]);
 
   const fetchCustomers = async () => {
     setLoading(true);
@@ -45,6 +55,32 @@ export const Customers = () => {
   useEffect(() => {
     fetchCustomers();
   }, []);
+
+  const handleDelete = async (id: string, name: string) => {
+    if (window.confirm(`Are you sure you want to delete ${name}?`)) {
+      // Optimistically remove the customer from the UI immediately to prevent double-clicks
+      // and bypass any aggressive browser caching on subsequent GET requests.
+      setCustomers(prev => prev.filter(c => c.id !== id));
+      
+      try {
+        await customersService.deleteCustomer(id);
+        success('Customer deleted successfully');
+        fetchCustomers();
+      } catch (err: any) {
+        console.error('Delete customer error:', err);
+        // Revert on failure
+        fetchCustomers();
+        
+        if (err.response && err.response.data && err.response.data.title) {
+          error(err.response.data.title);
+        } else if (err.response && err.response.data && err.response.data.message) {
+          error(err.response.data.message);
+        } else {
+          error(`Failed to delete customer: ${err.message || 'Unknown error'}`);
+        }
+      }
+    }
+  };
 
   const handleSort = (colKey: string) => {
     if (sortColumn === colKey) {
@@ -84,12 +120,17 @@ export const Customers = () => {
     return result;
   }, [customers, searchTerm, tierFilter, sortColumn, sortDirection]);
 
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredData.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredData, currentPage]);
+
   const columns: ColumnDef<Customer>[] = [
     {
       key: 'id',
       header: 'Customer ID',
       sortable: true,
-      render: (item) => <span className="font-semibold text-primary">{item.id}</span>
+      render: (item) => <span className="font-semibold text-primary">CST-{item.id.substring(0, 6).toUpperCase()}</span>
     },
     {
       key: 'name',
@@ -143,10 +184,10 @@ export const Customers = () => {
           <button onClick={() => navigate(`/app/customers/${item.id}`)} className="p-1.5 text-on-surface-variant hover:text-primary rounded-lg hover:bg-surface-variant/50 transition-colors" title="View">
             <span className="material-symbols-outlined text-[18px]">visibility</span>
           </button>
-          <button onClick={() => navigate(`/app/customers/${item.id}/edit`)} className="p-1.5 text-on-surface-variant hover:text-primary rounded-lg hover:bg-surface-variant/50 transition-colors" title="Edit">
+          <button onClick={() => { setCustomerToEdit(item); setIsAddModalOpen(true); }} className="p-1.5 text-on-surface-variant hover:text-primary rounded-lg hover:bg-surface-variant/50 transition-colors" title="Edit">
             <span className="material-symbols-outlined text-[18px]">edit</span>
           </button>
-          <button onClick={() => {}} className="p-1.5 text-on-surface-variant hover:text-error rounded-lg hover:bg-error/10 transition-colors" title="Delete">
+          <button onClick={() => handleDelete(item.id, item.name)} className="p-1.5 text-on-surface-variant hover:text-error rounded-lg hover:bg-error/10 transition-colors" title="Delete">
             <span className="material-symbols-outlined text-[18px]">delete</span>
           </button>
         </div>
@@ -171,57 +212,73 @@ export const Customers = () => {
 
       <div className="flex flex-col w-full space-y-6 md:space-y-8">
         {/* KPI Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#5C0A1E]">
-            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#5C0A1E]/10 flex items-center justify-center text-[#5C0A1E]">
-              <span className="material-symbols-outlined text-[20px]">groups</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Total Verified</span>
-              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">1,284</div>
-            </div>
-          </div>
+        {(() => {
+          const currentMonth = new Date().getMonth();
+          const currentYear = new Date().getFullYear();
           
-          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#10b981]">
-            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
-              <span className="material-symbols-outlined text-[20px]">how_to_reg</span>
+          const totalVerified = customers.length;
+          const newThisMonth = customers.filter(c => {
+            const d = new Date(c.createdAt);
+            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+          }).length;
+          const repeatClientele = customers.filter(c => (c.bookingsCount || 0) > 1).length;
+          const vipElite = customers.filter(c => c.tier === 'VIP').length;
+          const ledgerReceivables = customers.reduce((sum, c) => sum + (c.outstandingBalance || 0), 0);
+
+          return (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+              <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#5C0A1E]">
+                <div className="w-10 h-10 shrink-0 rounded-xl bg-[#5C0A1E]/10 flex items-center justify-center text-[#5C0A1E]">
+                  <span className="material-symbols-outlined text-[20px]">groups</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Total Verified</span>
+                  <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">{totalVerified.toLocaleString()}</div>
+                </div>
+              </div>
+              
+              <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#10b981]">
+                <div className="w-10 h-10 shrink-0 rounded-xl bg-[#10b981]/10 flex items-center justify-center text-[#10b981]">
+                  <span className="material-symbols-outlined text-[20px]">how_to_reg</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">New This Month</span>
+                  <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">{newThisMonth.toLocaleString()}</div>
+                </div>
+              </div>
+              
+              <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#b0891d]">
+                <div className="w-10 h-10 shrink-0 rounded-xl bg-[#b0891d]/10 flex items-center justify-center text-[#b0891d]">
+                  <span className="material-symbols-outlined text-[20px]">workspace_premium</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Repeat Clientele</span>
+                  <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">{repeatClientele.toLocaleString()}</div>
+                </div>
+              </div>
+              
+              <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#4a1420]">
+                <div className="w-10 h-10 shrink-0 rounded-xl bg-[#4a1420]/10 flex items-center justify-center text-[#4a1420]">
+                  <span className="material-symbols-outlined text-[20px]">stars</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">VIP / Elite</span>
+                  <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">{vipElite.toLocaleString()}</div>
+                </div>
+              </div>
+              
+              <div className="col-span-2 md:col-span-1 bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#e02424]">
+                <div className="w-10 h-10 shrink-0 rounded-xl bg-[#e02424]/10 flex items-center justify-center text-[#e02424]">
+                  <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Ledger Receivables</span>
+                  <div className="font-serif text-base md:text-headline-sm text-[#e02424] font-bold mt-1">PKR {(ledgerReceivables / 1000000).toFixed(2)}M</div>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">New This Month</span>
-              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">86</div>
-            </div>
-          </div>
-          
-          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#b0891d]">
-            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#b0891d]/10 flex items-center justify-center text-[#b0891d]">
-              <span className="material-symbols-outlined text-[20px]">workspace_premium</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Repeat Clientele</span>
-              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">342</div>
-            </div>
-          </div>
-          
-          <div className="bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#4a1420]">
-            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#4a1420]/10 flex items-center justify-center text-[#4a1420]">
-              <span className="material-symbols-outlined text-[20px]">stars</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">VIP / Elite</span>
-              <div className="font-serif text-base md:text-headline-sm text-[#4a1420] font-bold mt-1">84</div>
-            </div>
-          </div>
-          
-          <div className="col-span-2 md:col-span-1 bg-white p-3.5 md:p-5 rounded-xl shadow-sm flex items-center gap-3 border-l-[3px] border-[#e02424]">
-            <div className="w-10 h-10 shrink-0 rounded-xl bg-[#e02424]/10 flex items-center justify-center text-[#e02424]">
-              <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[9px] md:text-label-sm uppercase text-on-surface-variant font-bold tracking-wider">Ledger Receivables</span>
-              <div className="font-serif text-base md:text-headline-sm text-[#e02424] font-bold mt-1">PKR 2.48M</div>
-            </div>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* CONTROLS */}
         <div className="bg-white p-3 md:p-4 border border-[#e8e4db] rounded-xl shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -263,15 +320,16 @@ export const Customers = () => {
         <div className="bg-white rounded-xl shadow-sm border border-[#e8e4db] overflow-hidden">
           <div className="overflow-x-auto w-full">
             <DataGrid 
-              data={filteredData}
+              data={paginatedData}
               columns={columns}
               keyExtractor={(item) => item.id}
               onRowClick={(item) => navigate(`/app/customers/${item.id}`)}
               sortColumn={sortColumn}
               sortDirection={sortDirection}
               onSort={handleSort}
-              currentPage={1}
-              totalPages={1}
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredData.length / itemsPerPage)}
+              onPageChange={setCurrentPage}
               totalItems={filteredData.length}
               loading={loading}
             />
@@ -288,7 +346,7 @@ export const Customers = () => {
         footer={
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setSelectedCustomer(null)}>Close</Button>
-            <Button variant="primary">Edit Profile</Button>
+            <Button variant="primary" onClick={() => { setSelectedCustomer(null); setCustomerToEdit(selectedCustomer); setIsAddModalOpen(true); }}>Edit Profile</Button>
           </div>
         }
       >
@@ -341,8 +399,9 @@ export const Customers = () => {
       
       <AddCustomerModal 
         isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
+        onClose={() => { setIsAddModalOpen(false); setCustomerToEdit(null); }} 
         onSuccess={fetchCustomers}
+        customerToEdit={customerToEdit}
       />
     </div>
   );

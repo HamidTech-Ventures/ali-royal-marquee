@@ -10,18 +10,30 @@ interface AddCustomerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  customerToEdit?: any;
 }
 
-export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, onSuccess }) => {
+export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onClose, onSuccess, customerToEdit }) => {
   const { success, error } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    tier: 'Standard'
+    name: customerToEdit?.name || '',
+    phone: customerToEdit?.phone || '',
+    email: customerToEdit?.email || '',
+    tier: customerToEdit?.tier || 'Standard'
   });
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        name: customerToEdit?.name || '',
+        phone: customerToEdit?.phone || '',
+        email: customerToEdit?.email || '',
+        tier: customerToEdit?.tier || 'Standard'
+      });
+    }
+  }, [isOpen, customerToEdit]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -31,8 +43,13 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onCl
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      await customersService.createCustomer(formData);
-      success('Customer added successfully');
+      if (customerToEdit) {
+        await customersService.updateCustomer(customerToEdit.id, { id: customerToEdit.id, ...formData });
+        success('Customer updated successfully');
+      } else {
+        await customersService.createCustomer(formData);
+        success('Customer added successfully');
+      }
       onSuccess();
       onClose();
     } catch (err) {
@@ -46,15 +63,15 @@ export const AddCustomerModal: React.FC<AddCustomerModalProps> = ({ isOpen, onCl
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Add New Customer"
-      description="Create a new customer profile."
+      title={customerToEdit ? "Edit Customer" : "Add New Customer"}
+      description={customerToEdit ? "Update customer profile." : "Create a new customer profile."}
       maxWidth="lg"
       footer={
         <FormActions 
           onCancel={onClose} 
           onSave={handleSubmit} 
           isSaving={isSubmitting} 
-          saveLabel="Add Customer" 
+          saveLabel={customerToEdit ? "Save Changes" : "Add Customer"} 
           className="pt-0 mt-0 border-0 w-full"
         />
       }

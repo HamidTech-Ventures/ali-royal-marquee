@@ -5,6 +5,9 @@ export type Customer = {
   email: string;
   tier: 'VIP' | 'Standard' | 'Corporate';
   totalSpent: number;
+  createdAt: string;
+  bookingsCount: number;
+  outstandingBalance: number;
 };
 
 export type EnquiryStatus = 'Inquiry' | 'SiteVisit' | 'TokenReceived' | 'AdvancePaid' | 'Cancelled';
