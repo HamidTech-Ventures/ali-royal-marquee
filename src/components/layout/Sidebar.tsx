@@ -57,16 +57,11 @@ export const Sidebar = ({ isExpanded, onToggle }: SidebarProps) => {
             </button>
             <div 
               className={clsx(
-                "flex flex-col transition-opacity duration-300 overflow-hidden whitespace-nowrap",
+                "flex items-center gap-2 transition-opacity duration-300 overflow-hidden whitespace-nowrap",
                 isExpanded ? "opacity-100" : "opacity-0 w-0"
               )}
             >
-              <span className="font-headline-sm text-headline-sm tracking-tight text-surface-container-lowest leading-none">
-                Ali Royal
-              </span>
-              <span className="font-label-sm text-label-sm uppercase tracking-widest text-secondary-fixed mt-1 text-[10px]">
-                Management System
-              </span>
+              <img src="/logo.jfif" alt="Logo" className="h-12 w-auto object-contain drop-shadow-md" />
             </div>
           </div>
           <div className="mt-5 h-[1px] w-full bg-secondary-fixed/20"></div>

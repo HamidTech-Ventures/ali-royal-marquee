@@ -71,6 +71,7 @@ export const Settings = () => {
     try {
       if (editingVenue) {
         await referenceService.updateVenue(editingVenue.id, {
+          id: editingVenue.id,
           name: venueForm.name,
           capacity: Number(venueForm.capacity) || 0,
           description: venueForm.description,

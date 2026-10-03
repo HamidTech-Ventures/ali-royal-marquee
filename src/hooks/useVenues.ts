@@ -11,7 +11,7 @@ export const useVenues = () => {
     const fetchVenues = async () => {
       try {
         const data = await referenceService.getVenues();
-        setVenues(data.filter((v: any) => v.isActive));
+        setVenues(data);
       } catch (err: any) {
         setError(err.message || 'Failed to fetch venues');
       } finally {
