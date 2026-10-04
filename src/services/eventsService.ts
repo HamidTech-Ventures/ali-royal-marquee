@@ -31,13 +31,23 @@ export const eventsService = {
     return response.data;
   },
 
+  editTask: async (eventId: string, taskId: string, title: string, assignee: string, dueTime: string) => {
+    const response = await api.put(`/events/${eventId}/tasks/${taskId}/details`, { taskId, title, assignee, dueTime });
+    return response.data;
+  },
+
+  deleteTask: async (eventId: string, taskId: string) => {
+    const response = await api.delete(`/events/${eventId}/tasks/${taskId}`);
+    return response.data;
+  },
+
   addStaff: async (id: string, name: string, role: string, staffMemberId?: string) => {
     const response = await api.post(`/events/${id}/staff`, { eventId: id, name, role, staffMemberId });
     return response.data;
   },
 
-  removeStaff: async (id: string, staffMemberId: string) => {
-    const response = await api.delete(`/events/${id}/staff/${staffMemberId}`);
+  removeStaff: async (id: string, staffId: string) => {
+    const response = await api.delete(`/events/${id}/staff/${staffId}`);
     return response.data;
   },
 

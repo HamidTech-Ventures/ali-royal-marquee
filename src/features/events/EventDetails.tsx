@@ -10,6 +10,8 @@ import { eventsService } from '../../services/eventsService';
 import { financesService } from '../../services/financesService';
 import { DataGrid } from '../../components/ui/DataGrid';
 import { bookingsService } from '../../services/bookingsService';
+import { staffService } from '../../services/staffService';
+import { packagesService } from '../../services/packagesService';
 import type { ColumnDef } from '../../components/ui/DataGrid';
 import { Input } from '../../components/ui/forms/Input';
 import { Select } from '../../components/ui/forms/Select';
@@ -46,18 +48,30 @@ export const EventDetails = () => {
   const [event, setEvent] = useState<any>(null);
 
   const [taskModalOpen, setTaskModalOpen] = useState(false);
-  const [taskForm, setTaskForm] = useState({ title: '', assignee: '', dueTime: '' });
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [taskForm, setTaskForm] = useState({ title: '', assignee: '', dueDate: '', dueTime: '' });
   const [menuModalOpen, setMenuModalOpen] = useState(false);
+  const [selectedPackageId, setSelectedPackageId] = useState('');
   const [guestCount, setGuestCount] = useState(0);
   const [staffModalOpen, setStaffModalOpen] = useState(false);
+  const [staffForm, setStaffForm] = useState({ name: '', role: 'Waiter', staffMemberId: '' });
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [expenseForm, setExpenseForm] = useState({ amount: '', category: 'Vendor', notes: '' });
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({ amount: '', method: 'Cash' });
 
   const [loading, setLoading] = useState(true);
   
   const [payments, setPayments] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<any[]>([]);
   const [loadingFinances, setLoadingFinances] = useState(false);
+  const [globalStaff, setGlobalStaff] = useState<any[]>([]);
+  const [globalPackages, setGlobalPackages] = useState<any[]>([]);
+
+  useEffect(() => {
+    staffService.getStaff().then(res => setGlobalStaff(res)).catch(console.error);
+    packagesService.getPackages().then(res => setGlobalPackages(res)).catch(console.error);
+  }, []);
 
 
   useEffect(() => {
@@ -66,26 +80,52 @@ export const EventDetails = () => {
 
   const handleCreateTask = async () => {
     try {
-      await eventsService.addTask(event.id, { ...taskForm, eventId: event.id } as any);
-      success('Task created');
+      const dateTime = `${taskForm.dueDate} ${taskForm.dueTime}`.trim();
+      if (editingTaskId) {
+         await eventsService.editTask(event.id, editingTaskId, taskForm.title, taskForm.assignee, dateTime);
+         success('Task updated');
+      } else {
+         await eventsService.addTask(event.id, taskForm.title, taskForm.assignee, dateTime);
+         success('Task created');
+      }
       setTaskModalOpen(false);
-      fetchEvent();
-    } catch { error('Failed to create task'); }
+      setEditingTaskId(null);
+      loadEvent(event.id);
+    } catch { error('Failed to save task'); }
   };
-  const handleUpdateMenu = async () => {
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (!confirm('Are you sure you want to delete this task?')) return;
     try {
-      await bookingsService.updateBookingStatus(event.bookingId, 'Confirmed'); // Temp mock for guest update
-      success('Menu & Guests updated');
+       await eventsService.deleteTask(event.id, taskId);
+       success('Task deleted');
+       loadEvent(event.id);
+    } catch { error('Failed to delete task'); }
+  };
+
+  const handleUpdateTaskStatus = async (taskId: string, status: string) => {
+    try {
+       const progress = status === 'Completed' ? 100 : status === 'In Progress' ? 50 : 0;
+       await eventsService.updateTaskStatus(event.id, taskId, status, progress);
+       success('Task status updated');
+       loadEvent(event.id);
+    } catch { error('Failed to update status'); }
+  };
+  const handleUpdateMenu = async (overrideId?: string | null) => {
+    try {
+      const pkgIdToUse = overrideId !== undefined ? overrideId : (selectedPackageId || null);
+      await bookingsService.updateBookingPackage(event.bookingId, pkgIdToUse);
+      success('Package updated successfully');
       setMenuModalOpen(false);
-      fetchEvent();
-    } catch { error('Failed to update'); }
+      loadEvent(event.id);
+    } catch { error('Failed to update package'); }
   };
   const handleRecordExpense = async () => {
     try {
-      await financesService.addExpense({
+      await financesService.recordExpense({
         amount: Number(expenseForm.amount),
         category: expenseForm.category,
-        reference: expenseForm.notes,
+        description: expenseForm.notes,
         dateStr: new Date().toISOString().split('T')[0],
         eventId: event.id
       } as any);
@@ -96,14 +136,46 @@ export const EventDetails = () => {
     } catch { error('Failed to record expense'); }
   };
 
+  const handleRecordPayment = async () => {
+    try {
+      await bookingsService.addPayment(event.bookingId, {
+        amount: Number(paymentForm.amount),
+        method: paymentForm.method,
+        dateStr: new Date().toISOString().split('T')[0]
+      });
+      success('Payment recorded');
+      setPaymentModalOpen(false);
+      const payRes = await financesService.getPayments();
+      setPayments(payRes.filter((p: any) => p.bookingId === event.bookingId));
+    } catch { error('Failed to record payment'); }
+  };
+
   const handlePrintInvoice = async () => {
     try {
       success('Generating Invoice...');
-      const res = await bookingsService.generateInvoice(data.bookingId);
+      const res = await bookingsService.generateInvoice(event.bookingId);
       window.open(res.url, '_blank');
     } catch (err: any) {
       error(err.response?.data?.message || 'Failed to generate invoice');
     }
+  };
+
+  const handleAssignStaff = async () => {
+    try {
+      await eventsService.addStaff(event.id, staffForm.name, staffForm.role, staffForm.staffMemberId);
+      success('Staff Assigned');
+      setStaffModalOpen(false);
+      loadEvent(event.id);
+    } catch { error('Failed to assign staff'); }
+  };
+
+  const handleRemoveStaff = async (staffId: string) => {
+    if (!confirm('Are you sure you want to remove this staff member from the event?')) return;
+    try {
+      await eventsService.removeStaff(event.id, staffId);
+      success('Staff removed successfully');
+      loadEvent(event.id);
+    } catch { error('Failed to remove staff'); }
   };
 
   
@@ -247,23 +319,17 @@ export const EventDetails = () => {
           
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <Button variant="primary" icon="edit" className="!bg-[#5C0A1E]">Edit Event</Button>
+              <Button variant="primary" icon="edit" className="!bg-[#5C0A1E]" onClick={() => navigate('/app/bookings/' + event.bookingId)}>Edit Booking</Button>
               <Button variant="secondary" icon="update" className="!bg-[#b0891d] !text-white" onClick={() => setIsStatusModalOpen(true)}>Update Status</Button>
-              <Button variant="outline" icon="person_add" className="!text-[#4a1420] !border-surface-variant" onClick={() => setActiveTab('staff')}>Assign Staff</Button>
-              <Button variant="outline" icon="add_task" onClick={() => setTaskModalOpen(true)} className="!text-[#4a1420] !border-surface-variant">Add Task</Button>
+              <Button variant="outline" icon="person_add" className="!text-[#4a1420] !border-surface-variant" onClick={() => { setActiveTab('staff'); setStaffModalOpen(true); }}>Assign Staff</Button>
+              <Button variant="outline" icon="add_task" onClick={() => { setTaskForm({ title: '', assignee: '', dueDate: '', dueTime: '' }); setEditingTaskId(null); setTaskModalOpen(true); }} className="!text-[#4a1420] !border-surface-variant">Add Task</Button>
             </div>
             <div className="flex items-center flex-wrap justify-start lg:justify-end gap-2 md:gap-3 text-xs md:text-sm">
               <button className="text-[#4a1420] hover:underline flex items-center gap-1" onClick={() => setExpenseModalOpen(true)}><DollarSign className="w-3.5 h-3.5 md:w-4 md:h-4"/> Add Expense</button>
               <span className="text-outline-variant hidden md:inline">•</span>
-              <button className="text-[#4a1420] hover:underline flex items-center gap-1" onClick={() => setExpenseModalOpen(true)}><DollarSign className="w-3.5 h-3.5 md:w-4 md:h-4"/> Record Payment</button>
+              <button className="text-[#4a1420] hover:underline flex items-center gap-1" onClick={() => setPaymentModalOpen(true)}><DollarSign className="w-3.5 h-3.5 md:w-4 md:h-4"/> Record Payment</button>
               <span className="text-outline-variant hidden md:inline">•</span>
-              <button className="text-[#4a1420] hover:underline flex items-center gap-1" onClick={async () => {
-                  try {
-                     const { bookingsService } = await import('../../services/bookingsService');
-                     const res = await bookingsService.generateInvoice(event.bookingId || id);
-                     window.open(res.url, '_blank');
-                  } catch(e) { console.error('Failed to print invoice'); }
-                }}><FileText className="w-3.5 h-3.5 md:w-4 md:h-4"/> Print Invoice</button>
+              <button className="text-[#4a1420] hover:underline flex items-center gap-1" onClick={handlePrintInvoice}><FileText className="w-3.5 h-3.5 md:w-4 md:h-4"/> Print Invoice</button>
                 <span className="text-outline-variant hidden md:inline">·</span>
                 <button className="text-[#4a1420] hover:underline flex items-center gap-1" onClick={() => window.print()}><FileText className="w-3.5 h-3.5 md:w-4 md:h-4"/> Print Summary</button>
             </div>
@@ -363,7 +429,7 @@ export const EventDetails = () => {
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div className="col-span-1 text-on-surface-variant text-sm">Coordinator</div>
-                    <div className="col-span-2 font-medium">{event.managerId}</div>
+                    <div className="col-span-2 font-medium">{globalStaff.find(s => s.id === event.managerId)?.name || event.managerId || 'Unassigned'}</div>
                   </div>
                 </div>
               </section>
@@ -391,6 +457,7 @@ export const EventDetails = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="font-title-lg">Operational Readiness</h3>
+              <Button variant="primary" icon="add" onClick={() => { setTaskForm({ title: '', assignee: '', dueDate: '', dueTime: '' }); setEditingTaskId(null); setTaskModalOpen(true); }}>Add Task</Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {event.tasks?.length > 0 ? event.tasks.map((op: any) => (
@@ -400,9 +467,20 @@ export const EventDetails = () => {
                       <h4 className="font-semibold">{op.title}</h4>
                       <div className="text-xs text-on-surface-variant mt-0.5">Assignee: {op.assignee || 'Unassigned'} • Due: {op.dueTime || 'N/A'}</div>
                     </div>
-                    <Badge variant={op.progress === 100 ? 'success' : op.progress > 0 ? 'secondary' : 'neutral'}>
-                      {op.status}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                       <select className="text-xs p-1 border border-outline-variant rounded bg-surface-container" value={op.status} onChange={(e) => handleUpdateTaskStatus(op.id, e.target.value)}>
+                          <option value="Pending">Pending</option>
+                          <option value="In Progress">In Progress</option>
+                          <option value="Completed">Completed</option>
+                       </select>
+                       <button onClick={() => { 
+                           const parts = (op.dueTime || '').split(' ');
+                           setTaskForm({ title: op.title, assignee: op.assignee || '', dueDate: parts[0] || '', dueTime: parts[1] || '' }); 
+                           setEditingTaskId(op.id); 
+                           setTaskModalOpen(true); 
+                       }} className="text-primary hover:bg-primary/10 p-1 rounded flex items-center justify-center"><span className="material-symbols-outlined text-[16px]">edit</span></button>
+                       <button onClick={() => handleDeleteTask(op.id)} className="text-[#e02424] hover:bg-[#e02424]/10 p-1 rounded flex items-center justify-center"><span className="material-symbols-outlined text-[16px]">delete</span></button>
+                    </div>
                   </div>
                   <div className="w-full bg-surface-variant h-2 rounded-full overflow-hidden mt-1">
                     <div className={clsx("h-full rounded-full", op.progress === 100 ? "bg-success" : "bg-primary")} style={{ width: `${op.progress}%` }}></div>
@@ -413,7 +491,7 @@ export const EventDetails = () => {
                   <span className="material-symbols-outlined text-4xl mb-3 opacity-50">task</span>
                   <div className="font-medium text-lg mb-1">No tasks assigned yet</div>
                   <div className="text-sm max-w-md">The Operations section pulls directly from Event Tasks. Create tasks (like "Decorate Stage" or "Set up Sound") to track operational readiness here.</div>
-                  <Button variant="outline" className="mt-4">Create First Task</Button>
+                  <Button variant="outline" className="mt-4" onClick={() => { setTaskForm({ title: '', assignee: '', dueDate: '', dueTime: '' }); setEditingTaskId(null); setTaskModalOpen(true); }}>Create First Task</Button>
                 </div>
               )}
             </div>
@@ -425,8 +503,11 @@ export const EventDetails = () => {
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-title-lg">Catering & Package Details</h3>
               <div className="flex gap-2">
-                <Button variant="outline">Update Guest Count</Button>
-                <Button variant="primary">Edit Menu</Button>
+                <Button variant="primary" icon="edit" onClick={() => { 
+                   const pkg = globalPackages.find(p => p.name === event.packageName);
+                   setSelectedPackageId(pkg ? pkg.id : ''); 
+                   setMenuModalOpen(true); 
+                }}>Change Package</Button>
               </div>
             </div>
             
@@ -490,18 +571,23 @@ export const EventDetails = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-title-lg">Assigned Staff</h3>
-              <Button variant="primary" icon="person_add">Assign Staff</Button>
+              <Button variant="primary" icon="person_add" onClick={() => setStaffModalOpen(true)}>Assign Staff</Button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {event.staff?.length > 0 ? event.staff.map((s: any) => (
-                <div key={s.id} className="bg-surface border border-outline-variant/40 rounded-xl p-4 flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold">
-                    {s.name.charAt(0)}
+                <div key={s.id} className="bg-surface border border-outline-variant/40 rounded-xl p-4 flex items-center justify-between gap-4 group">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold">
+                      {s.name.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="font-medium">{s.name}</div>
+                      <div className="text-xs text-on-surface-variant uppercase tracking-wider">{s.role}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="font-medium">{s.name}</div>
-                    <div className="text-xs text-on-surface-variant uppercase tracking-wider">{s.role}</div>
-                  </div>
+                  <button onClick={() => handleRemoveStaff(s.id)} className="text-[#e02424] opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-[#e02424]/10 rounded-full flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[20px]">person_remove</span>
+                  </button>
                 </div>
               )) : (
                 <div className="col-span-full p-8 text-center text-on-surface-variant border border-dashed border-outline-variant rounded-xl">
@@ -540,7 +626,7 @@ export const EventDetails = () => {
           <div className="space-y-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-title-lg">Event Payments</h3>
-              <Button variant="primary" icon="add" onClick={() => setExpenseModalOpen(true)}>Record Payment</Button>
+              <Button variant="primary" icon="add" onClick={() => setPaymentModalOpen(true)}>Record Payment</Button>
             </div>
             <div className="bg-surface border border-outline-variant/40 rounded-xl overflow-hidden">
                {loadingFinances ? <div className="p-8 text-center text-on-surface-variant">Loading payments...</div> : (
@@ -586,28 +672,39 @@ export const EventDetails = () => {
       </div>
       </div>
 
-      <Modal isOpen={taskModalOpen} onClose={() => setTaskModalOpen(false)} title="Add Task">
+      <Modal isOpen={taskModalOpen} onClose={() => { setTaskModalOpen(false); setEditingTaskId(null); }} title={editingTaskId ? "Edit Task" : "Add Task"}>
         <div className="space-y-4">
           <Input label="Task Title" value={taskForm.title} onChange={e => setTaskForm({...taskForm, title: e.target.value})} />
-          <Input label="Assignee" value={taskForm.assignee} onChange={e => setTaskForm({...taskForm, assignee: e.target.value})} />
-          <Input label="Due Time" type="time" value={taskForm.dueTime} onChange={e => setTaskForm({...taskForm, dueTime: e.target.value})} />
+          <Select label="Assignee" value={taskForm.assignee} onChange={e => setTaskForm({...taskForm, assignee: e.target.value})} options={[{label: 'Unassigned', value: ''}, ...globalStaff.map((s: any) => ({ label: s.name, value: s.name }))]} />
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Due Date" type="date" value={taskForm.dueDate} onChange={e => setTaskForm({...taskForm, dueDate: e.target.value})} />
+            <Input label="Due Time" type="time" value={taskForm.dueTime} onChange={e => setTaskForm({...taskForm, dueTime: e.target.value})} />
+          </div>
           <div className="flex justify-end gap-3 pt-4"><Button onClick={handleCreateTask} variant="primary">Save Task</Button></div>
         </div>
       </Modal>
 
-      <Modal isOpen={menuModalOpen} onClose={() => setMenuModalOpen(false)} title="Update Menu & Guests">
+      <Modal isOpen={menuModalOpen} onClose={() => setMenuModalOpen(false)} title="Manage Event Package">
         <div className="space-y-4">
-          <Input label="Guaranteed Guests" type="number" value={guestCount.toString()} onChange={e => setGuestCount(Number(e.target.value))} />
-          <div className="p-4 bg-surface-variant/30 rounded-md text-sm text-on-surface-variant">Menu item selection will be added here.</div>
-          <div className="flex justify-end gap-3 pt-4"><Button onClick={handleUpdateMenu} variant="primary">Save Changes</Button></div>
+          <Select label="Package" value={selectedPackageId} onChange={e => setSelectedPackageId(e.target.value)} options={[
+            { label: 'No Package (Custom)', value: '' },
+            ...globalPackages.map(p => ({ label: `${p.name} - PKR ${p.price.toLocaleString()}`, value: p.id }))
+          ]} />
+          <div className="flex justify-end gap-3 pt-4">
+             <Button variant="outline" onClick={() => handleUpdateMenu(null)} className="!text-[#e02424] !border-[#e02424]/30">Remove Package</Button>
+             <Button onClick={() => handleUpdateMenu()} variant="primary">Save Changes</Button>
+          </div>
         </div>
       </Modal>
 
       <Modal isOpen={staffModalOpen} onClose={() => setStaffModalOpen(false)} title="Assign Staff">
         <div className="space-y-4">
-          <Select label="Role" options={[{label: 'Supervisor', value: 'Supervisor'}, {label: 'Waiter', value: 'Waiter'}]} />
-          <Select label="Staff Member" options={[{label: 'John Doe', value: '1'}, {label: 'Jane Smith', value: '2'}]} />
-          <div className="flex justify-end gap-3 pt-4"><Button onClick={() => { success('Staff Assigned'); setStaffModalOpen(false); }} variant="primary">Assign</Button></div>
+          <Select label="Staff Member" value={staffForm.staffMemberId} onChange={e => {
+            const selected = globalStaff.find(s => s.id === e.target.value);
+            setStaffForm({...staffForm, staffMemberId: e.target.value, name: selected?.name || '', role: selected?.role || 'Waiter'});
+          }} options={[{label: 'Select Staff...', value: ''}, ...globalStaff.map((s: any) => ({ label: s.name, value: s.id }))]} />
+          <Select label="Role" value={staffForm.role} onChange={e => setStaffForm({...staffForm, role: e.target.value})} options={[{label: 'Supervisor', value: 'Supervisor'}, {label: 'Waiter', value: 'Waiter'}, {label: 'Security', value: 'Security'}]} />
+          <div className="flex justify-end gap-3 pt-4"><Button onClick={handleAssignStaff} variant="primary">Assign</Button></div>
         </div>
       </Modal>
 
@@ -617,6 +714,14 @@ export const EventDetails = () => {
           <Select label="Category" value={expenseForm.category} onChange={e => setExpenseForm({...expenseForm, category: e.target.value})} options={[{label:'Vendor', value:'Vendor'}, {label:'Supplies', value:'Supplies'}]} />
           <Input label="Reference / Notes" value={expenseForm.notes} onChange={e => setExpenseForm({...expenseForm, notes: e.target.value})} />
           <div className="flex justify-end gap-3 pt-4"><Button onClick={handleRecordExpense} variant="primary">Save Expense</Button></div>
+        </div>
+      </Modal>
+
+      <Modal isOpen={paymentModalOpen} onClose={() => setPaymentModalOpen(false)} title="Record Payment">
+        <div className="space-y-4">
+          <Input label="Amount (PKR)" type="number" value={paymentForm.amount} onChange={e => setPaymentForm({...paymentForm, amount: e.target.value})} />
+          <Select label="Method" value={paymentForm.method} onChange={e => setPaymentForm({...paymentForm, method: e.target.value})} options={[{label:'Cash', value:'Cash'}, {label:'Bank Transfer', value:'Bank Transfer'}, {label:'Card', value:'Card'}]} />
+          <div className="flex justify-end gap-3 pt-4"><Button onClick={handleRecordPayment} variant="primary">Save Payment</Button></div>
         </div>
       </Modal>
 

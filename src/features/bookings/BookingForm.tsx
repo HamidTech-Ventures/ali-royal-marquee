@@ -102,7 +102,31 @@ export const BookingForm = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
-    setFormData(prev => ({ ...prev, [name]: val }));
+    
+    setFormData(prev => {
+      const next = { ...prev, [name]: val };
+      
+      // Auto-calculate total if these fields change
+      if (['guests', 'preferredVenueId', 'packageId'].includes(name)) {
+        const venue = venues.find(v => v.id === next.preferredVenueId);
+        const pkg = packages.find(p => p.id === next.packageId);
+        
+        let calc = 0;
+        if (venue?.basePrice) calc += venue.basePrice;
+        if (pkg) {
+          if (pkg.type && pkg.type.toLowerCase().includes('fixed')) {
+            calc += pkg.price;
+          } else {
+            calc += (pkg.price * Number(next.guests || 0));
+          }
+        }
+        
+        if (calc > 0 || next.packageId || next.preferredVenueId) {
+          next.totalAmount = calc;
+        }
+      }
+      return next;
+    });
   };
 
   const handleNext = () => setCurrentStep(prev => Math.min(prev + 1, steps.length));
@@ -402,16 +426,7 @@ export const BookingForm = () => {
                 label="Event Package" 
                 name="packageId"
                 value={formData.packageId}
-                onChange={(e) => {
-                  handleChange(e);
-                  const pkg = packages.find(p => p.id === e.target.value);
-                  if (pkg) {
-                    setFormData(prev => ({
-                      ...prev,
-                      totalAmount: pkg.price * prev.guests 
-                    }));
-                  }
-                }}
+                onChange={handleChange}
                 options={[
                   { label: '-- Select a Package --', value: '' },
                   ...packages.map(p => ({ label: `${p.name} (PKR ${p.price.toLocaleString()} per guest)`, value: p.id }))

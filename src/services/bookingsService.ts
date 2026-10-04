@@ -27,6 +27,11 @@ export const bookingsService = {
     return response.data;
   },
 
+  updateBookingPackage: async (id: string, packageId: string | null) => {
+    const response = await api.put(`/bookings/${id}/package`, { bookingId: id, packageId });
+    return response.data;
+  },
+
   deleteBooking: async (id: string) => {
     const response = await api.delete(`/bookings/${id}`);
     return response.data;
