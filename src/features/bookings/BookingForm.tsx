@@ -114,8 +114,8 @@ export const BookingForm = () => {
     }
   };
 
-  const handleSubmit = async (e?: React.FormEvent, isDraft = false) => {
-    if (e) e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent | null, isDraft = false, printInvoice = false) => {
+    if (e) (e as React.FormEvent).preventDefault();
     if (!formData.customerName || !formData.customerPhone) {
       error("Customer Name and Phone are required.");
       return;
@@ -192,8 +192,19 @@ export const BookingForm = () => {
          }
       }
 
-      success(isEditMode ? 'Booking updated successfully' : (isDraft ? 'Draft saved successfully' : 'Booking created successfully'));
-      navigate(`/app/bookings/${finalBookingId}`);
+      if (printInvoice) {
+        success('Booking created successfully. Generating Invoice...');
+        try {
+          const res = await bookingsService.generateInvoice(finalBookingId);
+          window.open(res.url, '_blank');
+        } catch (e) {
+          error('Failed to generate invoice.');
+        }
+        navigate(`/app/bookings/${finalBookingId}`);
+      } else {
+        success(isEditMode ? 'Booking updated successfully' : (isDraft ? 'Draft saved successfully' : 'Booking created successfully'));
+        navigate(`/app/bookings/${finalBookingId}`);
+      }
     } catch (err: any) {
       console.error(err);
       const apiMsg = err.response?.data?.detail || err.response?.data?.message || err.response?.data;
@@ -501,9 +512,16 @@ export const BookingForm = () => {
               Next Step <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           ) : (
-            <Button variant="primary" onClick={handleSubmit} disabled={isSubmitting} className="bg-[#5C0A1E] text-white">
-              {isSubmitting ? 'Confirming...' : (isEditMode ? 'Update Booking' : 'Confirm Booking')}
-            </Button>
+            <div className="flex gap-2">
+              {!isEditMode && (
+                <Button variant="outline" onClick={() => handleSubmit(null, false, true)} disabled={isSubmitting} className="border-[#5C0A1E] text-[#5C0A1E]">
+                  Confirm Booking + Print Invoice
+                </Button>
+              )}
+              <Button variant="primary" onClick={() => handleSubmit(null, false, false)} disabled={isSubmitting} className="bg-[#5C0A1E] text-white">
+                {isSubmitting ? 'Confirming...' : (isEditMode ? 'Update Booking' : 'Confirm Booking')}
+              </Button>
+            </div>
           )}
         </div>
       </div>

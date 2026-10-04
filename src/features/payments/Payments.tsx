@@ -165,7 +165,7 @@ export const Payments = () => {
       result = result.filter(p => 
         p.id.toLowerCase().includes(lower) || 
         (p.reference && p.reference.toLowerCase().includes(lower)) ||
-        mockCustomerName(p.customerId).toLowerCase().includes(lower) ||
+        (p.customerName || mockCustomerName(p.customerId)).toLowerCase().includes(lower) ||
         mockEventName(p.bookingId).toLowerCase().includes(lower) ||
         generateReadableReceipt(p.id).toLowerCase().includes(lower)
       );
@@ -211,7 +211,7 @@ export const Payments = () => {
     ) },
     { key: 'customer', header: 'Client & Booking', render: (i) => (
       <div>
-        <div className="font-bold text-on-surface">{mockCustomerName(i.customerId)}</div>
+        <div className="font-bold text-on-surface">{i.customerName || mockCustomerName(i.customerId)}</div>
         <div className="text-[12px] text-on-surface-variant mt-0.5">{mockEventName(i.bookingId)}</div>
       </div>
     ) },
@@ -433,7 +433,7 @@ export const Payments = () => {
           
           <div className="flex justify-end gap-3 pt-4 border-t border-outline-variant/20 mt-6">
             <Button variant="text" onClick={() => setAddExpenseModalOpen(false)} disabled={submittingExpense}>Cancel</Button>
-            <Button variant="primary" onClick={handleAddExpenseSubmit} disabled={true}>Save Expense</Button>
+            <Button variant="primary" onClick={handleAddExpenseSubmit} disabled={submittingExpense || !newExpense.amount || !newExpense.description}>Save Expense</Button>
           </div>
         </div>
       </Modal>

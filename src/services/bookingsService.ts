@@ -40,5 +40,10 @@ export const bookingsService = {
   checkAvailability: async (venueId: string, startTime: string, endTime: string) => {
     const response = await api.get('/bookings/availability', { params: { venueId, startTime, endTime } });
     return response.data; // { available: boolean }
+  },
+
+  generateInvoice: async (id: string) => {
+    const response = await api.get(`/bookings/${id}/invoice`);
+    return response.data; // { url: string }
   }
 };

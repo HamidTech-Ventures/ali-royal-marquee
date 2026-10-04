@@ -124,12 +124,11 @@ export function DataGrid<T>({
           <div className="font-body-sm text-body-sm text-on-surface-variant">
             {totalItems !== undefined ? (
               (() => {
-                // We default to 10 if not provided (or we can just calculate if it was full)
                 const limit = 10; 
                 const from = totalItems === 0 ? 0 : ((currentPage || 1) - 1) * limit + 1;
-                const to = Math.min((currentPage || 1) * limit, totalItems);
+                const to = from + data.length - 1;
                 return (
-                  <span>Showing <strong>{from}-{to}</strong> of <strong>{totalItems}</strong> records</span>
+                  <span>Showing <strong>{from}-{Math.max(from, to)}</strong> of <strong>{totalItems}</strong> records</span>
                 );
               })()
             ) : (

@@ -2,23 +2,38 @@ import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Button } from '../../components/ui/Button';
-import { SearchInput } from '../../components/ui/SearchInput';
 import { bookingsService } from '../../services/bookingsService';
+import { useVenues } from '../../hooks/useVenues';
 import clsx from 'clsx';
 
 export const Calendar = () => {
   const navigate = useNavigate();
+  type ViewType = 'Month' | 'Week' | 'Day' | 'List';
+  const [currentView, setCurrentView] = useState<ViewType>('Month');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const { venues } = useVenues();
 
-  // Month navigation
-  const prevMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  // View navigation
+  const prevDateRange = () => {
+    if (currentView === 'Month' || currentView === 'List') {
+      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, currentDate.getDate()));
+    } else if (currentView === 'Week') {
+      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - 7));
+    } else if (currentView === 'Day') {
+      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() - 1));
+    }
   };
   
-  const nextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  const nextDateRange = () => {
+    if (currentView === 'Month' || currentView === 'List') {
+      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, currentDate.getDate()));
+    } else if (currentView === 'Week') {
+      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 7));
+    } else if (currentView === 'Day') {
+      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 1));
+    }
   };
 
   const goToToday = () => {
@@ -29,31 +44,52 @@ export const Calendar = () => {
   const days = useMemo(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
-    const date = new Date(year, month, 1);
-    const result = [];
     
-    const startDay = date.getDay(); // 0 is Sunday, 1 is Monday
-    const diff = startDay === 0 ? 6 : startDay - 1; // start on Monday
-    const prevDate = new Date(date);
-    prevDate.setDate(date.getDate() - diff);
-    
-    while (prevDate < date) {
-      result.push({ date: new Date(prevDate), isCurrentMonth: false });
-      prevDate.setDate(prevDate.getDate() + 1);
+    if (currentView === 'Month') {
+      const date = new Date(year, month, 1);
+      const result = [];
+      const startDay = date.getDay(); // 0 is Sunday, 1 is Monday
+      const diff = startDay === 0 ? 6 : startDay - 1; // start on Monday
+      const prevDate = new Date(date);
+      prevDate.setDate(date.getDate() - diff);
+      
+      while (prevDate < date) {
+        result.push({ date: new Date(prevDate), isCurrentMonth: false });
+        prevDate.setDate(prevDate.getDate() + 1);
+      }
+      
+      while (date.getMonth() === month) {
+        result.push({ date: new Date(date), isCurrentMonth: true });
+        date.setDate(date.getDate() + 1);
+      }
+      
+      while (result.length % 7 !== 0) {
+        result.push({ date: new Date(date), isCurrentMonth: false });
+        date.setDate(date.getDate() + 1);
+      }
+      return result;
     }
     
-    while (date.getMonth() === month) {
-      result.push({ date: new Date(date), isCurrentMonth: true });
-      date.setDate(date.getDate() + 1);
+    if (currentView === 'Week') {
+      const result = [];
+      const current = new Date(currentDate);
+      const startDay = current.getDay();
+      const diff = startDay === 0 ? 6 : startDay - 1;
+      current.setDate(current.getDate() - diff); // go to monday
+      
+      for(let i=0; i<7; i++) {
+        result.push({ date: new Date(current), isCurrentMonth: current.getMonth() === month });
+        current.setDate(current.getDate() + 1);
+      }
+      return result;
     }
     
-    while (result.length % 7 !== 0) {
-      result.push({ date: new Date(date), isCurrentMonth: false });
-      date.setDate(date.getDate() + 1);
+    if (currentView === 'Day') {
+      return [{ date: new Date(currentDate), isCurrentMonth: true }];
     }
     
-    return result;
-  }, [currentDate]);
+    return []; // For List view, days array is not strictly used in grid
+  }, [currentDate, currentView]);
 
   // Fetch Bookings
   useEffect(() => {
@@ -99,18 +135,21 @@ export const Calendar = () => {
       return d.getMonth() === currentDate.getMonth() && d.getFullYear() === currentDate.getFullYear();
     });
 
-    const tentativeCount = monthBookings.filter(b => b.status === 'Pending').length;
+    const tentativeCount = monthBookings.filter(b => b.status === 'Pending' || b.status === 'Draft').length;
     
-    const totalPossibleShifts = 30 * 2 * 3; // roughly 30 days * 2 shifts * 3 venues
-    const util = Math.round((monthBookings.length / totalPossibleShifts) * 100);
+    const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+    const venueCount = venues.length > 0 ? venues.length : 3; // Fallback to 3 if venues are still loading
+    const totalPossibleShifts = daysInMonth * 2 * venueCount; // Days * 2 shifts (Day/Night) * Venues
+    
+    const util = totalPossibleShifts > 0 ? Math.round((monthBookings.length / totalPossibleShifts) * 100) : 0;
 
     return {
       todaysOps: todaysBookings.length,
-      availableShifts: totalPossibleShifts - monthBookings.length,
+      availableShifts: Math.max(0, totalPossibleShifts - monthBookings.length),
       tentativeCount,
       utilization: util > 100 ? 100 : util
     };
-  }, [activeBookings, currentDate]);
+  }, [activeBookings, currentDate, venues]);
 
   const conflicts = useMemo(() => {
     const map = new Map<string, any[]>();
@@ -137,7 +176,21 @@ export const Calendar = () => {
     return 'bg-surface-variant text-on-surface-variant border-outline-variant/30';
   };
   
-  const monthYearStr = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const displayStr = useMemo(() => {
+    if (currentView === 'Month' || currentView === 'List') {
+      return currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    } else if (currentView === 'Day') {
+      return currentDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    } else {
+      const startDay = currentDate.getDay();
+      const diff = startDay === 0 ? 6 : startDay - 1; // start on Monday
+      const startOfWeek = new Date(currentDate);
+      startOfWeek.setDate(currentDate.getDate() - diff);
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      return `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+    }
+  }, [currentDate, currentView]);
   const todayDateStr = new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
 
   return (
@@ -150,27 +203,13 @@ export const Calendar = () => {
           description="Real-time hall occupancy, conflict prevention engine, and banquet schedule coordination across Ali Royal Marquee estate."
           actions={
             <div className="flex items-center gap-2 w-full md:w-auto">
-              <Button variant="outline" icon="lock" className="flex-1 md:flex-auto border-[#e8e4db] text-[#4a1420]">Block / Hold</Button>
+
               <Button variant="primary" icon="add" className="flex-1 md:flex-auto !bg-[#5C0A1E]" onClick={() => navigate('/app/bookings/new')}>New Booking</Button>
             </div>
           }
         />
 
-        {/* Filters and Views */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex w-full md:w-auto items-center gap-3">
-             <div className="flex-1 md:w-64">
-               <SearchInput placeholder="Search booking, client, VIP..." value="" onChange={() => {}} />
-             </div>
-             <Button variant="outline" icon="tune" className="border-[#e8e4db] text-[#4a1420]">Filters</Button>
-          </div>
-          <div className="bg-white border border-[#e8e4db] p-1 rounded-lg flex items-center shadow-sm overflow-x-auto w-full md:w-auto hide-scrollbar">
-            <button className="bg-[#FAF8F5] text-[#4a1420] shadow-sm text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 rounded-md font-medium transition-all whitespace-nowrap" type="button">Month</button>
-            <button className="text-on-surface-variant hover:text-[#4a1420] text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 rounded-md transition-colors whitespace-nowrap" type="button">Week</button>
-            <button className="text-on-surface-variant hover:text-[#4a1420] text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 rounded-md transition-colors whitespace-nowrap" type="button">Day</button>
-            <button className="text-on-surface-variant hover:text-[#4a1420] text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 rounded-md transition-colors whitespace-nowrap" type="button">List</button>
-          </div>
-        </div>
+
 
         {/* VENUE AVAILABILITY & CAPACITY SUMMARY */}
         {/* VENUE AVAILABILITY & CAPACITY SUMMARY */}
@@ -275,11 +314,11 @@ export const Calendar = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4 mb-4">
             <div className="flex flex-wrap items-center gap-2 md:gap-3 w-full sm:w-auto">
               <div className="flex items-center bg-[#FAF8F5] border border-[#e8e4db] rounded-lg p-1 w-full sm:w-auto justify-between sm:justify-start">
-                <button onClick={prevMonth} className="p-1 md:p-1.5 hover:bg-[#e8e4db] rounded transition-colors text-[#4a1420]" type="button">
+                <button onClick={prevDateRange} className="p-1 md:p-1.5 hover:bg-[#e8e4db] rounded transition-colors text-[#4a1420]" type="button">
                   <span className="material-symbols-outlined text-[20px]">chevron_left</span>
                 </button>
-                <span className="font-serif text-sm md:text-base text-[#4a1420] font-bold px-2 md:px-4 w-auto md:w-[200px] text-center">{monthYearStr}</span>
-                <button onClick={nextMonth} className="p-1 md:p-1.5 hover:bg-[#e8e4db] rounded transition-colors text-[#4a1420]" type="button">
+                <span className="font-serif text-sm md:text-base text-[#4a1420] font-bold px-2 md:px-4 w-auto md:w-[200px] text-center">{displayStr}</span>
+                <button onClick={nextDateRange} className="p-1 md:p-1.5 hover:bg-[#e8e4db] rounded transition-colors text-[#4a1420]" type="button">
                   <span className="material-symbols-outlined text-[20px]">chevron_right</span>
                 </button>
               </div>
@@ -287,24 +326,74 @@ export const Calendar = () => {
                 Today ({todayDateStr})
               </button>
             </div>
-            <div className="flex flex-wrap items-center gap-1.5 bg-[#FAF8F5] border border-[#e8e4db] p-1 rounded-lg w-full sm:w-auto">
-              <button className="bg-white text-[#4a1420] text-xs md:text-sm font-bold px-3 py-1.5 rounded-md shadow-sm w-full sm:w-auto" type="button">All Venues</button>
+            <div className="bg-[#FAF8F5] border border-[#e8e4db] p-1 rounded-lg flex items-center shadow-sm overflow-x-auto w-full sm:w-auto hide-scrollbar">
+              {(['Month', 'Week', 'Day', 'List'] as ViewType[]).map(view => (
+                <button 
+                  key={view}
+                  onClick={() => setCurrentView(view)}
+                  className={clsx(
+                    "text-xs md:text-sm px-3 md:px-4 py-1.5 rounded-md font-bold transition-all whitespace-nowrap",
+                    currentView === view 
+                      ? "bg-white text-[#4a1420] shadow-sm border border-[#e8e4db]"
+                      : "text-on-surface-variant hover:text-[#4a1420]"
+                  )}
+                  type="button"
+                >
+                  {view}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="overflow-x-auto no-scrollbar w-full">
-            <div className="min-w-[700px] w-full">
-              <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2">
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                  <div key={day} className={`text-center py-2 text-[10px] md:text-xs uppercase tracking-wider font-bold ${['Thu', 'Fri', 'Sat', 'Sun'].includes(day) ? (day === 'Thu' ? 'text-[#b0891d]' : 'text-[#5C0A1E]') : 'text-on-surface-variant'}`}>{day}</div>
-                ))}
-              </div>
-
           {loading ? (
             <div className="py-20 text-center text-on-surface-variant">Loading calendar...</div>
+          ) : currentView === 'List' ? (
+            <div className="flex flex-col gap-2 overflow-y-auto max-h-[600px] w-full mt-4">
+              {activeBookings.length === 0 ? (
+                <div className="py-10 text-center text-on-surface-variant">No bookings for this period.</div>
+              ) : (
+                activeBookings.map((b, idx) => {
+                  const colorClass = getVenueColor(b.hall);
+                  const isConflict = conflicts.some(cGroup => cGroup.includes(b));
+                  return (
+                    <div 
+                      key={idx}
+                      onClick={() => navigate(`/app/bookings/${b.id}`)}
+                      className={clsx(
+                        "p-5 rounded-xl flex items-center justify-between cursor-pointer border shadow-sm hover:shadow-md transition-all hover:scale-[1.01] hover:-translate-y-0.5",
+                        colorClass,
+                        isConflict && "ring-2 ring-error"
+                      )}
+                    >
+                      <div>
+                        <div className="font-bold text-lg">{b.customerName || 'Booking'}</div>
+                        <div className="text-sm opacity-80">{b.dateStr} • {b.shift}</div>
+                      </div>
+                      <div className="font-semibold text-right">
+                        <div>{b.hall}</div>
+                        <div className="text-xs mt-1 opacity-75">{b.guests} Guests</div>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
           ) : (
-            <div className="grid grid-cols-7 gap-2">
+          <div className="overflow-x-auto no-scrollbar w-full">
+            <div className="min-w-[700px] w-full">
+              {currentView !== 'Day' && (
+                <div className={clsx("grid gap-1 md:gap-2 mb-2", currentView === 'Week' ? "grid-cols-7" : "grid-cols-7")}>
+                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                    <div key={day} className={`text-center py-2 text-[10px] md:text-xs uppercase tracking-wider font-bold ${['Thu', 'Fri', 'Sat', 'Sun'].includes(day) ? (day === 'Thu' ? 'text-[#b0891d]' : 'text-[#5C0A1E]') : 'text-on-surface-variant'}`}>{day}</div>
+                  ))}
+                </div>
+              )}
+
+            <div className={clsx("grid gap-3", currentView === 'Day' ? "grid-cols-1 max-w-3xl mx-auto" : "grid-cols-7")}>
               {days.map((dayObj, i) => {
+                const isToday = dayObj.date.getDate() === new Date().getDate() && 
+                                dayObj.date.getMonth() === new Date().getMonth() && 
+                                dayObj.date.getFullYear() === new Date().getFullYear();
                 const dayBookings = activeBookings.filter(b => {
                   if(!b.dateStr) return false;
                   const bDate = new Date(b.dateStr);
@@ -315,12 +404,19 @@ export const Calendar = () => {
 
                 return (
                   <div key={i} className={clsx(
-                    "min-h-[110px] p-2 rounded flex flex-col transition-colors border",
-                    dayObj.isCurrentMonth ? "bg-surface-container-low hover:bg-surface-container border-transparent" : "bg-surface-container-lowest opacity-50 border-transparent",
+                    "min-h-[120px] p-2.5 rounded-xl flex flex-col transition-all border",
+                    dayObj.isCurrentMonth 
+                      ? "bg-white hover:bg-[#FAF8F5] border-[#e8e4db] hover:shadow-sm" 
+                      : "bg-[#FAF8F5] opacity-50 border-transparent",
+                    isToday ? "ring-2 ring-[#4a1420]/30 bg-[#4a1420]/5 border-[#4a1420]/20" : "",
                     "relative"
                   )}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className={clsx("font-title-sm text-title-sm font-semibold", dayObj.isCurrentMonth ? "text-on-surface" : "text-on-surface-variant")}>
+                      <span className={clsx(
+                        "flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold font-serif",
+                        isToday ? "bg-[#4a1420] text-white shadow-sm" : 
+                        dayObj.isCurrentMonth ? "text-[#4a1420]" : "text-on-surface-variant"
+                      )}>
                         {dayObj.date.getDate()}
                       </span>
                       {dayBookings.length > 0 && (
@@ -338,9 +434,9 @@ export const Calendar = () => {
                             key={idx} 
                             onClick={() => navigate(`/app/bookings/${b.id}`)}
                             className={clsx(
-                              "px-1.5 py-0.5 rounded text-[10px] font-semibold truncate shadow-xs cursor-pointer border",
+                              "px-2 py-1.5 rounded-md text-[10.5px] font-bold truncate shadow-sm cursor-pointer border transition-transform hover:scale-[1.02]",
                               colorClass,
-                              isConflict && "ring-2 ring-error"
+                              isConflict && "ring-2 ring-error animate-pulse"
                             )}
                             title={`${b.hall} - ${b.shift}`}
                           >
@@ -353,9 +449,9 @@ export const Calendar = () => {
                 );
               })}
             </div>
-          )}
             </div>
           </div>
+          )}
         </div>
 
       </div>

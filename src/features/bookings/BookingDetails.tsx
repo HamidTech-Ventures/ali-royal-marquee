@@ -72,6 +72,16 @@ export const BookingDetails = () => {
     { id: 'activity', label: 'Activity Logs' }
   ];
 
+  const handlePrintInvoice = async () => {
+    try {
+      success('Generating Invoice...');
+      const res = await bookingsService.generateInvoice(booking.id);
+      window.open(res.url, '_blank');
+    } catch (err: any) {
+      error(err.response?.data?.message || 'Failed to generate invoice');
+    }
+  };
+
   const handleRecordPayment = async () => {
     if (!paymentForm.amount || Number(paymentForm.amount) <= 0) {
       error('Please enter a valid amount');
@@ -180,6 +190,7 @@ export const BookingDetails = () => {
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2 flex-wrap">
               <Button variant="primary" icon="edit" onClick={() => navigate(`/app/bookings/${booking.id}/edit`)}>Edit Booking</Button>
+                <Button variant="outline" icon="print" onClick={handlePrintInvoice}>Print Invoice</Button>
               <Button variant="secondary" icon="payments" onClick={() => setPaymentModalOpen(true)} disabled={booking.status === 'Cancelled'}>Record Payment</Button>
             </div>
             <div className="flex items-center justify-end gap-3 text-sm">
