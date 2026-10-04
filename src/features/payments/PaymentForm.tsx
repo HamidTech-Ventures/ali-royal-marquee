@@ -90,7 +90,7 @@ export const PaymentForm = () => {
               { value: '', label: 'Select a booking' },
               ...bookings.map(b => ({ 
                 value: b.id, 
-                label: `${b.eventName || 'Booking'} - ${new Date(b.eventDate).toLocaleDateString()}` 
+                label: `${b.referenceNumber || 'Booking'} - ${b.customerName} - ${b.eventTitle || 'Event'} (${b.dateStr})` 
               }))
             ]}
           />
