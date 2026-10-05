@@ -10,6 +10,7 @@ import { useToast } from '../../context/ToastContext';
 import { financesService } from '../../services/financesService';
 import { eventsService } from '../../services/eventsService';
 import { vendorsService } from '../../services/vendorsService';
+import { bookingsService } from '../../services/bookingsService';
 import { Modal } from '../../components/ui/Modal';
 import { Select } from '../../components/ui/forms/Select';
 import { Input } from '../../components/ui/forms/Input';
@@ -243,7 +244,12 @@ export const Payments = () => {
            );
         }
         return <Badge variant={i.status === 'Completed' ? 'success' : 'error'}>{i.status}</Badge>;
-    }}
+    }},
+    { key: 'actions', header: '', align: 'right', render: (i) => (
+       <button onClick={(e) => { e.stopPropagation(); bookingsService.generateInvoice(i.bookingId).then(res => window.open(res.url, '_blank')); }} className="text-[#4a1420] hover:bg-[#4a1420]/10 p-1.5 rounded-full transition-colors" title="Download Invoice">
+         <span className="material-symbols-outlined text-[18px]">download</span>
+       </button>
+    )}
   ];
 
   const expenseColumns: ColumnDef<any>[] = [

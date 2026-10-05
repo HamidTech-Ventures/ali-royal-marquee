@@ -266,7 +266,12 @@ export const EventDetails = () => {
     { key: 'id', header: 'Receipt', render: (i) => <span className="font-mono text-xs">{i.id.substring(0, 8).toUpperCase()}</span> },
     { key: 'method', header: 'Method' },
     { key: 'amount', header: 'Amount', align: 'right', render: (i) => <span className="font-currency-num font-bold text-[#10b981]">PKR {i.amount.toLocaleString()}</span> },
-    { key: 'status', header: 'Status', align: 'right', render: (i) => <Badge variant={i.status === 'Completed' ? 'success' : 'warning'}>{i.status}</Badge> }
+    { key: 'status', header: 'Status', align: 'right', render: (i) => <Badge variant={i.status === 'Completed' ? 'success' : 'warning'}>{i.status}</Badge> },
+    { key: 'actions', header: '', align: 'right', render: (i) => (
+       <button onClick={(e) => { e.stopPropagation(); bookingsService.generateInvoice(event.bookingId).then(res => window.open(res.url, '_blank')); }} className="text-[#4a1420] hover:bg-[#4a1420]/10 p-1.5 rounded-full transition-colors" title="Download Invoice">
+         <span className="material-symbols-outlined text-[18px]">download</span>
+       </button>
+    )}
   ];
 
   const expenseColumns: ColumnDef<any>[] = [

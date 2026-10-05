@@ -337,6 +337,7 @@ export const BookingDetails = () => {
                     <th className="p-4 font-medium">Reference</th>
                     <th className="p-4 font-medium">Method</th>
                     <th className="p-4 font-medium text-right">Amount</th>
+                    <th className="p-4 font-medium text-right"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant/20">
@@ -350,11 +351,16 @@ export const BookingDetails = () => {
                       <td className="p-4 text-right font-currency-num text-on-surface font-medium text-success">
                         + PKR {payment.amount.toLocaleString()}
                       </td>
+                      <td className="p-4 text-right">
+                        <button onClick={(e) => { e.stopPropagation(); bookingsService.generateInvoice(booking.id).then(res => window.open(res.url, '_blank')); }} className="text-[#4a1420] hover:bg-[#4a1420]/10 p-1.5 rounded-full transition-colors" title="Download Invoice">
+                          <span className="material-symbols-outlined text-[18px]">download</span>
+                        </button>
+                      </td>
                     </tr>
                   ))}
                   {(!booking.payments || booking.payments.length === 0) && (
                     <tr>
-                      <td colSpan={4} className="p-8 text-center text-on-surface-variant">No payments recorded yet.</td>
+                      <td colSpan={5} className="p-8 text-center text-on-surface-variant">No payments recorded yet.</td>
                     </tr>
                   )}
                 </tbody>
